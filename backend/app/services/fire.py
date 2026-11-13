@@ -82,9 +82,9 @@ def project(corpus: float, monthly_investment: float, age: int, annual_expenses:
     mc = monte_carlo(corpus, monthly_investment, age, target_age or 60, fire_number, rr, real_step, p)
     return {
         "inputs": {"current_corpus": round(corpus), "monthly_investment": round(monthly_investment), "age": age,
-                   "annual_expenses": round(annual_expenses), "nominal_return_pct": p["nominal_return"] * 100,
-                   "inflation_pct": p["inflation"] * 100, "real_return_pct": round(rr * 100, 2),
-                   "withdrawal_rate_pct": p["swr"] * 100, "annual_step_up_pct": p["step_up"] * 100},
+                   "annual_expenses": round(annual_expenses), "nominal_return_pct": round(p["nominal_return"] * 100, 2),
+                   "inflation_pct": round(p["inflation"] * 100, 2), "real_return_pct": round(rr * 100, 2),
+                   "withdrawal_rate_pct": round(p["swr"] * 100, 2), "annual_step_up_pct": round(p["step_up"] * 100, 2)},
         "fire_number": round(fire_number), "lean_fire_number": round(targets["lean"]),
         "fat_fire_number": round(targets["fat"]),
         "fire_age": reached["regular"], "lean_fire_age": reached["lean"], "fat_fire_age": reached["fat"],
