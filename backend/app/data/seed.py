@@ -92,16 +92,18 @@ def build_net_worth_history(db, uid: int):
     ident = load_identity(db, uid)
     nw = net_worth(ident)
     monthly = sorted(ident.monthly, key=lambda r: r["month"])
-    assets, liabs = nw["total_assets"], nw["total_liabilities"]
+    net, liabs = nw["net_worth"], nw["total_liabilities"]
     market_assets = nw["breakdown"].get("Equity", 0) + nw["breakdown"].get("Mutual funds", 0)
     principal_paid = sum(l["emi"] * 0.45 for l in ident.loans)  # approx. principal share of EMIs
     snaps = []
     for idx in range(len(monthly) - 1, -1, -1):
-        snaps.append(dict(user_id=uid, month=monthly[idx]["month"], assets=round(assets, 0), liabilities=round(liabs, 0),
-                          net_worth=round(assets - liabs, 0)))
-        # step back one month
-        assets -= max(monthly[idx]["savings"], 0) * 0.85 + market_assets * 0.009
-        liabs += principal_paid
+        snaps.append(dict(user_id=uid, month=monthly[idx]["month"], assets=round(net + liabs, 0), liabilities=round(liabs, 0),
+                          net_worth=round(net, 0)))
+        # Step back one month: net worth changed by that month's savings plus ~0.9% market growth;
+        # liabilities fell by loan principal repaid and rose by any deficit funded on credit.
+        s = monthly[idx]["savings"]
+        net -= s + market_assets * 0.009
+        liabs = max(0.0, liabs + principal_paid - max(0.0, -s))
     db.execute(insert(M.NetWorthSnapshot), list(reversed(snaps)))
 
 

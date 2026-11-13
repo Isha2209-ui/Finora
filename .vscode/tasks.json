@@ -1,0 +1,14 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    { "label": "Finora: setup (first time)", "type": "shell", "command": "./setup.sh", "problemMatcher": [] },
+    { "label": "Finora: backend", "type": "shell", "command": "source venv/bin/activate && uvicorn app.main:app --reload --port 8001",
+      "options": { "cwd": "${workspaceFolder}/backend" }, "isBackground": true, "problemMatcher": [], "presentation": { "group": "finora" } },
+    { "label": "Finora: frontend", "type": "shell", "command": "npm run dev", "options": { "cwd": "${workspaceFolder}/frontend" },
+      "isBackground": true, "problemMatcher": [], "presentation": { "group": "finora" } },
+    { "label": "Run Finora", "dependsOn": ["Finora: backend", "Finora: frontend"], "group": { "kind": "build", "isDefault": true }, "problemMatcher": [] },
+    { "label": "Finora: run tests", "type": "shell", "command": "source venv/bin/activate && pytest -q", "options": { "cwd": "${workspaceFolder}/backend" }, "problemMatcher": [] },
+    { "label": "Finora: retrain models", "type": "shell", "command": "source venv/bin/activate && python -m app.ml.train", "options": { "cwd": "${workspaceFolder}/backend" }, "problemMatcher": [] },
+    { "label": "Finora: reset demo data", "type": "shell", "command": "source venv/bin/activate && python -m app.data.seed", "options": { "cwd": "${workspaceFolder}/backend" }, "problemMatcher": [] }
+  ]
+}
