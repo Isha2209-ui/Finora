@@ -22,7 +22,8 @@ if [ ! -f .env ]; then
 fi
 echo "== Loading demo data =="
 python -m app.data.seed
-if [ ! -f artifacts/metrics.json ]; then echo "== Training models =="; python -m app.ml.train; fi
+echo "== Training models on this machine (about 1 minute) =="
+python -m app.ml.train
 echo "== Running tests =="
 pytest -q || true
 cd ../frontend
