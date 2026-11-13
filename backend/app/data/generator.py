@@ -19,7 +19,9 @@ import numpy as np
 
 from . import narrations as N
 
-MONTHS = [(2025, 11), (2025, 12)] + [(2026, m) for m in range(1, 11)]
+MONTHS = [(2025, 11), (2025, 12)] + [(2026, m) for m in range(1, 11)]          # demo identities: 12 months
+MONTHS_24 = [(2024, 11), (2024, 12)] + [(2025, m) for m in range(1, 13)] + [(2026, m) for m in range(1, 11)]
+FESTIVE = {(2024, 11), (2025, 11), (2026, 10)}  # Diwali-season months in the synthetic calendar
 AS_OF = date(2026, 10, 31)
 
 # Expense classification used everywhere in Finora
@@ -84,6 +86,7 @@ class Spec:
     planted_anomalies: int = 0
     random_anomaly_rate: float = 0.0
     is_demo: bool = False
+    n_months: int = 12
 
 
 # ================================================================= simulation
@@ -120,7 +123,7 @@ def simulate(spec: Spec, seed: int) -> dict:
     prev_min_due = {c["key"]: round(max(200.0, c.get("opening_balance", 0.0) * 0.05), 0) for c in spec.cards}
     missed_sip_months = {s["scheme"]: set(s.get("missed_months", [])) for s in spec.sips}
 
-    for mi, (y, m) in enumerate(MONTHS):
+    for mi, (y, m) in enumerate(MONTHS_24 if spec.n_months == 24 else MONTHS):
         month_key = f"{y}-{m:02d}"
         month_start = len(out["transactions"])
 
@@ -146,7 +149,7 @@ def simulate(spec: Spec, seed: int) -> dict:
         if spec.rent_paid:
             add_tx(date(y, m, 5), spec.rent_paid, "Rent", N.special_narration("Rent", rng), "Landlord", account=primary)
         for ln in spec.loans:
-            if mi >= 12 - ln.get("months_active_in_window", 12):
+            if mi >= spec.n_months - ln.get("months_active_in_window", spec.n_months):
                 add_tx(date(y, m, ln.get("emi_day", 5)), ln["emi"], "EMI",
                        N.special_narration("EMI", rng, lender=ln["lender"]), ln["lender"], account=primary)
         for s in spec.sips:
@@ -166,7 +169,7 @@ def simulate(spec: Spec, seed: int) -> dict:
 
         # ---------------- variable spending
         trend = (1 + spec.disc_trend) ** mi
-        festive = 1.35 if (y, m) in [(2025, 11), (2026, 10)] else 1.0
+        festive = 1.35 if (y, m) in FESTIVE else 1.0
         for cat, base in spec.budgets.items():
             if base <= 0:
                 continue
@@ -488,9 +491,9 @@ def population_spec(i: int, seed: int) -> Spec:
         retirement_age_target=60, salary=income if salaried else 0, freelance_mean=0 if salaried else income,
         freelance_cv=0 if salaried else rng.uniform(0.3, 0.6), bonus_month=3 if salaried and rng.random() < 0.5 else None,
         bonus=round(income * rng.uniform(0.5, 1.2), -3), rent_paid=round(income * rng.uniform(0.12, 0.28), -2) if rng.random() < 0.75 else 0,
-        accounts=accounts, cards=cards, budgets=budgets, disc_trend=0.025 if arche == "spender" else 0.0,
+        accounts=accounts, cards=cards, budgets=budgets, disc_trend=0.012 if arche == "spender" else 0.0,
         card_share=rng.uniform(0.3, 0.85), atm_per_month=(0, 3), subscriptions=[("Netflix", 649)] if rng.random() < 0.6 else [],
-        loans=loans, sips=sips, random_anomaly_rate=0.012)
+        loans=loans, sips=sips, random_anomaly_rate=0.012, n_months=24)
     return spec
 
 

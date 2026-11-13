@@ -1,0 +1,1129 @@
+{
+  "trained_at": "2026-11-13T18:19:27+00:00",
+  "seed": 7,
+  "population_users": 240,
+  "population_transactions": 324500,
+  "credit_risk": {
+    "model": "XGBClassifier",
+    "dataset": "UCI Default of Credit Card Clients (Yeh & Lien, 2009) - 30,000 real customers",
+    "rows": 30000,
+    "train_rows": 24000,
+    "test_rows": 6000,
+    "default_rate_pct": 22.12,
+    "features": 14,
+    "threshold": 0.24,
+    "xgboost": {
+      "roc_auc": 0.7856,
+      "pr_auc": 0.5835,
+      "brier": 0.1304,
+      "precision": 0.494,
+      "recall": 0.626,
+      "f1": 0.553
+    },
+    "cv_roc_auc_mean": 0.7791,
+    "cv_roc_auc_std": 0.007,
+    "baseline_logistic_regression": {
+      "roc_auc": 0.7609,
+      "pr_auc": 0.5374
+    },
+    "baseline_rule_delayed_last_month": {
+      "roc_auc": 0.6971,
+      "precision": 0.523,
+      "recall": 0.532,
+      "f1": 0.527
+    },
+    "beats_logistic_regression": true,
+    "confusion_matrix": {
+      "tn": 3823,
+      "fp": 850,
+      "fn": 496,
+      "tp": 831
+    },
+    "roc_curve": [
+      {
+        "fpr": 0.0,
+        "tpr": 0.0
+      },
+      {
+        "fpr": 0.003,
+        "tpr": 0.0656
+      },
+      {
+        "fpr": 0.0066,
+        "tpr": 0.1168
+      },
+      {
+        "fpr": 0.0103,
+        "tpr": 0.156
+      },
+      {
+        "fpr": 0.0135,
+        "tpr": 0.1922
+      },
+      {
+        "fpr": 0.0171,
+        "tpr": 0.2163
+      },
+      {
+        "fpr": 0.0214,
+        "tpr": 0.2464
+      },
+      {
+        "fpr": 0.025,
+        "tpr": 0.2781
+      },
+      {
+        "fpr": 0.0302,
+        "tpr": 0.312
+      },
+      {
+        "fpr": 0.0353,
+        "tpr": 0.3361
+      },
+      {
+        "fpr": 0.04,
+        "tpr": 0.3572
+      },
+      {
+        "fpr": 0.0458,
+        "tpr": 0.3828
+      },
+      {
+        "fpr": 0.0514,
+        "tpr": 0.4084
+      },
+      {
+        "fpr": 0.0597,
+        "tpr": 0.4258
+      },
+      {
+        "fpr": 0.0636,
+        "tpr": 0.4461
+      },
+      {
+        "fpr": 0.0713,
+        "tpr": 0.4619
+      },
+      {
+        "fpr": 0.0794,
+        "tpr": 0.477
+      },
+      {
+        "fpr": 0.0865,
+        "tpr": 0.4951
+      },
+      {
+        "fpr": 0.0922,
+        "tpr": 0.5117
+      },
+      {
+        "fpr": 0.0987,
+        "tpr": 0.5252
+      },
+      {
+        "fpr": 0.1111,
+        "tpr": 0.5441
+      },
+      {
+        "fpr": 0.1245,
+        "tpr": 0.5637
+      },
+      {
+        "fpr": 0.1346,
+        "tpr": 0.5757
+      },
+      {
+        "fpr": 0.1449,
+        "tpr": 0.5923
+      },
+      {
+        "fpr": 0.1586,
+        "tpr": 0.6044
+      },
+      {
+        "fpr": 0.1738,
+        "tpr": 0.6164
+      },
+      {
+        "fpr": 0.1842,
+        "tpr": 0.6262
+      },
+      {
+        "fpr": 0.2067,
+        "tpr": 0.6368
+      },
+      {
+        "fpr": 0.2211,
+        "tpr": 0.6473
+      },
+      {
+        "fpr": 0.2412,
+        "tpr": 0.6616
+      },
+      {
+        "fpr": 0.254,
+        "tpr": 0.6737
+      },
+      {
+        "fpr": 0.2662,
+        "tpr": 0.6865
+      },
+      {
+        "fpr": 0.2857,
+        "tpr": 0.6978
+      },
+      {
+        "fpr": 0.303,
+        "tpr": 0.7099
+      },
+      {
+        "fpr": 0.3135,
+        "tpr": 0.7219
+      },
+      {
+        "fpr": 0.3296,
+        "tpr": 0.734
+      },
+      {
+        "fpr": 0.3452,
+        "tpr": 0.7445
+      },
+      {
+        "fpr": 0.3627,
+        "tpr": 0.7558
+      },
+      {
+        "fpr": 0.3865,
+        "tpr": 0.7656
+      },
+      {
+        "fpr": 0.3997,
+        "tpr": 0.7777
+      },
+      {
+        "fpr": 0.413,
+        "tpr": 0.7882
+      },
+      {
+        "fpr": 0.4359,
+        "tpr": 0.7973
+      },
+      {
+        "fpr": 0.4511,
+        "tpr": 0.8071
+      },
+      {
+        "fpr": 0.4734,
+        "tpr": 0.8176
+      },
+      {
+        "fpr": 0.4945,
+        "tpr": 0.8304
+      },
+      {
+        "fpr": 0.5132,
+        "tpr": 0.8463
+      },
+      {
+        "fpr": 0.5356,
+        "tpr": 0.8568
+      },
+      {
+        "fpr": 0.5596,
+        "tpr": 0.8689
+      },
+      {
+        "fpr": 0.5834,
+        "tpr": 0.8802
+      },
+      {
+        "fpr": 0.6077,
+        "tpr": 0.8915
+      },
+      {
+        "fpr": 0.6401,
+        "tpr": 0.9028
+      },
+      {
+        "fpr": 0.6576,
+        "tpr": 0.9133
+      },
+      {
+        "fpr": 0.6931,
+        "tpr": 0.9231
+      },
+      {
+        "fpr": 0.7197,
+        "tpr": 0.9352
+      },
+      {
+        "fpr": 0.7582,
+        "tpr": 0.9457
+      },
+      {
+        "fpr": 0.7837,
+        "tpr": 0.9578
+      },
+      {
+        "fpr": 0.8277,
+        "tpr": 0.9683
+      },
+      {
+        "fpr": 0.868,
+        "tpr": 0.9797
+      },
+      {
+        "fpr": 0.9409,
+        "tpr": 0.9894
+      },
+      {
+        "fpr": 1.0,
+        "tpr": 1.0
+      }
+    ],
+    "feature_importance": [
+      {
+        "feature": "Latest payment status",
+        "importance": 0.3434
+      },
+      {
+        "feature": "Worst payment delay (6 months)",
+        "importance": 0.2593
+      },
+      {
+        "feature": "Months with a delayed payment",
+        "importance": 0.2142
+      },
+      {
+        "feature": "Months with no payment made",
+        "importance": 0.0368
+      },
+      {
+        "feature": "Payment status 2 months ago",
+        "importance": 0.0233
+      },
+      {
+        "feature": "Average utilisation (6 months)",
+        "importance": 0.0192
+      },
+      {
+        "feature": "Latest credit utilisation",
+        "importance": 0.017
+      },
+      {
+        "feature": "Months paying only part of the bill",
+        "importance": 0.0143
+      },
+      {
+        "feature": "Utilisation trend",
+        "importance": 0.013
+      },
+      {
+        "feature": "Payment status 3 months ago",
+        "importance": 0.013
+      },
+      {
+        "feature": "Share of last bill repaid",
+        "importance": 0.0124
+      },
+      {
+        "feature": "Average share of bill repaid",
+        "importance": 0.0121
+      },
+      {
+        "feature": "Months paid in full",
+        "importance": 0.011
+      },
+      {
+        "feature": "Age",
+        "importance": 0.0109
+      }
+    ],
+    "limitations": "Trained on 2005 Taiwanese card data: it captures general default patterns, not Indian bureau scores. Demographic columns were excluded on purpose.",
+    "training_seconds": 2.7
+  },
+  "categoriser": {
+    "model": "TF-IDF (char 2-5 grams + words) + Logistic Regression",
+    "categories": [
+      "Card Payment",
+      "Cash",
+      "Dining",
+      "EMI",
+      "Education",
+      "Entertainment",
+      "Fuel",
+      "Groceries",
+      "Health",
+      "Insurance",
+      "Investment",
+      "Rent",
+      "Shopping",
+      "Subscriptions",
+      "Transfer",
+      "Travel",
+      "Utilities"
+    ],
+    "training_rows": 9436,
+    "statement_formats_total": 15,
+    "held_out_formats": [
+      "kotak_upi",
+      "razorpay",
+      "phonepe"
+    ],
+    "seen_formats_test": {
+      "rows": 1662,
+      "accuracy": 0.988,
+      "macro_f1": 0.9879,
+      "keyword_rule_accuracy": 0.4627,
+      "keyword_rule_macro_f1": 0.5676
+    },
+    "unseen_formats_test": {
+      "rows": 1952,
+      "accuracy": 0.9974,
+      "macro_f1": 0.9974,
+      "keyword_rule_accuracy": 0.3391,
+      "keyword_rule_macro_f1": 0.4078
+    },
+    "never_seen_merchants_test": {
+      "rows": 1475,
+      "merchants_held_out": [
+        "Practo",
+        "Shell",
+        "Star Health",
+        "Steam",
+        "Tata CLiQ",
+        "Unacademy",
+        "Water Bill",
+        "YouTube Premium",
+        "Zepto",
+        "Zomato",
+        "redBus"
+      ],
+      "accuracy": 0.1505,
+      "keyword_rule_accuracy": 0.12
+    },
+    "beats_keyword_rule": true,
+    "confusion_matrix_unseen_formats": {
+      "labels": [
+        "Card Payment",
+        "Cash",
+        "Dining",
+        "EMI",
+        "Education",
+        "Entertainment",
+        "Fuel",
+        "Groceries",
+        "Health",
+        "Insurance",
+        "Investment",
+        "Rent",
+        "Shopping",
+        "Subscriptions",
+        "Transfer",
+        "Travel",
+        "Utilities"
+      ],
+      "matrix": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          190,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          183,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          176,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          175,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          185,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          188,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          178,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3,
+          0,
+          0,
+          0,
+          163,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          178,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          166,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          165
+        ]
+      ]
+    },
+    "limitations": "Training narrations are generated from realistic templates, not scraped bank statements. Unknown local merchants fall back to the nearest known pattern; low-confidence results are shown for review.",
+    "training_seconds": 7.2
+  },
+  "anomaly": {
+    "model": "IsolationForest",
+    "n_estimators": 300,
+    "contamination": 0.015,
+    "features": [
+      "log_amount",
+      "ratio_to_cat_median",
+      "robust_z",
+      "share_of_month_cat",
+      "ratio_to_user_p95",
+      "source_rarity",
+      "same_day_same_cat"
+    ],
+    "training_transactions": 230107,
+    "training_users": 192,
+    "test_transactions": 67470,
+    "test_users": 48,
+    "planted_anomalies_in_test": 620,
+    "isolation_forest": {
+      "precision": 0.443,
+      "recall": 0.795,
+      "f1": 0.569,
+      "flagged": 1114,
+      "pr_auc": 0.574
+    },
+    "baseline_rule_3x_category_median": {
+      "precision": 0.263,
+      "recall": 0.913,
+      "f1": 0.408,
+      "flagged": 2152
+    },
+    "beats_rule_on_f1": true,
+    "score_distribution": {
+      "bin_edges": [
+        0.3674,
+        0.3822,
+        0.3971,
+        0.412,
+        0.4268,
+        0.4417,
+        0.4566,
+        0.4714,
+        0.4863,
+        0.5012,
+        0.516,
+        0.5309,
+        0.5458,
+        0.5606,
+        0.5755,
+        0.5904,
+        0.6052,
+        0.6201,
+        0.635,
+        0.6498,
+        0.6647,
+        0.6796,
+        0.6944,
+        0.7093,
+        0.7242,
+        0.739,
+        0.7539,
+        0.7688,
+        0.7836,
+        0.7985,
+        0.8134
+      ],
+      "counts": [
+        4928,
+        10761,
+        11394,
+        8047,
+        6835,
+        5908,
+        4453,
+        3032,
+        2965,
+        2328,
+        1768,
+        1395,
+        1043,
+        737,
+        484,
+        359,
+        239,
+        151,
+        100,
+        84,
+        56,
+        30,
+        48,
+        57,
+        49,
+        51,
+        59,
+        56,
+        40,
+        13
+      ],
+      "threshold": 0.6011
+    },
+    "limitations": "Evaluated on held-out SYNTHETIC users against planted (controlled) anomalies. This shows the model recovers unusual amounts; it is not a real-world fraud-detection accuracy.",
+    "training_seconds": 7.0
+  },
+  "forecast": {
+    "model": "XGBRegressor (target = next month / trailing 6-month average)",
+    "split": {
+      "type": "chronological",
+      "train_months": [
+        "2025-05",
+        "2026-07"
+      ],
+      "test_months": [
+        "2026-08",
+        "2026-09",
+        "2026-10"
+      ]
+    },
+    "total_expense": {
+      "train_rows": 3600,
+      "test_rows": 720,
+      "xgboost": {
+        "mae": 8517.0,
+        "rmse": 11719.7,
+        "mape_pct": 9.63
+      },
+      "baseline_3_month_average": {
+        "mae": 9294.0,
+        "rmse": 12763.3,
+        "mape_pct": 10.56
+      },
+      "baseline_last_month": {
+        "mae": 11409.1,
+        "rmse": 15785.2,
+        "mape_pct": 13.22
+      },
+      "beats_baseline": true,
+      "improvement_vs_3m_average_pct": 8.4,
+      "by_test_month": [
+        {
+          "month": "2026-08",
+          "xgboost_mae": 8274.6,
+          "baseline_3m_mae": 9153.1,
+          "festive": false
+        },
+        {
+          "month": "2026-09",
+          "xgboost_mae": 8848.2,
+          "baseline_3m_mae": 9423.8,
+          "festive": false
+        },
+        {
+          "month": "2026-10",
+          "xgboost_mae": 8428.1,
+          "baseline_3m_mae": 9305.2,
+          "festive": true
+        }
+      ],
+      "permutation_importance": [
+        {
+          "feature": "12-month average vs 6-month average",
+          "importance": 0.1046
+        },
+        {
+          "feature": "Festive-season month",
+          "importance": 0.0185
+        },
+        {
+          "feature": "Discretionary share",
+          "importance": 0.0166
+        },
+        {
+          "feature": "Income vs spending",
+          "importance": 0.0146
+        },
+        {
+          "feature": "Two months ago vs 6-month average",
+          "importance": 0.0023
+        },
+        {
+          "feature": "Transaction count trend",
+          "importance": 0.0008
+        },
+        {
+          "feature": "EMI share",
+          "importance": 0.0007
+        },
+        {
+          "feature": "Previous month was festive",
+          "importance": 0.0
+        },
+        {
+          "feature": "Last month vs 6-month average",
+          "importance": -0.0001
+        },
+        {
+          "feature": "Recent spending trend",
+          "importance": -0.0018
+        },
+        {
+          "feature": "Typical (median) month vs average",
+          "importance": -0.0027
+        },
+        {
+          "feature": "Spending variability",
+          "importance": -0.0043
+        },
+        {
+          "feature": "Last 3 months vs 6-month average",
+          "importance": -0.0057
+        }
+      ]
+    },
+    "category_expense": {
+      "train_rows": 33074,
+      "test_rows": 6614,
+      "xgboost": {
+        "mae": 1593.2,
+        "rmse": 3768.3,
+        "mape_pct": 17.55
+      },
+      "baseline_3_month_average": {
+        "mae": 1911.9,
+        "rmse": 4137.3,
+        "mape_pct": 23.26
+      },
+      "beats_baseline": true,
+      "improvement_vs_3m_average_pct": 16.7,
+      "per_category": [
+        {
+          "category": "Cash",
+          "xgboost_mae": 5434.4,
+          "baseline_3m_mae": 5886.0
+        },
+        {
+          "category": "Dining",
+          "xgboost_mae": 1676.1,
+          "baseline_3m_mae": 2022.4
+        },
+        {
+          "category": "Education",
+          "xgboost_mae": 386.7,
+          "baseline_3m_mae": 435.7
+        },
+        {
+          "category": "Entertainment",
+          "xgboost_mae": 713.2,
+          "baseline_3m_mae": 968.1
+        },
+        {
+          "category": "Fuel",
+          "xgboost_mae": 286.0,
+          "baseline_3m_mae": 334.8
+        },
+        {
+          "category": "Groceries",
+          "xgboost_mae": 775.3,
+          "baseline_3m_mae": 855.6
+        },
+        {
+          "category": "Health",
+          "xgboost_mae": 142.9,
+          "baseline_3m_mae": 156.1
+        },
+        {
+          "category": "Shopping",
+          "xgboost_mae": 3334.3,
+          "baseline_3m_mae": 4357.2
+        },
+        {
+          "category": "Travel",
+          "xgboost_mae": 1738.7,
+          "baseline_3m_mae": 2382.8
+        },
+        {
+          "category": "Utilities",
+          "xgboost_mae": 437.3,
+          "baseline_3m_mae": 494.1
+        }
+      ]
+    },
+    "limitations": "Trained on synthetic spending histories. Month-to-month personal spending is noisy, so errors of 10-15% are normal; importance scores show association, not causation.",
+    "training_seconds": 18.7
+  },
+  "peers": {
+    "model": "KMeans",
+    "users": 240,
+    "features": [
+      "Savings rate",
+      "Essentials / income",
+      "Discretionary / income",
+      "EMI / income",
+      "Investing / income",
+      "Spending variability",
+      "Income variability",
+      "Card utilisation"
+    ],
+    "k_scan": [
+      {
+        "k": 2,
+        "silhouette": 0.2563,
+        "davies_bouldin": 1.6478
+      },
+      {
+        "k": 3,
+        "silhouette": 0.3508,
+        "davies_bouldin": 1.1964
+      },
+      {
+        "k": 4,
+        "silhouette": 0.3202,
+        "davies_bouldin": 1.2334
+      },
+      {
+        "k": 5,
+        "silhouette": 0.3136,
+        "davies_bouldin": 1.1096
+      },
+      {
+        "k": 6,
+        "silhouette": 0.3206,
+        "davies_bouldin": 1.1217
+      }
+    ],
+    "chosen_k": 3,
+    "silhouette": 0.3508,
+    "davies_bouldin": 1.1964,
+    "adjusted_rand_vs_generator_archetypes": 0.712,
+    "clusters": [
+      {
+        "cluster": "Loan-Heavy",
+        "size": 60,
+        "means": {
+          "Savings rate": -2.0,
+          "Essentials / income": 28.5,
+          "Discretionary / income": 16.3,
+          "EMI / income": 50.8,
+          "Investing / income": 3.7,
+          "Spending variability": 8.0,
+          "Income variability": 12.7,
+          "Card utilisation": 10.3
+        }
+      },
+      {
+        "cluster": "Disciplined Savers & Investors",
+        "size": 120,
+        "means": {
+          "Savings rate": 43.3,
+          "Essentials / income": 28.2,
+          "Discretionary / income": 17.9,
+          "EMI / income": 3.4,
+          "Investing / income": 13.1,
+          "Spending variability": 14.7,
+          "Income variability": 26.6,
+          "Card utilisation": 8.7
+        }
+      },
+      {
+        "cluster": "High Discretionary Spenders",
+        "size": 60,
+        "means": {
+          "Savings rate": 20.4,
+          "Essentials / income": 28.9,
+          "Discretionary / income": 40.9,
+          "EMI / income": 3.2,
+          "Investing / income": 2.9,
+          "Spending variability": 14.6,
+          "Income variability": 11.4,
+          "Card utilisation": 56.0
+        }
+      }
+    ],
+    "limitations": "Clusters describe the synthetic population. The Adjusted Rand Index compares clusters with the generator's hidden archetypes (used for evaluation only, never as a feature).",
+    "training_seconds": 0.1
+  }
+}

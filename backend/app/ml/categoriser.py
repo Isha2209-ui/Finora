@@ -1,0 +1,147 @@
+"""Transaction Categoriser - turns raw bank-statement narrations into spending categories.
+
+    "UPI/DR/402918376152/SWIGGY/YESB/swiggy@ybl/Payment"  ->  Dining
+
+Model: character n-gram TF-IDF (2-5 chars, robust to codes, truncation and typos)
+       + word TF-IDF, fed to a linear classifier (logistic regression).
+Training data: labelled narrations generated from realistic templates of 15 Indian
+       bank / card / wallet statement formats (app/data/narrations.py).
+Honest evaluation: the model is tested on statement FORMATS and MERCHANT spellings
+       it never saw in training, and compared with a keyword-rule baseline.
+"""
+from __future__ import annotations
+
+import random
+import re
+
+import numpy as np
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
+from sklearn.pipeline import FeatureUnion, Pipeline
+
+from ..data import narrations as N
+
+HELD_OUT_FORMATS = ["kotak_upi", "razorpay", "phonepe"]  # never seen in training
+SPECIAL = ["EMI", "Investment", "Rent", "Cash", "Card Payment", "Transfer", "Insurance"]
+MERCHANT_CATS = [c for c in N.MERCHANTS if c not in {"Rent", "EMI", "Investment", "Card Payment", "Transfer", "Cash"}]
+LENDERS = ["HDFC Bank", "SBI Home Loans", "Bajaj Finance", "Axis Bank", "ICICI Bank", "Tata Capital", "LIC Housing"]
+SCHEMES = ["Parag Parikh Flexi Cap", "UTI Nifty 50 Index", "Axis ELSS", "Mirae Asset Large Cap", "Quant Small Cap",
+           "HDFC Short Term Debt", "SBI Bluechip"]
+
+_DIGITS = re.compile(r"\d{3,}")
+
+
+def normalise(text: str) -> str:
+    return _DIGITS.sub(" # ", str(text).upper())
+
+
+def _noisy(text: str, rng: random.Random) -> str:
+    """Mimic real statements: truncation, case changes, dropped separators."""
+    r = rng.random()
+    if r < 0.12:
+        return text[: max(14, int(len(text) * rng.uniform(0.55, 0.9)))]
+    if r < 0.20:
+        return text.lower()
+    if r < 0.28:
+        return text.replace("-", " ").replace("/", " ")
+    return text
+
+
+def build_dataset(n_per_cat: int = 900, seed: int = 11) -> pd.DataFrame:
+    rng = random.Random(seed)
+    rows = []
+    for cat in MERCHANT_CATS:
+        for _ in range(n_per_cat):
+            desc, merch, fmt = N.merchant_narration(cat, rng)
+            rows.append((_noisy(desc, rng), cat, fmt, merch))
+    for cat in SPECIAL:
+        for _ in range(n_per_cat // 2):
+            desc = N.special_narration(cat, rng, lender=rng.choice(LENDERS), bank=rng.choice(list(N.BANK_UPI_FORMAT)),
+                                       scheme=rng.choice(SCHEMES), card=rng.choice(LENDERS), city=rng.choice(N.CITIES))
+            rows.append((_noisy(desc, rng), cat, "special", None))
+    return pd.DataFrame(rows, columns=["text", "category", "format", "merchant"])
+
+
+def _pipeline(seed: int) -> Pipeline:
+    feats = FeatureUnion([
+        ("char", TfidfVectorizer(preprocessor=normalise, analyzer="char_wb", ngram_range=(2, 5), min_df=2, sublinear_tf=True)),
+        ("word", TfidfVectorizer(preprocessor=normalise, analyzer="word", token_pattern=r"[A-Z]{2,}", ngram_range=(1, 2), min_df=2)),
+    ])
+    return Pipeline([("tfidf", feats), ("clf", LogisticRegression(C=8.0, max_iter=3000, random_state=seed))])
+
+
+# ---- keyword-rule baseline (what a developer would write without ML)
+KEYWORDS = {
+    "Dining": ["SWIGGY", "ZOMATO", "RESTAURANT", "CAFE", "PIZZA"], "Groceries": ["BIGBASKET", "GROCER", "DMART", "KIRANA"],
+    "Shopping": ["AMAZON", "FLIPKART", "MYNTRA"], "Travel": ["UBER", "OLA", "IRCTC", "FLIGHT"], "Fuel": ["PETROL", "FUEL", "IOCL"],
+    "Entertainment": ["BOOKMYSHOW", "PVR", "MOVIE"], "Subscriptions": ["NETFLIX", "SPOTIFY", "PRIME"],
+    "Utilities": ["ELECTRICITY", "AIRTEL", "JIO", "BILL"], "Health": ["PHARMACY", "HOSPITAL", "MEDICAL"],
+    "Education": ["COURSE", "SCHOOL", "FEES"], "Insurance": ["INSURANCE", "LIC", "PREMIUM"], "Rent": ["RENT"],
+    "EMI": ["EMI", "LOAN"], "Investment": ["SIP", "MUTUAL", "BSE"], "Cash": ["ATM", "CASH"],
+    "Card Payment": ["CREDIT CARD", "CC PAYMENT"], "Transfer": ["SELF", "OWN ACCOUNT"],
+}
+
+
+def keyword_rule(text: str) -> str:
+    t = str(text).upper()
+    for cat, kws in KEYWORDS.items():
+        if any(k in t for k in kws):
+            return cat
+    return "Shopping"
+
+
+def train(seed: int = 7) -> tuple[dict, dict]:
+    df = build_dataset(seed=seed + 4)
+    held = df["format"].isin(HELD_OUT_FORMATS)
+    rng = np.random.default_rng(seed)
+    in_dist_test = (~held) & (rng.random(len(df)) < 0.15)
+    tr = df[~held & ~in_dist_test]
+    model = _pipeline(seed).fit(tr["text"], tr["category"])
+
+    def score(part: pd.DataFrame) -> dict:
+        pred = model.predict(part["text"])
+        rule = part["text"].map(keyword_rule)
+        return {"rows": int(len(part)), "accuracy": round(float(accuracy_score(part["category"], pred)), 4),
+                "macro_f1": round(float(f1_score(part["category"], pred, average="macro")), 4),
+                "keyword_rule_accuracy": round(float(accuracy_score(part["category"], rule)), 4),
+                "keyword_rule_macro_f1": round(float(f1_score(part["category"], rule, average="macro")), 4)}
+
+    unseen = df[held]
+    # hardest test: merchants the model has never seen at all (one per category held out completely)
+    hold_merch = {c: sorted(set(m for m, _ in N.MERCHANTS[c]))[-1] for c in MERCHANT_CATS if len(set(m for m, _ in N.MERCHANTS[c])) > 2}
+    is_new = df.apply(lambda r: hold_merch.get(r["category"]) == r["merchant"], axis=1)
+    m2 = _pipeline(seed).fit(df[~is_new]["text"], df[~is_new]["category"])
+    new_part = df[is_new]
+    new_pred = m2.predict(new_part["text"])
+    new_merchants = {"rows": int(len(new_part)), "merchants_held_out": sorted(hold_merch.values()),
+                     "accuracy": round(float(accuracy_score(new_part["category"], new_pred)), 4),
+                     "keyword_rule_accuracy": round(float(accuracy_score(new_part["category"], new_part["text"].map(keyword_rule))), 4)}
+    labels = sorted(df["category"].unique())
+    cm = confusion_matrix(unseen["category"], model.predict(unseen["text"]), labels=labels)
+    seen, unseen_m = score(df[in_dist_test]), score(unseen)
+    metrics = {
+        "model": "TF-IDF (char 2-5 grams + words) + Logistic Regression", "categories": labels,
+        "training_rows": int(len(tr)), "statement_formats_total": len(N.FORMATS), "held_out_formats": HELD_OUT_FORMATS,
+        "seen_formats_test": seen, "unseen_formats_test": unseen_m, "never_seen_merchants_test": new_merchants,
+        "beats_keyword_rule": unseen_m["macro_f1"] > unseen_m["keyword_rule_macro_f1"],
+        "confusion_matrix_unseen_formats": {"labels": labels, "matrix": cm.tolist()},
+        "limitations": "Training narrations are generated from realistic templates, not scraped bank statements. "
+                       "Unknown local merchants fall back to the nearest known pattern; low-confidence results are shown for review.",
+    }
+    # final model: refit on everything
+    final = _pipeline(seed).fit(df["text"], df["category"])
+    return {"model": final}, metrics
+
+
+def predict(art: dict, texts: list[str]) -> list[dict]:
+    if not texts:
+        return []
+    proba = art["model"].predict_proba(texts)
+    classes = art["model"].classes_
+    out = []
+    for row in proba:
+        k = int(np.argmax(row))
+        out.append({"category": str(classes[k]), "confidence": round(float(row[k]), 3), "needs_review": bool(row[k] < 0.5)})
+    return out
