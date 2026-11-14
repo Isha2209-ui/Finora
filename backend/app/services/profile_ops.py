@@ -7,7 +7,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from .. import models as M
-from ..config import REPORTS_DIR
+from ..config import IMPORT_TMP_DIR, REPORTS_DIR
 
 # Every table that hangs off users.id, children before parents.
 PROFILE_TABLES = [M.StatementImport, M.CategoryRule, M.Transaction, M.IncomeRecord, M.RecurringPayment, M.StockHolding, M.MutualFundHolding, M.SIP, M.FixedDeposit,
@@ -28,6 +28,11 @@ def delete_profile_data(db: Session, profile: M.User) -> int:
         try:
             if p.resolve().parent == REPORTS_DIR.resolve() and p.exists():
                 p.unlink()
+        except OSError:
+            pass
+    for (imp_id,) in db.execute(select(M.StatementImport.id).where(M.StatementImport.user_id == uid)):
+        try:
+            (IMPORT_TMP_DIR / f"import_{imp_id}.csv").unlink(missing_ok=True)   # uploaded files still waiting in a preview
         except OSError:
             pass
     card_ids = [c for (c,) in db.execute(select(M.CreditCard.id).where(M.CreditCard.user_id == uid))]

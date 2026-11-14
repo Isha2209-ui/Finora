@@ -7,7 +7,7 @@ import { Badge, Button, Card, Empty, ErrorBox, Loading, Note, PageHeader, Select
 import { PALETTE, axisInr, dateLabel, inr, monthLabel, num, pct } from '../format'
 import { useAsync, useFinora } from '../store.jsx'
 
-const KIND_TONE = { bill: 'info', subscription: 'accent', loan: 'warn', investment: 'good' }
+const KIND_TONE = { bill: 'info', subscription: 'accent', loan: 'warn', investment: 'good', 'regular spend': 'neutral' }
 const FREQ = { monthly: 'monthly', quarterly: 'quarterly', yearly: 'yearly' }
 
 export default function Insights() {

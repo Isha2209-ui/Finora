@@ -64,6 +64,27 @@ app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS,
                    allow_headers=["Content-Type", CSRF_HEADER], expose_headers=["Content-Disposition"])
 
 
+MULTIPART_OVERHEAD = 1_000_000
+
+
+@app.middleware("http")
+async def upload_size_guard(request: Request, call_next):
+    """Refuse an oversized statement upload from its Content-Length header, before the body is read or spooled to disk.
+    (A chunked upload without Content-Length is still capped by the endpoint while it reads the file.)"""
+    path = request.url.path
+    if request.method == "POST" and (path.endswith("/imports") or path.endswith("/upload")):
+        limit = (statements.UPLOAD_MAX_BYTES if path.endswith("/imports") else data.UPLOAD_MAX_BYTES) + MULTIPART_OVERHEAD
+        try:
+            size = int(request.headers.get("content-length") or 0)
+        except ValueError:
+            size = 0
+        if size > limit:
+            from fastapi.responses import JSONResponse
+            return JSONResponse({"detail": f"File too large (limit {(limit - MULTIPART_OVERHEAD) // 1_000_000} MB). "
+                                           "Split the statement into smaller files."}, status_code=413)
+    return await call_next(request)
+
+
 @app.middleware("http")
 async def security_headers(request: Request, call_next):
     response = await call_next(request)

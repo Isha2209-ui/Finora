@@ -282,23 +282,25 @@ def missing_roles(mapping: dict) -> list[str]:
     return miss
 
 
-def detect(content: bytes, sample_rows: int = 2000) -> dict:
-    """Fast preview: layout, mapping, date format, sign convention and sample rows (the file is not saved)."""
+def detect(content: bytes, sample_rows: int | None = None, return_rows: bool = False):
+    """Preview: layout, mapping, date format, sign convention, the WHOLE file's balance check and sample rows.
+    The full file is parsed (not a sample) so the closing balance shown is the file's real last balance."""
     t = read_table(content)
     mapping = auto_mapping(t["headers"])
     if missing_roles(mapping):
-        return {"needs_mapping": True, "missing": missing_roles(mapping), "layout": "Unrecognised layout", "headers": t["headers"],
-                "mapping": {r: t["headers"][i] for r, i in mapping.items()}, "mapping_index": mapping, "encoding": t["encoding"],
-                "delimiter": t["delimiter"], "header_line": t["header_line"], "rows_in_file": len(t["rows"]),
-                "raw_sample": t["rows"][:8], "suggested_kind": "bank", "warnings": [], "dropped": {},
-                "balance": {"present": "balance" in mapping}}
-    sub = {**t, "rows": t["rows"][:sample_rows], "file_lines": t["file_lines"][:sample_rows]}
+        det = {"needs_mapping": True, "missing": missing_roles(mapping), "layout": "Unrecognised layout", "headers": t["headers"],
+               "mapping": {r: t["headers"][i] for r, i in mapping.items()}, "mapping_index": mapping, "encoding": t["encoding"],
+               "delimiter": t["delimiter"], "header_line": t["header_line"], "rows_in_file": len(t["rows"]),
+               "raw_sample": t["rows"][:8], "suggested_kind": "bank", "warnings": [], "dropped": {},
+               "balance": {"present": "balance" in mapping}}
+        return (det, None) if return_rows else det
+    sub = {**t, "rows": t["rows"][:sample_rows], "file_lines": t["file_lines"][:sample_rows]} if sample_rows else t
     parsed = parse(sub, mapping=mapping, kind=None)
     det = parsed.detection
     det["rows_in_file"] = len(t["rows"])
     det["sample"] = [{"date": r.date.isoformat()[:10], "description": r.raw_description[:90], "amount": round(r.amount, 2), "type": r.type,
                       "balance": None if pd.isna(r.balance) else round(r.balance, 2)} for r in parsed.rows.head(8).itertuples()]
-    return det
+    return (det, parsed.rows) if return_rows else det
 
 
 def parse(table: dict, mapping: dict[str, int] | None = None, kind: str | None = "bank", sign: str | None = None,

@@ -55,10 +55,13 @@ function Group({ g, profileId, readOnly, incomeTypes, onDone, onError }) {
   const credit = g.type === 'credit'
   const items = g.items.map((i) => ({ kind: i.kind, id: i.id }))
   const run = async (fn) => { setBusy(true); onError(null); try { await fn(); onDone() } catch (e) { onError(e.message) } finally { setBusy(false) } }
-  const apply = () => run(() => {
+  const apply = () => {
     const [kind, value] = choice.split(':')
-    return api.reviewClassify(profileId, { items, remember, apply_to_similar: true, ...(kind === 'income' ? { income_type: value } : { category: value }) })
-  })
+    if (g.classified_as.startsWith('Income') && kind === 'cat' && !['Transfer', 'Card Payment', 'Investment'].includes(value) &&
+      !window.confirm(`These ${g.count} rows are counted as income now. As a refund of ${value} they stop being income and reduce your ${value} spending instead. Continue?`)) return
+    // exactly the rows in this group (the count on the button); 'remember' handles future imports
+    return run(() => api.reviewClassify(profileId, { items, remember, apply_to_similar: false, ...(kind === 'income' ? { income_type: value } : { category: value }) }))
+  }
   const confirm = () => run(() => api.reviewConfirm(profileId, items))
   return (
     <Card pad={false}>

@@ -50,7 +50,7 @@ def ivy():
     c = signed_in_client("ivy")
     c.pid, c.acc, c.other, c.card = _profile(c)
     c.before = c.get(f"/api/profiles/{c.pid}/analysis").json()
-    c.bank_pv, c.bank = _import(c, c.pid, F.hdfc(BANK), "hdfc.csv", account_id=c.acc)
+    c.bank_pv, c.bank = _import(c, c.pid, F.hdfc(BANK), "hdfc.csv", account_id=c.acc, update_balance=True)
     c.card_pv, c.cardimp = _import(c, c.pid, F.card_statement(CARD), "card.csv", statement_kind="card", card_id=c.card)
     c.after = c.get(f"/api/profiles/{c.pid}/analysis").json()
     return c
@@ -327,7 +327,7 @@ def test_editing_a_statement_balance_by_hand_marks_it_manual(ivy):
         assert db.get(M.BankAccount, ivy.acc).balance_source == "statement"
     c = signed_in_client("manualbal")
     pid, acc, *_ = _profile(c)
-    _import(c, pid, F.hdfc(BANK[:20]), account_id=acc)
+    _import(c, pid, F.hdfc(BANK[:20]), account_id=acc, update_balance=True)
     c.patch(f"/api/profiles/{pid}/records/bank_accounts/{acc}", json={"balance": 1000})
     with SessionLocal() as db:
         a = db.get(M.BankAccount, acc)
@@ -411,7 +411,7 @@ def test_undo_restores_the_profile_exactly():
     c = signed_in_client("undo")
     pid, acc, *_ = _profile(c)
     before = c.get(f"/api/profiles/{pid}/analysis").json()
-    _, s = _import(c, pid, F.hdfc(BANK), account_id=acc)
+    _, s = _import(c, pid, F.hdfc(BANK), account_id=acc, update_balance=True)
     mid = c.get(f"/api/profiles/{pid}/analysis").json()
     assert mid["net_worth"]["net_worth"] != before["net_worth"]["net_worth"]
     u = c.delete(f"/api/profiles/{pid}/imports/{s['id']}").json()

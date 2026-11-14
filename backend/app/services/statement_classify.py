@@ -105,7 +105,7 @@ def predict_categories(art: dict, texts: pd.Series, progress=None, chunk: int = 
 def classify(rows: pd.DataFrame, *, kind: str, art: dict, rules: dict[str, str] | None = None,
              own_account_last4: set[str] | None = None, own_card_last4: set[str] | None = None,
              history: pd.DataFrame | None = None, this_account: tuple[str, int | None] = ("account", None),
-             progress=None) -> tuple[pd.DataFrame, dict]:
+             salary_months: set[str] | None = None, progress=None) -> tuple[pd.DataFrame, dict]:
     """Adds: merchant, category, category_source, confidence, needs_review, review_reason, flags, target ('tx'|'income'),
     income_source. Returns (rows, stats)."""
     t = rows.copy()
@@ -198,7 +198,7 @@ def classify(rows: pd.DataFrame, *, kind: str, art: dict, rules: dict[str, str] 
          category=None if kind != "card" else "Shopping", category_source="rule:cashback", confidence=0.8)
     # 3d. regular credits: the largest steady monthly credit is salary; other steady credits are proposed income
     if kind != "card":
-        _regular_credits(t, setv)
+        _regular_credits(t, setv, salary_months)
     # 4. the categoriser for every remaining debit
     deb = ~is_cr
     mm = setv(deb, category=t["model_category"], category_source="model", confidence=t["model_confidence"])
@@ -220,7 +220,7 @@ def classify(rows: pd.DataFrame, *, kind: str, art: dict, rules: dict[str, str] 
     return t.drop(columns=["mkey"]), stats
 
 
-def _regular_credits(t: pd.DataFrame, setv) -> None:
+def _regular_credits(t: pd.DataFrame, setv, salary_months: set[str] | None = None) -> None:
     cand = t[(t["type"] == "credit") & t["category_source"].isna()]
     if cand.empty:
         return
@@ -233,11 +233,13 @@ def _regular_credits(t: pd.DataFrame, setv) -> None:
         cv = float(monthly.std(ddof=0) / monthly.mean()) if monthly.mean() else 9
         per_month = len(g) / len(monthly)
         if cv <= 0.25 and per_month <= 1.5:
-            groups.append((monthly.median(), mk, cv, len(monthly)))
+            groups.append((monthly.median(), mk, cv, len(monthly), {str(m) for m in monthly.index}))
     groups.sort(reverse=True)
-    for i, (med, mk, cv, months) in enumerate(groups):
+    salary_months = salary_months or set()
+    for i, (med, mk, cv, months, mset) in enumerate(groups):
         mask = ((t["mkey"] == mk) & (t["type"] == "credit")).values
-        if i == 0 and med >= 10000 and not (t["income_source"] == "Salary").any():
+        overlaps_salary = bool(mset & salary_months)
+        if i == 0 and med >= 10000 and not (t["income_source"] == "Salary").any() and not overlaps_salary:
             setv(mask, target="income", income_source="Salary", category_source="rule:regular_monthly_credit",
                  confidence=0.85 if cv <= 0.1 else 0.7)
             if cv > 0.1:
@@ -248,13 +250,22 @@ def _regular_credits(t: pd.DataFrame, setv) -> None:
             src = "Rental income" if t.loc[mask, "raw_description"].str.contains(RENT_IN).any() else "Other income"
             m = setv(mask, target="income", income_source=src, category_source="rule:regular_credit", confidence=0.6)
             t.loc[m, "needs_review"] = True
-            t.loc[m, "review_reason"] = f"Regular credit from {t.loc[m, 'merchant'].iloc[0] if m.any() else 'one sender'} in {months} months: counted as income; please confirm."
+            who = t.loc[m, 'merchant'].iloc[0] if m.any() else 'one sender'
+            t.loc[m, "review_reason"] = (f"Regular credit from {who} in {months} months, in months that already have a salary recorded: "
+                                         "counted as other income, not a second salary; please confirm." if overlaps_salary and i == 0 else
+                                         f"Regular credit from {who} in {months} months: counted as income; please confirm.")
+
+
+PAIR_MAX_MODEL_CONFIDENCE = 0.6
 
 
 def _pair_transfers(t: pd.DataFrame, history: pd.DataFrame, this_account) -> np.ndarray:
-    """A row whose equal and opposite twin sits in ANOTHER of the person's accounts within 3 days is a self-transfer."""
+    """A row is a self-transfer when an equal and opposite row sits in ANOTHER of the person's accounts within 3 days
+    AND there is evidence on both sides: the other row is already a transfer, and this row is not something the model
+    confidently recognises as a purchase or income (amount and date alone are a coincidence, e.g. a Rs 600 Swiggy order
+    on the day a friend sent Rs 600)."""
     field, ident = this_account
-    h = history
+    h = history[history["category"] == "Transfer"] if "category" in history else history.iloc[0:0]
     if field == "account":
         h = h[(h["account_id"].notna()) & (h["account_id"] != ident)]
     else:
@@ -266,7 +277,13 @@ def _pair_transfers(t: pd.DataFrame, history: pd.DataFrame, this_account) -> np.
     for d, a, ty in zip(hd, h["amount"].round(2), h["type"]):
         index.setdefault((float(a), ty), []).append(d)
     out = np.zeros(len(t), bool)
+    # debits: not something the model confidently sees as a purchase. Credits: the model only knows spending narrations,
+    # so its guess says nothing about a credit; the other side already being a transfer is the evidence.
+    eligible = ((t["type"] == "credit") | t["model_category"].isin(["Transfer", "Card Payment"])
+                | (t["model_confidence"] < PAIR_MAX_MODEL_CONFIDENCE)).values
     for i, (d, a, ty) in enumerate(zip(t["date"], t["amount"].round(2), t["type"])):
+        if not eligible[i]:
+            continue
         opp = "debit" if ty == "credit" else "credit"
         for hd_ in index.get((float(a), opp), []):
             if abs((hd_ - d).days) <= 3:

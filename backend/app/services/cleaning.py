@@ -58,7 +58,9 @@ def clean_transactions(tx: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
         t["type"] = np.where(t["amount"] < 0, "credit", "debit")
     t["type"] = t["type"].fillna("debit").str.lower().replace({"dr": "debit", "cr": "credit"})
     t["amount"] = t["amount"].abs()
-    key = [c for c in ["date", "amount", "raw_description", "account_id", "card_id", "type"] if c in t.columns]
+    # A stored row's `ref` is unique, so two identical purchases on the same day (two metro recharges) are two rows and
+    # both count. Without a ref (raw input, tests) identical rows are treated as one accidental duplicate.
+    key = [c for c in ["date", "amount", "raw_description", "account_id", "card_id", "type", "ref"] if c in t.columns]
     dup = t.duplicated(subset=key, keep="first")
     report["duplicates_removed"] = int(dup.sum())
     t = t[~dup]

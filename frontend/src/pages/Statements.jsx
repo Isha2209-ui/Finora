@@ -16,7 +16,8 @@ const ORDER = STAGES.map((s) => s[0])
 function sampleStatement() {
   const lines = ['SAMPLE BANK (synthetic demo file),,,,', ',,,,', 'Date,Narration,Withdrawal,Deposit,Balance']
   let bal = 60000
-  const add = (d, desc, out, inn) => { bal += (inn || 0) - (out || 0); lines.push(`${d},"${desc}",${out || ''},${inn || ''},${bal.toFixed(2)}`) }
+  const rows = []
+  const add = (d, desc, out, inn) => rows.push([d, desc, out, inn])
   for (const [m, y] of [['08', 2026], ['09', 2026], ['10', 2026]]) {
     add(`01/${m}/${y}`, 'NEFT CR-HDFC0000123-ACME TECHNOLOGIES PVT LTD-PAYOUT', 0, 82000)
     add(`03/${m}/${y}`, 'NACH/DR/HDFC BANK EMI/88231190', 12500, 0)
@@ -32,6 +33,9 @@ function sampleStatement() {
   }
   add('20/10/2026', 'REFUND POS 4521XXXXXXXX8812 AMAZON BANGALORE', 0, 1999)
   add('25/10/2026', 'POS 4521XXXXXXXX8812 CROMA MUMBAI', 46500, 0)
+  const key = (d) => d.split('/').reverse().join('')
+  rows.sort((a, b) => key(a[0]).localeCompare(key(b[0])))          // date order, so the running balance reconciles
+  for (const [d, desc, out, inn] of rows) { bal += (inn || 0) - (out || 0); lines.push(`${d},"${desc}",${out || ''},${inn || ''},${bal.toFixed(2)}`) }
   return new File([lines.join('\n')], 'sample_synthetic_statement.csv', { type: 'text/csv' })
 }
 
@@ -89,7 +93,7 @@ function Picker({ onFile, busy }) {
           <Button variant="ghost" disabled={busy} onClick={() => onFile(sampleStatement())}>Try a synthetic sample</Button></div>
       </div>
       <div className="mt-3 grid gap-2 text-xs text-muted md:grid-cols-3">
-        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-accent" /> Finora never connects to your bank. Only the file you choose is read, and it is deleted after import.</div>
+        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-accent" /> Finora never connects to your bank. Only the file you choose is read, and it is deleted once the import finishes or is cancelled.</div>
         <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-accent" /> An account balance is only updated from a statement whose running balances reconcile, and you can decline it.</div>
         <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-accent" /> Money from senders Finora does not recognise is not counted as income until you confirm it.</div>
       </div>
@@ -105,18 +109,23 @@ function Preview({ imp, profileId, onCancel, onStarted, onError }) {
   const [mapping, setMapping] = useState(d.mapping || {})
   const [editMap, setEditMap] = useState(needsMap)
   const [newAcc, setNewAcc] = useState({ bank_name: '', last4: '', account_type: 'savings', balance: '' })
-  const [updateBalance, setUpdateBalance] = useState(true)
+  const [updateBalance, setUpdateBalance] = useState(false)
+  const [overlapOk, setOverlapOk] = useState(false)
   const [again, setAgain] = useState(false)
   const [busy, setBusy] = useState(false)
   const b = d.balance || {}
   const acc = target.startsWith('account:') ? imp.accounts.find((a) => `account:${a.id}` === target) : null
   const options = kind === 'card' ? imp.cards.map((c) => [`card:${c.id}`, c.label]) : [...imp.accounts.map((a) => [`account:${a.id}`, a.label]), ['new', '+ Create a new account from this statement']]
   useEffect(() => { if (!options.find(([v]) => v === target)) setTarget(options[0]?.[0] || '') }, [kind]) // eslint-disable-line react-hooks/exhaustive-deps
+  // a statement-verified balance may be refreshed by a newer statement by default; a balance you typed only if you tick the box
+  useEffect(() => { setUpdateBalance(acc?.balance_source === 'statement') }, [target]) // eslint-disable-line react-hooks/exhaustive-deps
+  const tgtKey = target === 'new' ? null : target.replace(':', '|')
+  const clash = (d.overlap || []).find((o) => o.share_pct >= 50 && `${o.kind}|${o.id}` !== tgtKey)
 
   const start = async () => {
     setBusy(true); onError(null)
     try {
-      const body = { statement_kind: kind, update_balance: updateBalance, allow_same_file: again }
+      const body = { statement_kind: kind, update_balance: updateBalance, allow_same_file: again, allow_overlap: overlapOk }
       if (target.startsWith('account:')) body.account_id = Number(target.split(':')[1])
       else if (target.startsWith('card:')) body.card_id = Number(target.split(':')[1])
       else body.new_account = { bank_name: newAcc.bank_name, last4: newAcc.last4, account_type: newAcc.account_type, ...(newAcc.balance !== '' ? { balance: Number(newAcc.balance) } : {}) }
@@ -133,7 +142,7 @@ function Preview({ imp, profileId, onCancel, onStarted, onError }) {
         {needsMap && <div className="mb-3"><Note tone="warn">Finora could not recognise these column names. Tell it which column is which below (missing: {d.missing.join(', ')}).</Note></div>}
         {!needsMap && (
           <div className="grid gap-3 md:grid-cols-4">
-            <Mini label="Rows" value={num(imp.rows_total)} sub={`${num(d.rows_valid)} of the first ${num(d.rows_parsed)} read cleanly`} />
+            <Mini label="Rows" value={num(imp.rows_total)} sub={`${num(d.rows_valid)} of ${num(d.rows_parsed)} read cleanly`} />
             <Mini label="Period" value={d.date_from ? `${dateLabel(d.date_from)} – ${dateLabel(d.date_to)}` : '—'} sub={`${d.months_covered} months in the preview · ${d.file_order}`} />
             <Mini label="Amounts" value={d.layout_kind} sub={`${num(d.debits)} debits · ${num(d.credits)} credits`} />
             <Mini label="Format" value={d.date_format ? d.date_format.replaceAll('%', '') : 'mixed'} sub={`${d.encoding} · ${d.delimiter} separated · header on line ${d.header_line}`} />
@@ -191,13 +200,17 @@ function Preview({ imp, profileId, onCancel, onStarted, onError }) {
           )}
           {kind === 'bank' && acc && b.verified && (
             <label className="flex items-start gap-2 text-xs text-muted"><input type="checkbox" className="mt-0.5" checked={updateBalance} onChange={(e) => setUpdateBalance(e.target.checked)} />
-              <span>Set {acc.label}'s balance to the verified closing balance ({inr(b.closing_balance)} as of {dateLabel(b.closing_date)}). Now recorded: {inr(acc.balance)}{acc.balance_as_of ? ` as of ${dateLabel(acc.balance_as_of)}` : ' (entered by you)'}.</span></label>
+              <span>{acc.balance_source === 'statement' ? `Refresh ${acc.label}'s balance` : `Replace the balance you entered for ${acc.label} (${inr(acc.balance)})`} with the statement's verified closing balance ({inr(b.closing_balance)} as of {dateLabel(b.closing_date)}).{acc.balance_as_of ? ` Now recorded: ${inr(acc.balance)} as of ${dateLabel(acc.balance_as_of)}.` : ' Left unticked, your balance stays as it is.'}</span></label>
+          )}
+          {clash && (
+            <label className="flex items-start gap-2 rounded-xl border border-warn/30 bg-warn/10 p-2 text-xs text-warn"><input type="checkbox" className="mt-0.5" checked={overlapOk} onChange={(e) => setOverlapOk(e.target.checked)} />
+              <span>{num(clash.rows_matching)} of these rows ({clash.share_pct}%) are already recorded on <b>{clash.label}</b>. If this is the same statement, attach it there instead. Import to the chosen {kind === 'card' ? 'card' : 'account'} anyway?</span></label>
           )}
           {imp.same_file_imported?.length > 0 && (
             <label className="flex items-start gap-2 rounded-xl border border-warn/30 bg-warn/10 p-2 text-xs text-warn"><input type="checkbox" className="mt-0.5" checked={again} onChange={(e) => setAgain(e.target.checked)} />
               <span>This exact file was imported on {dateLabel(imp.same_file_imported[0].created_at)}. Import again anyway? Rows already present are skipped.</span></label>
           )}
-          <div className="flex gap-2 pt-1"><Button loading={busy} disabled={!target || (imp.same_file_imported?.length > 0 && !again)} onClick={start} className="flex-1">Import this statement</Button>
+          <div className="flex gap-2 pt-1"><Button loading={busy} disabled={!target || (imp.same_file_imported?.length > 0 && !again) || (clash && !overlapOk)} onClick={start} className="flex-1">Import this statement</Button>
             <Button variant="ghost" icon={X} onClick={cancel}>Cancel</Button></div>
         </div>
       </Card>
@@ -212,6 +225,8 @@ function Mini({ label, value, sub }) {
 function Progress({ profileId, imp, onDone }) {
   const [s, setS] = useState(imp)
   const [cancelling, setCancelling] = useState(false)
+  const [elapsed, setElapsed] = useState(0)
+  useEffect(() => { if (s.stage !== 'analysis') return; const t0 = Date.now(); const t = setInterval(() => setElapsed(Math.round((Date.now() - t0) / 1000)), 1000); return () => clearInterval(t) }, [s.stage])
   useEffect(() => {
     let alive = true
     const tick = async () => {
@@ -231,11 +246,12 @@ function Progress({ profileId, imp, onDone }) {
     <Card title={`Importing ${imp.filename}`} subtitle="You can leave this page; the import continues in the background.">
       <div className="flex items-center justify-between text-sm"><span className="font-medium">{s.stage_label || 'Starting…'}</span><span className="num text-muted">{Math.round(s.pct || 0)}%</span></div>
       <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-raised"><div className="h-full rounded-full bg-accent transition-all duration-300" style={{ width: `${s.pct || 1}%` }} /></div>
-      {s.stage_total > 0 && <div className="mt-1 text-xs text-faint num">{num(s.stage_done)} / {num(s.stage_total)} {s.stage === 'categorising' ? 'distinct narrations' : 'rows'}</div>}
+      {s.stage === 'analysis' && <div className="mt-1 text-xs text-muted">Your transactions are saved. Recomputing every figure (cash flow, health score, models, recommendations) with them: <span className="num">{elapsed}s</span>. Large files can take 15–20 s.</div>}
+      {s.stage_total > 0 && s.stage !== 'analysis' && <div className="mt-1 text-xs text-faint num">{num(s.stage_done)} / {num(s.stage_total)} {s.stage === 'categorising' ? 'distinct narrations' : 'rows'}</div>}
       <ol className="mt-4 grid gap-1.5 text-xs md:grid-cols-4">{STAGES.map(([k, l], i) => (
         <li key={k} className={cx('flex items-center gap-1.5', i < cur ? 'text-good' : i === cur ? 'text-accent' : 'text-faint')}>
           {i < cur ? <CheckCircle2 size={13} /> : i === cur ? <Loader2 size={13} className="animate-spin" /> : <Circle size={13} />} {l}</li>))}</ol>
-      <div className="mt-4"><Button variant="ghost" icon={X} loading={cancelling} onClick={async () => { setCancelling(true); try { await api.importCancel(profileId, imp.id) } catch { /* finished */ } }}>Cancel import</Button></div>
+      {s.stage !== 'analysis' && <div className="mt-4"><Button variant="ghost" icon={X} loading={cancelling} onClick={async () => { setCancelling(true); try { await api.importCancel(profileId, imp.id) } catch { /* finished */ } }}>Cancel import</Button></div>}
     </Card>
   )
 }
@@ -303,7 +319,7 @@ function History({ history, profileId, readOnly, onChange }) {
       <Table dense rows={history.items} columns={[
         { key: 'filename', label: 'File', render: (r) => <span className="font-medium">{r.filename}</span> },
         { key: 'status', label: 'Status', render: (r) => <Badge tone={tone[r.status]}>{r.status}</Badge> },
-        { key: 'to', label: 'Attributed to', render: (r) => label(r) || <span className="text-faint">—</span> },
+        { key: 'to', label: 'Attributed to', render: (r) => r.summary?.target_label || label(r) || <span className="text-faint">—</span> },
         { key: 'period', label: 'Period', render: (r) => r.summary ? `${dateLabel(r.summary.date_from)} – ${dateLabel(r.summary.date_to)}` : '—' },
         { key: 'added', label: 'Added', right: true, render: (r) => r.summary ? num(r.summary.transactions_added + r.summary.income_records_added) : '—' },
         { key: 'dup', label: 'Skipped dupes', right: true, render: (r) => r.summary ? num(r.summary.duplicates_skipped) : '—' },

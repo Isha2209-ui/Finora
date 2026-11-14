@@ -178,7 +178,8 @@ def _merchants(t, k: int = 15) -> list[dict]:
 
 def detect_recurring(t: pd.DataFrame, end: pd.Timestamp | None = None) -> list[dict]:
     """Repeating debits to the same counterparty at a steady interval and a steady amount."""
-    d = t[(t["type"] == "debit") & (t["category"] != "Transfer") & (t["category"] != "Card Payment")]
+    # cash withdrawals are not a commitment (what the cash buys is unknown); transfers and card bills are money moved
+    d = t[(t["type"] == "debit") & ~t["category"].isin(["Transfer", "Card Payment", "Cash"])]
     if d.empty:
         return []
     end = end or d["date"].max()
@@ -209,9 +210,16 @@ def detect_recurring(t: pd.DataFrame, end: pd.Timestamp | None = None) -> list[d
                     "first_date": g["date"].min().date().isoformat(), "last_date": last.date().isoformat(),
                     "next_expected": nxt.date().isoformat() if active else None, "status": "active" if active else "stopped",
                     "amount_steadiness_pct": _r(steady * 100, 0), "interval_regularity_pct": _r(regular * 100, 0),
-                    "kind": "investment" if cat == "Investment" else "loan" if cat == "EMI" else
-                            "subscription" if cat == "Subscriptions" or (cat in DISCRETIONARY and typical < 2500) else "bill"})
+                    "kind": _kind(cat)})
     return sorted(out, key=lambda r: (r["status"] != "active", -r["monthly_equivalent"]))
+
+
+BILLS = {"Rent", "Utilities", "Insurance", "Education"}
+
+
+def _kind(cat: str) -> str:
+    return ("investment" if cat == "Investment" else "loan" if cat == "EMI" else "subscription" if cat == "Subscriptions"
+            else "bill" if cat in BILLS else "regular spend")
 
 
 def _recurring(t, ident) -> dict:
@@ -223,7 +231,7 @@ def _recurring(t, ident) -> dict:
     active = [i for i in items if i["status"] == "active"]
     return {"items": items, "active_count": len(active), "monthly_total": _r(sum(i["monthly_equivalent"] for i in active)),
             "by_kind": {k: _r(sum(i["monthly_equivalent"] for i in active if i["kind"] == k))
-                        for k in ("bill", "subscription", "loan", "investment") if any(i["kind"] == k for i in active)}}
+                        for k in ("bill", "subscription", "loan", "investment", "regular spend") if any(i["kind"] == k for i in active)}}
 
 
 def _investments(t, ident, months) -> dict:

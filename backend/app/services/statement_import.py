@@ -47,6 +47,7 @@ STAGE_LABEL = {"queued": "Waiting to start", "reading": "Reading the file", "par
                "analysis": "Refreshing your analysis", "done": "Finished"}
 PROGRESS: dict[int, dict] = {}
 CANCEL: set[int] = set()
+COMMITTED: set[int] = set()   # rows + balance + summary committed: from here on only Undo can reverse the import
 
 
 class Cancelled(Exception):
@@ -58,7 +59,7 @@ def _progress(imp_id: int, stage: str, done: int = 0, total: int = 0) -> None:
     frac = (done / total) if total else 0.0
     PROGRESS[imp_id] = {"stage": stage, "label": STAGE_LABEL[stage], "done": done, "total": total,
                         "pct": round(lo + (hi - lo) * min(1.0, frac), 1), "at": time.time()}
-    if imp_id in CANCEL:
+    if imp_id in CANCEL and imp_id not in COMMITTED:
         raise Cancelled()
 
 
@@ -72,7 +73,10 @@ def norm_desc(s: str) -> str:
 
 # ---------------------------------------------------------------- 1. preview
 def create_preview(db: Session, user: M.User, app_user_id: int | None, content: bytes, filename: str) -> M.StatementImport:
-    det = P.detect(content)                                          # raises StatementError with a readable message
+    purge_stale_previews(db)
+    det, rows = P.detect(content, return_rows=True)                  # raises StatementError with a readable message
+    if rows is not None:
+        det["overlap"] = overlap_report(db, user.id, rows)
     imp = M.StatementImport(user_id=user.id, app_user_id=app_user_id, filename=filename[:120] or "statement.csv",
                             sha256=hashlib.sha256(content).hexdigest(), size_bytes=len(content), status="preview",
                             statement_kind=det["suggested_kind"], detection=det, rows_total=det["rows_in_file"])
@@ -83,6 +87,94 @@ def create_preview(db: Session, user: M.User, app_user_id: int | None, content: 
     return imp
 
 
+# ---------------------------------------------------------------- duplicate matching
+def _compatible(a: str, b: str) -> bool:
+    """Two narrations of the same transaction: equal, or one is a shortened form of the other (some exports cut text)."""
+    if a == b:
+        return True
+    short, long_ = (a, b) if len(a) <= len(b) else (b, a)
+    return len(short) >= 12 and long_.startswith(short)
+
+
+def match_existing(keys: list[tuple], existing: list[tuple]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """keys/existing: (date, amount, type, normalised narration). Each existing row can absorb at most one incoming row,
+    so genuine repeats (two identical metro recharges) are kept. Returns (exact, near, look_alike) masks:
+      exact      - same date, amount, direction and narration            -> already imported, skipped
+      near       - same date, amount, direction, narration shortened      -> already imported, skipped
+      look_alike - same date, amount and direction, different narration   -> kept, flagged for review"""
+    left = Counter(existing)
+    exact = np.zeros(len(keys), bool)
+    for i, k in enumerate(keys):
+        if left[k] > 0:
+            left[k] -= 1
+            exact[i] = True
+    bucket: dict[tuple, list[str]] = {}
+    for k, n in left.items():
+        if n > 0:
+            bucket.setdefault(k[:3], []).extend([k[3]] * n)
+    near = np.zeros(len(keys), bool)
+    for i, k in enumerate(keys):
+        if exact[i]:
+            continue
+        cands = bucket.get(k[:3])
+        if cands:
+            j = next((j for j, d in enumerate(cands) if _compatible(k[3], d)), None)
+            if j is not None:
+                cands.pop(j)
+                near[i] = True
+    look = np.zeros(len(keys), bool)
+    for i, k in enumerate(keys):
+        if not exact[i] and not near[i] and bucket.get(k[:3]):
+            look[i] = True
+    return exact, near, look
+
+
+def _row_keys(rows: pd.DataFrame) -> list[tuple]:
+    return [(d.date(), round(float(a), 2), ty, norm_desc(ds)) for d, a, ty, ds in
+            zip(rows["date"], rows["amount"], rows["type"], rows["raw_description"])]
+
+
+def _stored_keys(db: Session, uid: int) -> dict[tuple, list[tuple]]:
+    """Every stored transaction and imported income row of the profile, grouped by where it belongs."""
+    out: dict[tuple, list[tuple]] = {}
+    for d, a, ty, ds, acc, card in db.execute(select(M.Transaction.date, M.Transaction.amount, M.Transaction.type,
+                                                     M.Transaction.raw_description, M.Transaction.account_id, M.Transaction.card_id)
+                                              .where(M.Transaction.user_id == uid)):
+        tgt = ("card", card) if card else ("account", acc)
+        out.setdefault(tgt, []).append((d, round(float(a), 2), ty, norm_desc(ds)))
+    for d, a, ds, acc in db.execute(select(M.IncomeRecord.date, M.IncomeRecord.amount, M.IncomeRecord.raw_description,
+                                           M.IncomeRecord.account_id).where(M.IncomeRecord.user_id == uid,
+                                                                            M.IncomeRecord.raw_description.is_not(None))):
+        out.setdefault(("account", acc), []).append((d, round(float(a), 2), "credit", norm_desc(ds)))
+    return out
+
+
+def overlap_report(db: Session, uid: int, rows: pd.DataFrame) -> list[dict]:
+    """How many of the file's rows already exist on each of the profile's accounts/cards (exact or shortened narration)."""
+    if rows is None or rows.empty:
+        return []
+    keys = _row_keys(rows)
+    labels = {("account", a.id): f"{a.bank_name} {a.account_masked}" for a in db.scalars(select(M.BankAccount).where(M.BankAccount.user_id == uid))}
+    labels.update({("card", c.id): f"{c.issuer} {c.card_name} ••{c.last4}" for c in db.scalars(select(M.CreditCard).where(M.CreditCard.user_id == uid))})
+    out = []
+    for tgt, existing in _stored_keys(db, uid).items():
+        exact, near, _ = match_existing(keys, existing)
+        n = int(exact.sum() + near.sum())
+        if n:
+            out.append({"kind": tgt[0], "id": tgt[1], "label": labels.get(tgt, "Not attributed to an account"),
+                        "rows_matching": n, "share_pct": round(n / len(keys) * 100, 1)})
+    return sorted(out, key=lambda o: -o["rows_matching"])
+
+
+def overlap_conflict(imp: M.StatementImport, kind: str, account_id: int | None, card_id: int | None) -> dict | None:
+    """The account/card that already holds most of this file, when the person chose a different destination."""
+    target = ("card", card_id) if kind == "card" else ("account", account_id)
+    for o in (imp.detection or {}).get("overlap") or []:
+        if o["share_pct"] >= 50 and (o["kind"], o["id"]) != target:
+            return o
+    return None
+
+
 def same_file_imports(db: Session, imp: M.StatementImport) -> list[dict]:
     q = select(M.StatementImport).where(M.StatementImport.user_id == imp.user_id, M.StatementImport.sha256 == imp.sha256,
                                         M.StatementImport.status == "done", M.StatementImport.id != imp.id)
@@ -90,7 +182,7 @@ def same_file_imports(db: Session, imp: M.StatementImport) -> list[dict]:
 
 
 # ---------------------------------------------------------------- 2. confirm
-def configure(db: Session, user: M.User, imp: M.StatementImport, opts: dict) -> None:
+def configure(db: Session, user: M.User, imp: M.StatementImport, opts: dict, dry_run: bool = False) -> None:
     """Validate and store the person's choices; raises ValueError with a readable message."""
     if imp.status != "preview":
         raise ValueError(f"This import is already {imp.status}.")
@@ -143,11 +235,16 @@ def configure(db: Session, user: M.User, imp: M.StatementImport, opts: dict) -> 
                 float(new_account["balance"])
             except (TypeError, ValueError):
                 raise ValueError("The balance must be a number.")
+    if opts.get("date_format") and opts["date_format"] not in P.DATE_FORMATS:
+        raise ValueError("Unsupported date format. Leave it empty to detect it from the file, or use one of: " + ", ".join(P.DATE_FORMATS))
     sign = opts.get("sign_convention")
     if sign not in (None, "negative_is_debit", "positive_is_debit"):
         raise ValueError("sign_convention must be negative_is_debit or positive_is_debit.")
+    if dry_run:                                        # validation only (the route checks overlaps next)
+        return
     det["options"] = {"mapping_index": mapping_index, "sign_convention": sign, "date_format": opts.get("date_format"),
-                      "update_balance": bool(opts.get("update_balance", True)), "new_account": new_account,
+                      "update_balance": opts.get("update_balance"),  # True asked, False declined, None not asked
+                      "new_account": new_account,
                       "allow_same_file": bool(opts.get("allow_same_file", False))}
     imp.detection = det
     imp.statement_kind, imp.account_id, imp.card_id = kind, account_id, card_id
@@ -195,53 +292,37 @@ def run(imp_id: int) -> None:
         new_acc = opts.get("new_account")
         history = _history(db, user.id)
         rules = {r.merchant_key: r.category for r in db.scalars(select(M.CategoryRule).where(M.CategoryRule.user_id == user.id))}
+        salary_months = {d.strftime("%Y-%m") for (d,) in db.execute(select(M.IncomeRecord.date).where(
+            M.IncomeRecord.user_id == user.id, M.IncomeRecord.source == "Salary"))}
         _stage(db, imp, "categorising")
         own_acc = {a.account_masked[-4:] for a in accounts if a.id != account_id and a.account_masked}
         own_cards = {c.last4 for c in cards if c.id != card_id and c.last4}
         target = ("card", card_id) if imp.statement_kind == "card" else ("account", account_id)
         rows, cstats = classify(rows, kind=imp.statement_kind, art=registry.get("categoriser"), rules=rules,
                                 own_account_last4=own_acc, own_card_last4=own_cards, history=history, this_account=target,
-                                progress=lambda d, n: _progress(imp_id, "categorising", d, n))
+                                salary_months=salary_months, progress=lambda d, n: _progress(imp_id, "categorising", d, n))
         _stage(db, imp, "patterns")
         # ---- duplicates: rows already in the database for the same account/card (counted, so genuine repeats survive)
         _stage(db, imp, "duplicates")
-        if new_acc is None:
-            existing = Counter()
-            if imp.statement_kind == "card":
-                same = history[history["card_id"] == card_id] if card_id else history[history["card_id"].isna() & history["account_id"].isna()]
-            else:
-                same = history[history["account_id"] == account_id] if account_id else history[history["card_id"].isna() & history["account_id"].isna()]
-            for d, a, ty, ds in zip(same["date"], same["amount"], same["type"], same["raw_description"]):
-                existing[(pd.Timestamp(d).date(), round(float(a), 2), ty, norm_desc(ds))] += 1
-            inc_q = select(M.IncomeRecord.date, M.IncomeRecord.amount, M.IncomeRecord.raw_description).where(
-                M.IncomeRecord.user_id == user.id, M.IncomeRecord.raw_description.is_not(None),
-                (M.IncomeRecord.account_id == account_id) if account_id else M.IncomeRecord.account_id.is_(None))
-            if imp.statement_kind == "bank":
-                for d, a, ds in db.execute(inc_q):
-                    existing[(d, round(float(a), 2), "credit", norm_desc(ds))] += 1
+        stored = _stored_keys(db, user.id) if new_acc is None else {}
+        if imp.statement_kind == "card":
+            existing = stored.get(("card", card_id), []) if card_id else stored.get(("account", None), [])
         else:
-            existing = Counter()
-        keys = [(d.date(), round(float(a), 2), ty, norm_desc(ds)) for d, a, ty, ds in
-                zip(rows["date"], rows["amount"], rows["type"], rows["raw_description"])]
-        dup = np.zeros(len(rows), bool)
-        for i, k in enumerate(keys):
-            if existing[k] > 0:
-                existing[k] -= 1
-                dup[i] = True
-        # possible duplicates of hand-entered rows (same day, amount and direction, different text): kept, but flagged
+            existing = stored.get(("account", account_id), [])
+        keys = _row_keys(rows)
+        exact, near, look = match_existing(keys, existing)
+        dup = exact | near
+        # look-alikes on the same account/card, plus hand-entered rows anywhere in the profile: kept, flagged
         manual = history[history["import_id"].isna() & history["category_source"].isin(["user", "model", "given"])]
-        possible = np.zeros(len(rows), bool)
-        if len(manual):
-            mk = {(pd.Timestamp(d).date(), round(float(a), 2), ty) for d, a, ty in zip(manual["date"], manual["amount"], manual["type"])}
-            mkd = {(pd.Timestamp(d).date(), round(float(a), 2), ty, norm_desc(ds)) for d, a, ty, ds in
-                   zip(manual["date"], manual["amount"], manual["type"], manual["raw_description"])}
-            for i, k in enumerate(keys):
-                if not dup[i] and k[:3] in mk and k not in mkd:
-                    possible[i] = True
+        mk = {(pd.Timestamp(d).date(), round(float(a), 2), ty) for d, a, ty in zip(manual["date"], manual["amount"], manual["type"])}
+        mkd = {(pd.Timestamp(d).date(), round(float(a), 2), ty, norm_desc(ds)) for d, a, ty, ds in
+               zip(manual["date"], manual["amount"], manual["type"], manual["raw_description"])}
+        possible = look | np.array([(not dup[i]) and k[:3] in mk and k not in mkd for i, k in enumerate(keys)], dtype=bool)
         rows = rows.assign(dup=dup)
         pos_idx = np.where(possible)[0]
         rows.loc[pos_idx, "needs_review"] = True
-        rows.loc[pos_idx, "review_reason"] = "Same date, amount and direction as a transaction you entered by hand; delete one if it is a duplicate."
+        rows.loc[pos_idx, "review_reason"] = ("Same date, amount and direction as a row already recorded (entered by hand or from another "
+                                              "statement); delete one if it is a duplicate.")
         rows.loc[pos_idx, "flags"] = (rows.loc[pos_idx, "flags"] + ",possible_duplicate").str.strip(",")
         new = rows[~rows["dup"]]
         # ---- account created from the statement (balance only from a verified statement or typed by the person)
@@ -312,11 +393,18 @@ def run(imp_id: int) -> None:
         elif bal.get("verified") and account_id:
             acc = db.get(M.BankAccount, account_id)
             closing_date = pd.Timestamp(bal["closing_date"]).date()
-            if not opts.get("update_balance", True):
+            choice = opts.get("update_balance")
+            typed = acc.balance_source != "statement"
+            if choice is False:
                 balance_out["reason"] = "You chose not to update the account balance from this statement."
             elif acc.balance_as_of and acc.balance_source == "statement" and acc.balance_as_of > closing_date:
                 balance_out["reason"] = f"The account already has a newer verified balance (as of {acc.balance_as_of.isoformat()})."
+            elif typed and choice is not True:
+                balance_out["reason"] = (f"Kept the balance you entered (Rs {acc.balance:,.2f}). The statement's verified closing balance "
+                                         f"(Rs {float(bal['closing_balance']):,.2f} on {closing_date.isoformat()}) is only used if you choose it.")
             else:
+                provider = _balance_provider(db, acc, exclude=imp.id)
+                balance_out["previous_import_id"] = provider.id if provider else None
                 imp.previous_balance, imp.previous_balance_as_of = acc.balance, acc.balance_as_of
                 imp.previous_balance_source = acc.balance_source or "manual"
                 acc.balance, acc.balance_as_of, acc.balance_source = float(bal["closing_balance"]), closing_date, "statement"
@@ -327,9 +415,11 @@ def run(imp_id: int) -> None:
             balance_out["reason"] = "No account was selected, so no balance was updated."
         elif not bal.get("present"):
             balance_out["reason"] = "This file has no running balance, so Finora cannot establish a balance from it; the account balance was not changed."
-        imp.summary = _summary(parsed, rows, new, dup, possible, cstats, balance_out, time.time() - t0, created_account)
+        imp.summary = {**_summary(parsed, rows, new, dup, possible, cstats, balance_out, time.time() - t0, created_account),
+                       "duplicates_near": int(near.sum()), "target_label": _target_label(db, imp.statement_kind, account_id, card_id)}
         imp.rows_processed = int(len(rows))
-        db.commit()
+        db.commit()                                   # one commit: balance change + summary (rows already saved above)
+        COMMITTED.add(imp_id)
         # Recompute the whole analysis now (identity, cash flow, health, models, recommendations), so the next page the
         # person opens is already up to date. A failure here never undoes the import: the cache is just invalidated.
         _stage(db, imp, "analysis")
@@ -347,17 +437,22 @@ def run(imp_id: int) -> None:
         _progress(imp_id, "done", 1, 1)
     except Exception as e:  # noqa: BLE001 - every failure must leave no partial import behind
         db.rollback()
+        from ..routes import common
+        committed_imp = db.get(M.StatementImport, imp_id)
+        if committed_imp is not None and committed_imp.summary is not None:     # saved already: finish, never half-undo
+            committed_imp.status, committed_imp.stage, committed_imp.finished_at = "done", "done", datetime.utcnow()
+            db.commit()
+            common.invalidate(committed_imp.user_id)
+            PROGRESS.pop(imp_id, None)
+            return
         cancelled = isinstance(e, Cancelled)
         if not isinstance(e, (P.StatementError, Cancelled)):
             log.exception("statement import %s failed", imp_id)
         _cleanup_rows(db, imp_id)
         imp = db.get(M.StatementImport, imp_id)
         if imp is not None:
-            if imp.summary is None and imp.account_id and (imp.detection or {}).get("options", {}).get("new_account"):
-                acc = db.get(M.BankAccount, imp.account_id)
-                if acc is not None:
-                    db.delete(acc)
-                    imp.account_id = None
+            _drop_created_account(db, imp)
+            common.invalidate(imp.user_id)
             imp.status = "cancelled" if cancelled else "failed"
             imp.error = "Import cancelled; nothing was saved." if cancelled else (
                 str(e) if isinstance(e, P.StatementError) else f"Unexpected error while importing ({type(e).__name__}). Nothing was saved.")
@@ -366,6 +461,7 @@ def run(imp_id: int) -> None:
         PROGRESS.pop(imp_id, None)
     finally:
         CANCEL.discard(imp_id)
+        COMMITTED.discard(imp_id)
         try:
             pending_path(imp_id).unlink(missing_ok=True)
         except OSError:
@@ -421,31 +517,91 @@ def _summary(parsed, rows, new, dup, possible, cstats, balance, secs, created_ac
 
 
 # ---------------------------------------------------------------- 4. undo / cancel / housekeeping
+def _target_label(db: Session, kind: str, account_id, card_id) -> str | None:
+    if kind == "card" and card_id:
+        c = db.get(M.CreditCard, card_id)
+        return f"{c.issuer} {c.card_name} ••{c.last4}" if c else None
+    if account_id:
+        a = db.get(M.BankAccount, account_id)
+        return f"{a.bank_name} {a.account_masked}" if a else None
+    return None
+
+
+def _balance_info(imp: M.StatementImport) -> dict:
+    return ((imp.summary or {}).get("balance") or {})
+
+
+def _balance_provider(db: Session, acc: M.BankAccount, exclude: int | None = None) -> M.StatementImport | None:
+    """The finished import whose verified closing balance the account currently shows (None: typed or demo balance)."""
+    if acc.balance_source != "statement" or not acc.balance_as_of:
+        return None
+    q = select(M.StatementImport).where(M.StatementImport.account_id == acc.id, M.StatementImport.status == "done",
+                                        M.StatementImport.id != (exclude or -1)).order_by(M.StatementImport.id.desc())
+    for o in db.scalars(q):
+        b = _balance_info(o)
+        if b.get("applied") and b.get("closing_date") == acc.balance_as_of.isoformat() and \
+                abs(float(b.get("closing_balance") or 0) - acc.balance) < 0.005:
+            return o
+    return None
+
+
+def _account_in_use(db: Session, account_id: int, other_than_import: int | None = None) -> bool:
+    if db.scalar(select(M.Transaction.id).where(M.Transaction.account_id == account_id).limit(1)):
+        return True
+    if db.scalar(select(M.IncomeRecord.id).where(M.IncomeRecord.account_id == account_id).limit(1)):
+        return True
+    return bool(db.scalar(select(M.StatementImport.id).where(M.StatementImport.account_id == account_id,
+                                                             M.StatementImport.status == "done",
+                                                             M.StatementImport.id != (other_than_import or -1)).limit(1)))
+
+
+def _drop_created_account(db: Session, imp: M.StatementImport) -> bool:
+    """Remove the account an unfinished/undone import created - only if nothing else uses it."""
+    opts = (imp.detection or {}).get("options") or {}
+    acc_id = ((imp.summary or {}).get("created_account_id")) or (imp.account_id if opts.get("new_account") else None)
+    if not acc_id:
+        return False
+    acc = db.get(M.BankAccount, acc_id)
+    if acc is None or _account_in_use(db, acc_id, other_than_import=imp.id):
+        return False
+    db.delete(acc)
+    return True
+
+
 def undo(db: Session, imp: M.StatementImport) -> dict:
+    """Remove exactly this import's rows; put the balance back to what it would be had this import never happened."""
     if imp.status != "done":
         raise ValueError(f"Only a finished import can be undone (this one is {imp.status}).")
     n_tx = db.execute(delete(M.Transaction).where(M.Transaction.import_id == imp.id)).rowcount or 0
     n_inc = db.execute(delete(M.IncomeRecord).where(M.IncomeRecord.import_id == imp.id)).rowcount or 0
-    restored = False
-    s = imp.summary or {}
-    if imp.account_id and s.get("balance", {}).get("applied") and imp.previous_balance is not None:
-        acc = db.get(M.BankAccount, imp.account_id)
-        if acc is not None and acc.balance_source == "statement" and acc.balance_as_of and \
-                acc.balance_as_of.isoformat() == s["balance"]["closing_date"]:
-            acc.balance, acc.balance_as_of, acc.balance_source = imp.previous_balance, imp.previous_balance_as_of, imp.previous_balance_source
-            restored = True
-    removed_account = False
-    if s.get("created_account_id"):
-        acc = db.get(M.BankAccount, s["created_account_id"])
-        still_used = db.scalar(select(M.Transaction.id).where(M.Transaction.account_id == s["created_account_id"]).limit(1))
-        if acc is not None and not still_used:
-            db.execute(delete(M.IncomeRecord).where(M.IncomeRecord.account_id == acc.id))
-            db.delete(acc)
-            removed_account = True
+    s, b = imp.summary or {}, _balance_info(imp)
+    restored = relinked = False
+    if b.get("applied") and imp.account_id and not s.get("created_account_id"):
+        later = [o for o in db.scalars(select(M.StatementImport).where(M.StatementImport.account_id == imp.account_id,
+                                                                       M.StatementImport.status == "done",
+                                                                       M.StatementImport.id != imp.id))
+                 if _balance_info(o).get("applied") and _balance_info(o).get("previous_import_id") == imp.id]
+        if later:
+            # a later import replaced this balance: it now "remembers" what was there before THIS import
+            for o in later:
+                o.previous_balance, o.previous_balance_as_of = imp.previous_balance, imp.previous_balance_as_of
+                o.previous_balance_source = imp.previous_balance_source
+                o.summary = {**o.summary, "balance": {**_balance_info(o), "previous_import_id": b.get("previous_import_id"),
+                                                      "previous_balance": imp.previous_balance}}
+            relinked = True
+        else:
+            acc = db.get(M.BankAccount, imp.account_id)
+            if acc is not None and acc.balance_source == "statement" and acc.balance_as_of and \
+                    acc.balance_as_of.isoformat() == b.get("closing_date") and abs(acc.balance - float(b["closing_balance"])) < 0.005:
+                acc.balance, acc.balance_as_of = imp.previous_balance, imp.previous_balance_as_of
+                acc.balance_source = imp.previous_balance_source
+                restored = True
     imp.status = "undone"
+    db.flush()
+    removed_account = _drop_created_account(db, imp)
     db.commit()
     return {"transactions_removed": n_tx, "income_records_removed": n_inc, "balance_restored": restored,
-            "account_removed": removed_account}
+            "balance_chain_relinked": relinked, "account_removed": removed_account}
 
 
 def cancel(db: Session, imp: M.StatementImport) -> None:
@@ -454,24 +610,52 @@ def cancel(db: Session, imp: M.StatementImport) -> None:
         pending_path(imp.id).unlink(missing_ok=True)
         db.commit()
     elif imp.status in ("queued", "running"):
+        if imp.summary is not None or imp.id in COMMITTED:
+            raise ValueError("This import is already saved and is only refreshing your analysis. Use Undo to remove it.")
         CANCEL.add(imp.id)
     else:
         raise ValueError(f"This import is already {imp.status}.")
 
 
-def recover_interrupted(db: Session) -> int:
-    """At start-up: imports left running by a stopped server are rolled back and marked failed; stale previews expire."""
+def purge_stale_previews(db: Session, hours: int = 24) -> int:
+    """Previews nobody confirmed within `hours` are cancelled and their uploaded file deleted."""
+    cutoff = datetime.utcnow().timestamp() - hours * 3600
     n = 0
-    for imp in db.scalars(select(M.StatementImport).where(M.StatementImport.status.in_(["queued", "running"]))):
-        _cleanup_rows(db, imp.id)
-        imp.status, imp.error = "failed", "The server stopped during this import, so it was rolled back. Please import the file again."
-        n += 1
-    cutoff = datetime.utcnow().timestamp() - 24 * 3600
     for imp in db.scalars(select(M.StatementImport).where(M.StatementImport.status == "preview")):
         if imp.created_at.timestamp() < cutoff:
             imp.status = "cancelled"
             pending_path(imp.id).unlink(missing_ok=True)
+            n += 1
+    if n:
+        db.commit()
+    return n
+
+
+def recover_interrupted(db: Session) -> int:
+    """At start-up, after a crash or stop:
+      * an import whose rows, balance and summary were committed is simply marked done (it can be undone normally);
+      * anything earlier is rolled back completely - its rows, any account it created - and nothing else changed, because
+        the balance is only written in that final commit;
+      * uploaded files that no preview is waiting for are deleted; stale previews expire."""
+    n = 0
+    for imp in db.scalars(select(M.StatementImport).where(M.StatementImport.status.in_(["queued", "running"]))):
+        if imp.summary is not None:
+            imp.status, imp.stage, imp.finished_at = "done", "done", datetime.utcnow()
+            continue
+        _cleanup_rows(db, imp.id)
+        _drop_created_account(db, imp)
+        imp.status, imp.error = "failed", "The server stopped during this import, so it was rolled back. Please import the file again."
+        imp.finished_at = datetime.utcnow()
+        n += 1
     db.commit()
+    purge_stale_previews(db)
+    waiting = {i for (i,) in db.execute(select(M.StatementImport.id).where(M.StatementImport.status == "preview"))}
+    for f in IMPORT_TMP_DIR.glob("import_*.csv"):
+        try:
+            if int(f.stem.split("_")[1]) not in waiting:
+                f.unlink(missing_ok=True)
+        except (ValueError, IndexError, OSError):
+            continue
     return n
 
 

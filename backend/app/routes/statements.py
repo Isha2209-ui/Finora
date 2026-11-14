@@ -123,8 +123,9 @@ class StartIn(BaseModel):
     mapping: dict[str, str | None] | None = None
     sign_convention: str | None = Field(None, pattern=r"^(negative_is_debit|positive_is_debit)$")
     date_format: str | None = Field(None, max_length=20)
-    update_balance: bool = True
+    update_balance: bool | None = None     # None: only a statement-verified balance may be refreshed by a newer one
     allow_same_file: bool = False
+    allow_overlap: bool = False
 
 
 @router.post("/profiles/{internal_id}/imports/{imp_id}/start", status_code=202, summary="Confirm the mapping and start the import")
@@ -136,8 +137,20 @@ def start_import(imp_id: int, body: StartIn, request: Request, background: Backg
     if SI.same_file_imports(db, imp) and not body.allow_same_file:
         raise HTTPException(409, "This exact file was already imported. Rows already present would be skipped anyway; "
                                  "set allow_same_file to import it again.")
+    opts = body.model_dump() | {"new_account": body.new_account.model_dump() if body.new_account else None}
     try:
-        SI.configure(db, ctx.profile, imp, body.model_dump() | {"new_account": body.new_account.model_dump() if body.new_account else None})
+        SI.configure(db, ctx.profile, imp, opts, dry_run=True)
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+    kind = body.statement_kind or imp.statement_kind
+    clash = None if body.new_account is None else next((o for o in (imp.detection or {}).get("overlap") or [] if o["share_pct"] >= 50), None)
+    clash = clash or (SI.overlap_conflict(imp, kind, body.account_id, body.card_id) if body.new_account is None else None)
+    if clash and not body.allow_overlap:
+        raise HTTPException(409, f"{clash['rows_matching']:,} of this file's rows ({clash['share_pct']}%) are already recorded on "
+                                 f"{clash['label']}. If this is the same statement, attach it there (rows already present are skipped); "
+                                 "set allow_overlap to import it here anyway.")
+    try:
+        SI.configure(db, ctx.profile, imp, opts)
     except ValueError as e:
         raise HTTPException(422, str(e))
     audit(db, "statement.import", request=request, app_user_id=ctx.account.id, profile_id=ctx.profile.id,
