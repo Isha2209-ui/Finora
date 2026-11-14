@@ -78,6 +78,15 @@ export const api = {
   createRecord: (id, type, body) => request(`/profiles/${id}/records/${type}`, { method: 'POST', body }),
   updateRecord: (id, type, itemId, body) => request(`/profiles/${id}/records/${type}/${itemId}`, { method: 'PATCH', body }),
   deleteRecord: (id, type, itemId, cascade = false) => request(`/profiles/${id}/records/${type}/${itemId}${cascade ? '?cascade=true' : ''}`, { method: 'DELETE' }),
+  // Finora Plan (Phase 5)
+  plan: (id) => request(`/profiles/${id}/plan`),
+  planAction: (id, code) => request(`/profiles/${id}/plan/actions/${encodeURIComponent(code)}`),
+  planPreview: (id, assumptions, include_accepted = true) => request(`/profiles/${id}/plan/preview`, { method: 'POST', body: { assumptions, include_accepted } }),
+  planAccept: (id, body) => request(`/profiles/${id}/plan/assumptions`, { method: 'POST', body }),
+  planEdit: (id, aid, params) => request(`/profiles/${id}/plan/assumptions/${aid}`, { method: 'PATCH', body: { params } }),
+  planRemove: (id, aid) => request(`/profiles/${id}/plan/assumptions/${aid}`, { method: 'DELETE' }),
+  planDismiss: (id, code) => request(`/profiles/${id}/plan/dismiss`, { method: 'POST', body: { code } }),
+  planRestore: (id, code) => request(`/profiles/${id}/plan/dismiss/${encodeURIComponent(code)}`, { method: 'DELETE' }),
   // statement import (Phase 4)
   importPreview: (id, file) => { const f = new FormData(); f.append('file', file); return request(`/profiles/${id}/imports`, { method: 'POST', form: f }) },
   imports: (id) => request(`/profiles/${id}/imports`),

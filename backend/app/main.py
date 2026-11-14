@@ -18,7 +18,7 @@ from .config import CORS_ORIGINS, CSRF_HEADER, DATABASE_URL, IS_PRODUCTION, SESS
 from .database import Base, SessionLocal, engine
 from .ml import registry
 from .routes import auth as auth_routes
-from .routes import data, planning, profiles, records, statements
+from .routes import data, plan, planning, profiles, records, statements
 from .security import install_log_scrubbing
 
 
@@ -124,6 +124,7 @@ app.include_router(planning.router)
 app.include_router(data.router)
 app.include_router(records.router)
 app.include_router(statements.router)
+app.include_router(plan.router)
 app.add_middleware(UploadGuard)      # outermost: runs before the body is read
 
 

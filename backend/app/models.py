@@ -423,3 +423,21 @@ class CategoryRule(Base):
     merchant_key: Mapped[str] = mapped_column(String(80))
     category: Mapped[str] = mapped_column(String(40))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+# ---------------------------------------------------------------- Finora Plan
+class PlanAssumption(Base):
+    """An accepted (or dismissed) plan action, stored as an ASSUMPTION. It is applied by the scenario engine on top of
+    the unchanged history; it never creates a transaction or changes a balance.
+    kind: extra_debt_repayment | spending_cap | emergency_fund_contribution | sip | delayed_purchase"""
+    __tablename__ = "plan_assumptions"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = _fk("users")
+    app_user_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    kind: Mapped[str] = mapped_column(String(40))
+    params: Mapped[dict] = mapped_column(JSON)
+    title: Mapped[str] = mapped_column(String(160))
+    source_code: Mapped[str | None] = mapped_column(String(60), nullable=True, index=True)  # the action it came from
+    status: Mapped[str] = mapped_column(String(12), default="accepted")                     # accepted | dismissed
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

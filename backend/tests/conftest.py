@@ -31,6 +31,11 @@ os.environ.setdefault("LOGIN_IP_MAX_ATTEMPTS", "10000")
 os.environ.setdefault("CHAT_MAX_PER_MINUTE", "10000")
 os.environ.setdefault("UPLOAD_MAX_PER_HOUR", "10000")
 
+# The app is imported only AFTER every environment setting above (paths and limits) is in place.
+from app import migrate as _migrate  # noqa: E402  (after the environment points at the copy)
+from app.database import engine as _engine  # noqa: E402
+_migrate.run(_engine)                          # the copy always has the current (additive) schema
+
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 from sqlalchemy import delete, select  # noqa: E402

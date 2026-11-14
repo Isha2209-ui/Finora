@@ -10,7 +10,7 @@ from .. import models as M
 from ..config import IMPORT_TMP_DIR, REPORTS_DIR
 
 # Every table that hangs off users.id, children before parents.
-PROFILE_TABLES = [M.StatementImport, M.CategoryRule, M.Transaction, M.IncomeRecord, M.RecurringPayment, M.StockHolding, M.MutualFundHolding, M.SIP, M.FixedDeposit,
+PROFILE_TABLES = [M.PlanAssumption, M.StatementImport, M.CategoryRule, M.Transaction, M.IncomeRecord, M.RecurringPayment, M.StockHolding, M.MutualFundHolding, M.SIP, M.FixedDeposit,
                   M.OtherAsset, M.Loan, M.InsurancePolicy, M.Goal, M.SavingsRecord, M.MonthlySummary, M.NetWorthSnapshot,
                   M.AnalysisResult, M.Recommendation, M.Report, M.ChatMessage, M.Property, M.CreditCard, M.BankAccount]
 

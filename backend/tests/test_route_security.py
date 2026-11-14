@@ -14,6 +14,7 @@ READ_ACCESS_POSTS = {
     ("POST", "/api/profiles/{internal_id}/payoff"),      # what-if calculation, nothing stored
     ("POST", "/api/profiles/{internal_id}/chat"),        # stores the caller's own chat lines (app_user_id)
     ("DELETE", "/api/profiles/{internal_id}/chat"),      # deletes only the caller's own chat lines
+    ("POST", "/api/profiles/{internal_id}/plan/preview"),  # what-if scenario, nothing stored
 }
 # Mutating routes with no profile in the path, and why they are allowed.
 NON_PROFILE_MUTATIONS = {
