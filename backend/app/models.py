@@ -403,6 +403,10 @@ class StatementImport(Base):
     previous_balance_source: Mapped[str | None] = mapped_column(String(20), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    # shared by every server process: liveness, cancellation and progress live in the database, not in one process's memory
+    heartbeat_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    cancel_requested: Mapped[bool] = mapped_column(Boolean, default=False)
+    progress_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
 class CategoryRule(Base):

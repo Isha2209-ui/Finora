@@ -14,7 +14,7 @@ from sqlalchemy import func, inspect, select
 from . import migrate
 from . import models as M
 from .cfo import llm
-from .config import CORS_ORIGINS, CSRF_HEADER, DATABASE_URL, IS_PRODUCTION
+from .config import CORS_ORIGINS, CSRF_HEADER, DATABASE_URL, IS_PRODUCTION, SESSION_COOKIE
 from .database import Base, SessionLocal, engine
 from .ml import registry
 from .routes import auth as auth_routes
@@ -67,22 +67,43 @@ app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS,
 MULTIPART_OVERHEAD = 1_000_000
 
 
-@app.middleware("http")
-async def upload_size_guard(request: Request, call_next):
-    """Refuse an oversized statement upload from its Content-Length header, before the body is read or spooled to disk.
-    (A chunked upload without Content-Length is still capped by the endpoint while it reads the file.)"""
-    path = request.url.path
-    if request.method == "POST" and (path.endswith("/imports") or path.endswith("/upload")):
-        limit = (statements.UPLOAD_MAX_BYTES if path.endswith("/imports") else data.UPLOAD_MAX_BYTES) + MULTIPART_OVERHEAD
-        try:
-            size = int(request.headers.get("content-length") or 0)
-        except ValueError:
-            size = 0
-        if size > limit:
-            from fastapi.responses import JSONResponse
-            return JSONResponse({"detail": f"File too large (limit {(limit - MULTIPART_OVERHEAD) // 1_000_000} MB). "
-                                           "Split the statement into smaller files."}, status_code=413)
-    return await call_next(request)
+class UploadGuard:
+    """Outermost guard for statement uploads, applied BEFORE any byte of the body is read or spooled to disk:
+      * no session cookie            -> 401 (anonymous uploads never reach the form parser)
+      * no Content-Length (chunked)  -> 411 (a declared size is required; the server rejects bodies longer than declared)
+      * Content-Length over the limit -> 413
+    Session validity, CSRF, ownership and the rate limit are still checked by the endpoint itself."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http" and scope["method"] == "POST" and (scope["path"].endswith("/imports") or scope["path"].endswith("/upload")):
+            headers = {k.lower(): v for k, v in scope["headers"]}
+            limit = (statements.UPLOAD_MAX_BYTES if scope["path"].endswith("/imports") else data.UPLOAD_MAX_BYTES) + MULTIPART_OVERHEAD
+            cookie = headers.get(b"cookie", b"").decode("latin-1")
+            raw_len = headers.get(b"content-length")
+            if f"{SESSION_COOKIE}=" not in cookie:
+                return await _reply(send, 401, "Please sign in.")
+            if raw_len is None:
+                return await _reply(send, 411, "Upload size must be declared (Content-Length).")
+            try:
+                size = int(raw_len)
+            except ValueError:
+                return await _reply(send, 400, "Invalid Content-Length.")
+            if size > limit:
+                return await _reply(send, 413, f"File too large (limit {(limit - MULTIPART_OVERHEAD) // 1_000_000} MB). "
+                                               "Split the statement into smaller files.")
+        return await self.app(scope, receive, send)
+
+
+async def _reply(send, status: int, detail: str):
+    import json
+    body = json.dumps({"detail": detail}).encode()
+    await send({"type": "http.response.start", "status": status,
+                "headers": [(b"content-type", b"application/json"), (b"content-length", str(len(body)).encode()),
+                            (b"connection", b"close")]})
+    await send({"type": "http.response.body", "body": body})
 
 
 @app.middleware("http")
@@ -102,6 +123,7 @@ app.include_router(planning.router)
 app.include_router(data.router)
 app.include_router(records.router)
 app.include_router(statements.router)
+app.add_middleware(UploadGuard)      # outermost: runs before the body is read
 
 
 @app.get("/api/health", tags=["System"], summary="Service status")

@@ -93,7 +93,7 @@ function Picker({ onFile, busy }) {
           <Button variant="ghost" disabled={busy} onClick={() => onFile(sampleStatement())}>Try a synthetic sample</Button></div>
       </div>
       <div className="mt-3 grid gap-2 text-xs text-muted md:grid-cols-3">
-        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-accent" /> Finora never connects to your bank. Only the file you choose is read, and it is deleted once the import finishes or is cancelled.</div>
+        <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-accent" /> Finora never connects to your bank. Only the file you choose is read, and it is deleted once the import finishes or is cancelled (a preview you never confirm is deleted after 24 hours).</div>
         <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-accent" /> An account balance is only updated from a statement whose running balances reconcile, and you can decline it.</div>
         <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-accent" /> Money from senders Finora does not recognise is not counted as income until you confirm it.</div>
       </div>
@@ -121,6 +121,7 @@ function Preview({ imp, profileId, onCancel, onStarted, onError }) {
   useEffect(() => { setUpdateBalance(acc?.balance_source === 'statement') }, [target]) // eslint-disable-line react-hooks/exhaustive-deps
   const tgtKey = target === 'new' ? null : target.replace(':', '|')
   const clash = (d.overlap || []).find((o) => o.share_pct >= 50 && `${o.kind}|${o.id}` !== tgtKey)
+  const partial = (d.overlap || []).filter((o) => o.share_pct < 50 && `${o.kind}|${o.id}` !== tgtKey)
 
   const start = async () => {
     setBusy(true); onError(null)
@@ -202,6 +203,7 @@ function Preview({ imp, profileId, onCancel, onStarted, onError }) {
             <label className="flex items-start gap-2 text-xs text-muted"><input type="checkbox" className="mt-0.5" checked={updateBalance} onChange={(e) => setUpdateBalance(e.target.checked)} />
               <span>{acc.balance_source === 'statement' ? `Refresh ${acc.label}'s balance` : `Replace the balance you entered for ${acc.label} (${inr(acc.balance)})`} with the statement's verified closing balance ({inr(b.closing_balance)} as of {dateLabel(b.closing_date)}).{acc.balance_as_of ? ` Now recorded: ${inr(acc.balance)} as of ${dateLabel(acc.balance_as_of)}.` : ' Left unticked, your balance stays as it is.'}</span></label>
           )}
+          {!clash && partial.length > 0 && <Note>{partial.map((o) => `${num(o.rows_matching)} rows are already recorded on ${o.label}`).join('; ')}. They will be skipped, not counted twice.</Note>}
           {clash && (
             <label className="flex items-start gap-2 rounded-xl border border-warn/30 bg-warn/10 p-2 text-xs text-warn"><input type="checkbox" className="mt-0.5" checked={overlapOk} onChange={(e) => setOverlapOk(e.target.checked)} />
               <span>{num(clash.rows_matching)} of these rows ({clash.share_pct}%) are already recorded on <b>{clash.label}</b>. If this is the same statement, attach it there instead. Import to the chosen {kind === 'card' ? 'card' : 'account'} anyway?</span></label>

@@ -193,6 +193,12 @@ def remove(record_type: str, item_id: int, request: Request, cascade: bool = Fal
         else:
             db.execute(delete(model).where(getattr(model, fld) == row.id))
         removed[label] = n
+    if rt.key == "bank_accounts":
+        for imp in db.scalars(select(M.StatementImport).where(M.StatementImport.user_id == ctx.profile.id,
+                                                              M.StatementImport.account_id == row.id)):
+            imp.account_id = None
+            if (imp.summary or {}).get("created_account_id") == row.id:
+                imp.summary = {**imp.summary, "created_account_id": None}
     db.delete(row)
     _changed(rt, {}, ctx.profile.id, request, ctx, db, "delete", item_id)
     return {"deleted": item_id, "type": rt.key, "also_removed": removed}

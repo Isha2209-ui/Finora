@@ -265,7 +265,10 @@ def _pair_transfers(t: pd.DataFrame, history: pd.DataFrame, this_account) -> np.
     confidently recognises as a purchase or income (amount and date alone are a coincidence, e.g. a Rs 600 Swiggy order
     on the day a friend sent Rs 600)."""
     field, ident = this_account
-    h = history[history["category"] == "Transfer"] if "category" in history else history.iloc[0:0]
+    # evidence = a RECOGNISED transfer (rule, file or the person). An unrecognised credit is only parked as "Transfer"
+    # pending review, so it is never evidence.
+    h = history[(history["category"] == "Transfer") & (history["category_source"].fillna("") != "rule:unrecognised_credit")] \
+        if {"category", "category_source"} <= set(history.columns) else history.iloc[0:0]
     if field == "account":
         h = h[(h["account_id"].notna()) & (h["account_id"] != ident)]
     else:
@@ -275,7 +278,7 @@ def _pair_transfers(t: pd.DataFrame, history: pd.DataFrame, this_account) -> np.
     hd = pd.to_datetime(h["date"])
     index: dict[tuple[float, str], list] = {}
     for d, a, ty in zip(hd, h["amount"].round(2), h["type"]):
-        index.setdefault((float(a), ty), []).append(d)
+        index.setdefault((float(a), ty), []).append(d)            # each twin can be used once (one-to-one)
     out = np.zeros(len(t), bool)
     # debits: not something the model confidently sees as a purchase. Credits: the model only knows spending narrations,
     # so its guess says nothing about a credit; the other side already being a transfer is the evidence.
@@ -285,9 +288,11 @@ def _pair_transfers(t: pd.DataFrame, history: pd.DataFrame, this_account) -> np.
         if not eligible[i]:
             continue
         opp = "debit" if ty == "credit" else "credit"
-        for hd_ in index.get((float(a), opp), []):
+        twins = index.get((float(a), opp), [])
+        for j, hd_ in enumerate(twins):
             if abs((hd_ - d).days) <= 3:
                 out[i] = True
+                twins.pop(j)
                 break
     return out
 

@@ -166,7 +166,7 @@ A separate checker with no part in building Phase 4 audited branch `phase-4-stat
 - **97% progress:** the analysis stage now explains what is happening and shows elapsed seconds; Cancel is hidden there.
 - **Reused account number:** history kept a reused account id. Fixed: the history shows the label captured at import time, and created accounts used by other imports are never deleted.
 - **Leftover uploads:** now deleted with the profile, at start-up when no preview is waiting, and when previews expire (24 h).
-- **Upload size:** now refused from the `Content-Length` header before the body is read. A chunked upload without that header is still capped by the endpoint while reading.
+- **Upload size:** ~~a chunked upload is still capped by the endpoint while reading~~ **incorrect**: the second audit showed a chunked body was spooled to disk in full first, even when not signed in. Fixed in the release round below.
 
 **One mistake of my own was caught during the fix round.** An inline comment swallowed the `new_account` option, so accounts created from a statement were silently not created. Found by the new C5 test before commit, and fixed.
 
@@ -187,8 +187,52 @@ A separate checker with no part in building Phase 4 audited branch `phase-4-stat
 **Still open, stated plainly:**
 - Merchant names are heuristic.
 - Real-bank classification accuracy is unmeasured (synthetic templates only).
-- Import progress is held in the server process.
 - CSV only.
-- A chunked upload without `Content-Length` is still received before the 25 MB check stops it.
 - The analysis stage of a 150k-row import still takes about 15 s; it is explained on screen, not shortened.
 - These fixes have **not yet been independently re-audited**.
+
+
+## Second independent audit and the release-blocker round
+
+A second checker, separate from the first and with no part in building Phase 4, audited `b43719c`. Its verdict was **FAIL**.
+- **Confirmed fixed:** C1, C4 and C6.
+- **Still failing in variants:** C2, C3, C5 and C7.
+- **New critical findings:** A–F below.
+- **Not driven:** the browser.
+
+That audit also found that **the test suite was deleting audit records from the development database** (81 → 72). The cleanup deletes audit rows by account id, and SQLite reuses ids. One focused repair round was authorised.
+
+| Audit finding | Fix | Regression test (`tests/test_statement_release.py`) |
+|---|---|---|
+| **A** Double counting via previews taken before another import, two imports started together, overlap under 50% into another account, and look-alikes with a prefix or 11-character cut | Duplicates are re-checked against the database when the import **runs**, against every account and card including for new accounts. Rows already on another account are skipped and reported (`already_on_other_accounts`) unless the person explicitly chose to import anyway. Imports are serialised per profile (an in-process lock plus a 409 while another import of the profile is alive). Narration matching uses letters and digits containment (≥ 8 characters), so prefixes and cut-off text match. The preview notes partial overlaps. | Stale previews into SBI or a new account add 0 and income stays Rs 90,000. Two imports run in parallel threads add salary once. A 33% overlap skips exactly the 8 shared rows (income total 6 × 90,000). Prefixed and 11-character narrations add 0. |
+| **B** Low-confidence debits became transfers by pairing with an unrecognised credit; one credit paired with four debits | Only a **recognised** transfer (rule, file or the person) is evidence; credits parked as "unrecognised" never are. Pairing is one-to-one. | Four unsure Rs 600 debits (at least one below 0.6 confidence) stay spending (expenses Rs 2,400). A recognised transfer pairs with at most one row. |
+| **C** Undoing both the creating import and a later one left the undone statement's balance on an empty account | Undoing the creating import marks later imports as having "no legitimate prior balance". After any undo, an account created by an undone import that nothing uses is removed. | The account is gone and net worth equals the profile before either import. |
+| **D** Undo deleted another user's account that had received a reused id | Before deleting, undo checks **owner + bank name + masked number** recorded at creation. Deleting an account in My Data detaches it from the imports that reference it. | User 2's Rs 7,77,777 account and user 1's new same-named account both survive; user 2's net worth stays Rs 7,77,777. |
+| **E** Chunked uploads (no Content-Length) were spooled in full, even unauthenticated (1,000 MB in 1.9 s) | An outermost ASGI guard on the two upload paths, before any byte is read: no session cookie → 401; no Content-Length → 411; Content-Length over the limit → 413. The server rejects a body longer than its declared length. | A chunked body → 411, anonymous → 401, a 100 MB declared length → 413; the endpoint is never reached (`read_limited` patched to fail) and no import row is created. |
+| **F** A second server process rolled back the first's live imports; cancel and progress were invisible across processes | Each import writes a **heartbeat** and **progress** to the database (at least every 2 s and at each stage). Recovery only touches imports whose heartbeat is older than 120 s. Cancel is a database flag read at every stage boundary and heartbeat. Status falls back to the stored progress. | A new process's recovery leaves a live import (fresh heartbeat) and an already-undone import untouched and rolls back only the stale one. A cancel set "in another process" stops the run; balance and rows are untouched. |
+| **Test isolation** | `tests/conftest.py` copies the dev database **read-only** (SQLite online backup) into a temporary folder, together with the model files, reports and upload folders, before the app is imported. The suite writes only there, and the folder is deleted at the end. | `test_suite_runs_on_a_temporary_copy_never_the_dev_database`. The dev `finora.db` SHA-256 and audit count were identical before and after the full run. |
+
+The earlier C1, C4 and C6 tests (`test_statement_fixes.py`) still pass. The three recovery tests now age the heartbeat to simulate a dead process.
+
+**Results of this round:**
+- Full suite **340 passed, rc=0**.
+- Development database byte-for-byte identical before and after the run (SHA-256 `7dc682ec334d548b…`, audit rows 72 → 72).
+- Frontend build passes.
+
+**Browser walkthrough** (built-in browser, servers from `~/Developer/finora`, throwaway account, synthetic files):
+1. **Import (two years, HDFC):** the replace-balance box was unticked by default; I ticked it on purpose. The import added 513 transactions and 32 income records (salary Rs 24.00 L, interest Rs 4,104), with 8 rows sent to review.
+2. **Totals:** net worth Rs 3,09,475.08 (= 2,29,475.08 + 80,000) and average income Rs 1,00,170.99, both exactly as calculated by hand.
+3. **Overlap guard:** a 3-month SBI-layout file aimed at SBI showed "68 of these rows (100%) are already recorded on HDFC Bank XXXX1234" and Import stayed disabled.
+4. **Cancel:** a 150,000-row file was cancelled at "Categorising 22%". The result was "Import cancelled; nothing was saved": 0 rows in the database, SBI still Rs 80,000, no pending file.
+5. **Review:** the 8-row group was classified as Other income. Average income rose by Rs 290.35 (= Rs 6,968.40 ÷ 24) and the queue emptied.
+6. **Undo:** HDFC was back to Rs 50,000 "manual", net worth Rs 1,30,000, income "not known".
+7. **Cleanup:** the account and profile were removed afterwards (their 13 audit records were kept). Integrity ok; financial row counts identical to before; 0 imports, 0 pending files.
+
+**Remaining limitations (not release blockers by the audits' criteria, stated plainly):**
+- **Look-alikes on the same account:** rows with the same date, amount and direction but genuinely different narration text are still **counted until reviewed**; they are flagged.
+- **Concurrent starts:** imports are serialised per profile within one process. Across processes, two starts at the same instant are still caught by the run-time duplicate re-check, not prevented outright.
+- **Crashed imports:** they are recovered once their heartbeat is 120 s old (at start-up or when import status is read), so a crashed import can show "running" for up to 2 minutes.
+- **Analysis time:** the stage after a 150k-row import takes about 13–16 s; it is explained on screen.
+- **Accuracy:** real-bank classification accuracy is unmeasured; only synthetic templates were tested. Merchant names are heuristic.
+- **Format and upload method:** CSV only. An upload must declare its size, which browsers and the app's own client always do.
+- **Not re-audited:** this round has not been independently re-audited.

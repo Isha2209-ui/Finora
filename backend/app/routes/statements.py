@@ -93,13 +93,16 @@ async def create_import(request: Request, file: UploadFile = File(...), ctx: Pro
 
 @router.get("/profiles/{internal_id}/imports", summary="Statement import history")
 def list_imports(ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db)):
+    SI.recover_interrupted(db)            # imports abandoned by a crashed process are rolled back once their heartbeat is stale
     q = select(M.StatementImport).where(M.StatementImport.user_id == ctx.profile.id).order_by(M.StatementImport.id.desc()).limit(50)
     return {"items": [SI.status(i) for i in db.scalars(q)], **_targets(db, ctx.profile.id)}
 
 
 @router.get("/profiles/{internal_id}/imports/{imp_id}", summary="Import status, progress and outcome")
 def get_import(imp_id: int, ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db)):
+    SI.recover_interrupted(db)
     imp = _imp(db, ctx, imp_id)
+    db.refresh(imp)
     out = SI.status(imp)
     if imp.status == "preview":
         out.update(detection=imp.detection, same_file_imported=SI.same_file_imports(db, imp), **_targets(db, ctx.profile.id))
@@ -134,6 +137,9 @@ def start_import(imp_id: int, body: StartIn, request: Request, background: Backg
     imp = _imp(db, ctx, imp_id)
     if not (body.account_id or body.card_id or body.new_account):
         raise HTTPException(422, "Choose which account or card this statement belongs to (or create the account).")
+    busy = SI.running_import(db, ctx.profile.id, exclude=imp.id)
+    if busy is not None:
+        raise HTTPException(409, f"Another import for this profile ({busy.filename}) is still running. Start this one when it has finished.")
     if SI.same_file_imports(db, imp) and not body.allow_same_file:
         raise HTTPException(409, "This exact file was already imported. Rows already present would be skipped anyway; "
                                  "set allow_same_file to import it again.")

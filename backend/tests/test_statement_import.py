@@ -450,7 +450,9 @@ def test_interrupted_import_is_rolled_back_on_restart():
     pid, acc, *_ = _profile(c)
     with SessionLocal() as db:
         uid = db.scalar(select(M.User.id).where(M.User.internal_id == pid))
-        imp = M.StatementImport(user_id=uid, filename="x.csv", sha256="0" * 64, size_bytes=1, status="running")
+        from datetime import datetime, timedelta
+        imp = M.StatementImport(user_id=uid, filename="x.csv", sha256="0" * 64, size_bytes=1, status="running",
+                                heartbeat_at=datetime.utcnow() - timedelta(seconds=SI.STALE_AFTER + 60))
         db.add(imp)
         db.flush()
         db.add(M.Transaction(user_id=uid, ref="x", date=BANK[0].date, amount=1, raw_description="half saved", import_id=imp.id))

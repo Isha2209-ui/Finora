@@ -1,5 +1,29 @@
+import atexit
 import os
 import secrets
+import shutil
+import sqlite3
+import tempfile
+from pathlib import Path
+
+# ---- Test isolation: the suite NEVER touches the development database, model files, reports or uploads.
+# Before the app is imported, the dev database is copied read-only (SQLite online backup) into a temporary folder and
+# every path the app writes to is pointed there. The folder is deleted when the test session ends.
+_BACKEND = Path(__file__).resolve().parents[1]
+_TMP = Path(tempfile.mkdtemp(prefix="finora-tests-"))
+_src = sqlite3.connect(f"file:{_BACKEND / 'finora.db'}?mode=ro", uri=True)
+_dst = sqlite3.connect(_TMP / "finora_test.db")
+_src.backup(_dst)
+_dst.close()
+_src.close()
+shutil.copytree(_BACKEND / "artifacts", _TMP / "artifacts")
+os.environ["DATABASE_URL"] = f"sqlite:///{_TMP / 'finora_test.db'}"
+os.environ["ARTIFACTS_DIR"] = str(_TMP / "artifacts")
+os.environ["REPORTS_DIR"] = str(_TMP / "reports")
+os.environ["IMPORT_TMP_DIR"] = str(_TMP / "pending")
+TEST_DB_PATH = _TMP / "finora_test.db"
+DEV_DB_PATH = _BACKEND / "finora.db"
+atexit.register(shutil.rmtree, _TMP, True)
 
 # Generous limits for the suite itself; the rate-limit tests lower them explicitly.
 os.environ.setdefault("REGISTER_IP_MAX", "10000")

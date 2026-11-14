@@ -169,6 +169,7 @@ def test_c4_crash_before_commit_leaves_balance_rows_account_and_file_untouched(m
         imp = db.get(M.StatementImport, pv["id"])
         assert imp.status == "running" and db.scalar(select(func.count()).select_from(M.Transaction).where(M.Transaction.import_id == imp.id))
         SI.pending_path(imp.id).write_bytes(b"left over")
+        _abandon(db, imp)                                               # the dead process stopped beating long ago
         SI.recover_interrupted(db)
         imp = db.get(M.StatementImport, pv["id"])
         assert imp.status == "failed"
@@ -185,13 +186,22 @@ def test_c4_crash_after_commit_is_finished_not_half_undone():
     pid, acc, *_ = _profile(c)
     _, s = _import(c, pid, F.hdfc(BANK[:40]), account_id=acc, update_balance=True)
     with SessionLocal() as db:                                          # simulate: killed while refreshing the analysis
-        db.get(M.StatementImport, s["id"]).status = "running"
-        db.commit()
+        imp = db.get(M.StatementImport, s["id"])
+        imp.status = "running"
+        _abandon(db, imp)
         SI.recover_interrupted(db)
         assert db.get(M.StatementImport, s["id"]).status == "done"
     assert _acct(acc)[0] == BANK[39].balance
     assert c.delete(f"/api/profiles/{pid}/imports/{s['id']}").json()["undo"]["balance_restored"]
     assert _acct(acc)[0] == 50000
+
+
+def _abandon(db, imp):
+    """Make an import look like its process died more than STALE_AFTER seconds ago."""
+    from datetime import datetime, timedelta
+    imp.heartbeat_at = datetime.utcnow() - timedelta(seconds=SI.STALE_AFTER + 60)
+    db.commit()
+    SI.PROGRESS.pop(imp.id, None)
 
 
 def _ctx(pid, imp_id):

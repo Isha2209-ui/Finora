@@ -20,6 +20,8 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import re
+import threading
 import time
 from collections import Counter
 from datetime import datetime
@@ -31,6 +33,7 @@ from sqlalchemy.orm import Session
 
 from .. import models as M
 from ..config import IMPORT_TMP_DIR, STATEMENT_MAX_ROWS
+from sqlalchemy import update
 from ..data.generator import NON_EXPENSE
 from ..database import SessionLocal
 from ..ml import registry
@@ -54,11 +57,26 @@ class Cancelled(Exception):
     pass
 
 
+HEARTBEAT_EVERY = 2.0        # seconds between progress/heartbeat writes
+STALE_AFTER = 120            # an import whose heartbeat is older than this is treated as abandoned (crashed process)
+_last_beat: dict[int, float] = {}
+
+
 def _progress(imp_id: int, stage: str, done: int = 0, total: int = 0) -> None:
     lo, hi = STAGES[stage]
     frac = (done / total) if total else 0.0
-    PROGRESS[imp_id] = {"stage": stage, "label": STAGE_LABEL[stage], "done": done, "total": total,
-                        "pct": round(lo + (hi - lo) * min(1.0, frac), 1), "at": time.time()}
+    pct = round(lo + (hi - lo) * min(1.0, frac), 1)
+    PROGRESS[imp_id] = {"stage": stage, "label": STAGE_LABEL[stage], "done": done, "total": total, "pct": pct, "at": time.time()}
+    now = time.time()
+    if now - _last_beat.get(imp_id, 0) >= HEARTBEAT_EVERY or stage in ("done", "analysis"):
+        _last_beat[imp_id] = now
+        with SessionLocal() as b:                   # short separate transaction: visible to every process
+            b.execute(update(M.StatementImport).where(M.StatementImport.id == imp_id)
+                      .values(heartbeat_at=datetime.utcnow(), progress_pct=pct))
+            requested = b.scalar(select(M.StatementImport.cancel_requested).where(M.StatementImport.id == imp_id))
+            b.commit()
+        if requested:
+            CANCEL.add(imp_id)
     if imp_id in CANCEL and imp_id not in COMMITTED:
         raise Cancelled()
 
@@ -88,12 +106,18 @@ def create_preview(db: Session, user: M.User, app_user_id: int | None, content: 
 
 
 # ---------------------------------------------------------------- duplicate matching
+_ALNUM = re.compile(r"[^A-Z0-9]")
+
+
 def _compatible(a: str, b: str) -> bool:
-    """Two narrations of the same transaction: equal, or one is a shortened form of the other (some exports cut text)."""
+    """Two narrations of the same transaction (same date, amount and direction already established): equal, or the
+    letters-and-digits of one appear inside the other - a cut-off export ("UPI/DR/1234") or an added prefix/suffix
+    ("TXN UPI/DR/1234...")."""
     if a == b:
         return True
-    short, long_ = (a, b) if len(a) <= len(b) else (b, a)
-    return len(short) >= 12 and long_.startswith(short)
+    x, y = _ALNUM.sub("", a), _ALNUM.sub("", b)
+    short, long_ = (x, y) if len(x) <= len(y) else (y, x)
+    return len(short) >= 8 and short in long_
 
 
 def match_existing(keys: list[tuple], existing: list[tuple]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -171,6 +195,17 @@ def overlap_conflict(imp: M.StatementImport, kind: str, account_id: int | None, 
     target = ("card", card_id) if kind == "card" else ("account", account_id)
     for o in (imp.detection or {}).get("overlap") or []:
         if o["share_pct"] >= 50 and (o["kind"], o["id"]) != target:
+            return o
+    return None
+
+
+def running_import(db: Session, uid: int, exclude: int | None = None) -> M.StatementImport | None:
+    """Another import of this profile that is still queued or running (and alive). Imports are serialised per profile."""
+    cutoff = datetime.utcnow().timestamp() - STALE_AFTER
+    for o in db.scalars(select(M.StatementImport).where(M.StatementImport.user_id == uid, M.StatementImport.id != (exclude or -1),
+                                                        M.StatementImport.status.in_(["queued", "running"]))):
+        beat = o.heartbeat_at or o.created_at
+        if beat.timestamp() >= cutoff:
             return o
     return None
 
@@ -266,10 +301,15 @@ def run(imp_id: int) -> None:
     """Background worker. Uses its own session; commits in short chunks; cleans up after any failure."""
     db = SessionLocal()
     t0 = time.time()
+    locked = None
     try:
         imp = db.get(M.StatementImport, imp_id)
         if imp is None or imp.status != "queued":
             return
+        lock = _profile_lock(imp.user_id)
+        if not lock.acquire(timeout=600):
+            raise P.StatementError("Another import for this profile is still running. Try again when it has finished.")
+        locked = lock
         user = db.get(M.User, imp.user_id)
         opts = (imp.detection or {}).get("options", {})
         imp.status = "running"
@@ -304,14 +344,34 @@ def run(imp_id: int) -> None:
         _stage(db, imp, "patterns")
         # ---- duplicates: rows already in the database for the same account/card (counted, so genuine repeats survive)
         _stage(db, imp, "duplicates")
-        stored = _stored_keys(db, user.id) if new_acc is None else {}
-        if imp.statement_kind == "card":
-            existing = stored.get(("card", card_id), []) if card_id else stored.get(("account", None), [])
+        # read NOW (not at preview time): another import may have finished since the preview
+        stored = _stored_keys(db, user.id)
+        if new_acc is not None:
+            target_key = None
+        elif imp.statement_kind == "card":
+            target_key = ("card", card_id) if card_id else ("account", None)
         else:
-            existing = stored.get(("account", account_id), [])
+            target_key = ("account", account_id)
+        existing = stored.get(target_key, []) if target_key else []
         keys = _row_keys(rows)
         exact, near, look = match_existing(keys, existing)
         dup = exact | near
+        # rows that already exist on ANOTHER of the person's accounts/cards are the same money: not imported again
+        # (unless the person explicitly chose to import anyway after seeing the overlap warning)
+        elsewhere = np.zeros(len(keys), bool)
+        elsewhere_on: dict[str, int] = {}
+        if not opts.get("allow_overlap"):
+            labels = {("account", a.id): f"{a.bank_name} {a.account_masked}" for a in accounts}
+            labels.update({("card", c.id): f"{c.issuer} {c.card_name} ••{c.last4}" for c in cards})
+            for tgt, rows_there in stored.items():
+                if tgt == target_key:
+                    continue
+                ex2, nr2, _ = match_existing([k if not dup[i] else (None,) * 4 for i, k in enumerate(keys)], rows_there)
+                hit = (ex2 | nr2) & ~dup & ~elsewhere
+                if hit.any():
+                    elsewhere |= hit
+                    elsewhere_on[labels.get(tgt, "rows not attributed to an account")] = int(hit.sum())
+        dup = dup | elsewhere
         # look-alikes on the same account/card, plus hand-entered rows anywhere in the profile: kept, flagged
         manual = history[history["import_id"].isna() & history["category_source"].isin(["user", "model", "given"])]
         mk = {(pd.Timestamp(d).date(), round(float(a), 2), ty) for d, a, ty in zip(manual["date"], manual["amount"], manual["type"])}
@@ -416,7 +476,10 @@ def run(imp_id: int) -> None:
         elif not bal.get("present"):
             balance_out["reason"] = "This file has no running balance, so Finora cannot establish a balance from it; the account balance was not changed."
         imp.summary = {**_summary(parsed, rows, new, dup, possible, cstats, balance_out, time.time() - t0, created_account),
-                       "duplicates_near": int(near.sum()), "target_label": _target_label(db, imp.statement_kind, account_id, card_id)}
+                       "duplicates_near": int(near.sum()), "target_label": _target_label(db, imp.statement_kind, account_id, card_id),
+                       "already_on_other_accounts": int(elsewhere.sum()), "already_on_other_accounts_by": elsewhere_on,
+                       "created_account_fingerprint": ([created_account.bank_name, created_account.account_masked]
+                                                       if created_account is not None else None)}
         imp.rows_processed = int(len(rows))
         db.commit()                                   # one commit: balance change + summary (rows already saved above)
         COMMITTED.add(imp_id)
@@ -460,8 +523,11 @@ def run(imp_id: int) -> None:
             db.commit()
         PROGRESS.pop(imp_id, None)
     finally:
+        if locked is not None:
+            locked.release()
         CANCEL.discard(imp_id)
         COMMITTED.discard(imp_id)
+        _last_beat.pop(imp_id, None)
         try:
             pending_path(imp_id).unlink(missing_ok=True)
         except OSError:
@@ -472,6 +538,9 @@ def run(imp_id: int) -> None:
 def _stage(db: Session, imp: M.StatementImport, stage: str) -> None:
     imp.stage = stage
     db.commit()
+    # a cancel requested through ANY server process is seen at every stage boundary (and every heartbeat in between)
+    if db.scalar(select(M.StatementImport.cancel_requested).where(M.StatementImport.id == imp.id)):
+        CANCEL.add(imp.id)
     _progress(imp.id, stage)
 
 
@@ -555,17 +624,43 @@ def _account_in_use(db: Session, account_id: int, other_than_import: int | None 
                                                              M.StatementImport.id != (other_than_import or -1)).limit(1)))
 
 
+def _is_created_by(acc: M.BankAccount | None, imp: M.StatementImport) -> bool:
+    """True only for the very account this import created: same owner AND same bank name and masked number it was
+    created with (SQLite can hand a deleted account's id to a new, unrelated account - even another user's)."""
+    if acc is None or acc.user_id != imp.user_id:
+        return False
+    s = imp.summary or {}
+    fp = s.get("created_account_fingerprint")
+    if fp is None:
+        new_acc = ((imp.detection or {}).get("options") or {}).get("new_account") or {}
+        fp = [str(new_acc.get("bank_name", ""))[:60], "XXXX" + str(new_acc.get("last4", ""))] if new_acc else None
+    return fp is not None and [acc.bank_name, acc.account_masked] == list(fp)
+
+
 def _drop_created_account(db: Session, imp: M.StatementImport) -> bool:
-    """Remove the account an unfinished/undone import created - only if nothing else uses it."""
+    """Remove the account an unfinished/undone import created - only if it is still that account and nothing uses it."""
     opts = (imp.detection or {}).get("options") or {}
     acc_id = ((imp.summary or {}).get("created_account_id")) or (imp.account_id if opts.get("new_account") else None)
     if not acc_id:
         return False
     acc = db.get(M.BankAccount, acc_id)
-    if acc is None or _account_in_use(db, acc_id, other_than_import=imp.id):
+    if not _is_created_by(acc, imp) or _account_in_use(db, acc_id, other_than_import=imp.id):
         return False
     db.delete(acc)
     return True
+
+
+def _drop_orphan_created_account(db: Session, account_id: int | None, user_id: int) -> bool:
+    """After an undo: an account that was created by an import which is itself undone, and that nothing uses any more,
+    is removed - together with whatever balance an undone statement left on it."""
+    if not account_id:
+        return False
+    for creator in db.scalars(select(M.StatementImport).where(M.StatementImport.user_id == user_id,
+                                                              M.StatementImport.status.in_(["undone", "failed", "cancelled"]))):
+        if (creator.summary or {}).get("created_account_id") == account_id or \
+                (creator.account_id == account_id and ((creator.detection or {}).get("options") or {}).get("new_account")):
+            return _drop_created_account(db, creator)
+    return False
 
 
 def undo(db: Session, imp: M.StatementImport) -> dict:
@@ -576,6 +671,12 @@ def undo(db: Session, imp: M.StatementImport) -> dict:
     n_inc = db.execute(delete(M.IncomeRecord).where(M.IncomeRecord.import_id == imp.id)).rowcount or 0
     s, b = imp.summary or {}, _balance_info(imp)
     restored = relinked = False
+    if b.get("applied") and imp.account_id and s.get("created_account_id"):
+        for o in db.scalars(select(M.StatementImport).where(M.StatementImport.account_id == imp.account_id,
+                                                            M.StatementImport.status == "done", M.StatementImport.id != imp.id)):
+            if _balance_info(o).get("applied") and _balance_info(o).get("previous_import_id") == imp.id:
+                o.summary = {**o.summary, "balance": {**_balance_info(o), "previous_import_id": None, "previous_from_undone_creation": True}}
+                relinked = True
     if b.get("applied") and imp.account_id and not s.get("created_account_id"):
         later = [o for o in db.scalars(select(M.StatementImport).where(M.StatementImport.account_id == imp.account_id,
                                                                        M.StatementImport.status == "done",
@@ -593,12 +694,17 @@ def undo(db: Session, imp: M.StatementImport) -> dict:
             acc = db.get(M.BankAccount, imp.account_id)
             if acc is not None and acc.balance_source == "statement" and acc.balance_as_of and \
                     acc.balance_as_of.isoformat() == b.get("closing_date") and abs(acc.balance - float(b["closing_balance"])) < 0.005:
-                acc.balance, acc.balance_as_of = imp.previous_balance, imp.previous_balance_as_of
-                acc.balance_source = imp.previous_balance_source
-                restored = True
+                if b.get("previous_from_undone_creation"):
+                    # the balance before this import came from a statement whose import was undone: there is no
+                    # legitimate balance to return to; the account itself is removed below if nothing else uses it
+                    restored = True
+                else:
+                    acc.balance, acc.balance_as_of = imp.previous_balance, imp.previous_balance_as_of
+                    acc.balance_source = imp.previous_balance_source
+                    restored = True
     imp.status = "undone"
     db.flush()
-    removed_account = _drop_created_account(db, imp)
+    removed_account = _drop_created_account(db, imp) or _drop_orphan_created_account(db, imp.account_id, imp.user_id)
     db.commit()
     return {"transactions_removed": n_tx, "income_records_removed": n_inc, "balance_restored": restored,
             "balance_chain_relinked": relinked, "account_removed": removed_account}
@@ -613,6 +719,8 @@ def cancel(db: Session, imp: M.StatementImport) -> None:
         if imp.summary is not None or imp.id in COMMITTED:
             raise ValueError("This import is already saved and is only refreshing your analysis. Use Undo to remove it.")
         CANCEL.add(imp.id)
+        imp.cancel_requested = True          # seen by whichever process runs the import
+        db.commit()
     else:
         raise ValueError(f"This import is already {imp.status}.")
 
@@ -638,7 +746,10 @@ def recover_interrupted(db: Session) -> int:
         the balance is only written in that final commit;
       * uploaded files that no preview is waiting for are deleted; stale previews expire."""
     n = 0
+    cutoff = datetime.utcnow().timestamp() - STALE_AFTER
     for imp in db.scalars(select(M.StatementImport).where(M.StatementImport.status.in_(["queued", "running"]))):
+        if (imp.heartbeat_at or imp.created_at).timestamp() >= cutoff or imp.id in PROGRESS:
+            continue                          # alive (possibly in another server process): leave it alone
         if imp.summary is not None:
             imp.status, imp.stage, imp.finished_at = "done", "done", datetime.utcnow()
             continue
@@ -649,7 +760,7 @@ def recover_interrupted(db: Session) -> int:
         n += 1
     db.commit()
     purge_stale_previews(db)
-    waiting = {i for (i,) in db.execute(select(M.StatementImport.id).where(M.StatementImport.status == "preview"))}
+    waiting = {i for (i,) in db.execute(select(M.StatementImport.id).where(M.StatementImport.status.in_(["preview", "queued", "running"])))}
     for f in IMPORT_TMP_DIR.glob("import_*.csv"):
         try:
             if int(f.stem.split("_")[1]) not in waiting:
@@ -661,7 +772,8 @@ def recover_interrupted(db: Session) -> int:
 
 def status(imp: M.StatementImport) -> dict:
     live = PROGRESS.get(imp.id)
-    pct = 100.0 if imp.status == "done" else (live["pct"] if live and imp.status in ("queued", "running") else 0.0)
+    pct = 100.0 if imp.status == "done" else (live["pct"] if live and imp.status in ("queued", "running")
+                                                else (imp.progress_pct or 0.0) if imp.status in ("queued", "running") else 0.0)
     return {"id": imp.id, "filename": imp.filename, "status": imp.status, "stage": imp.stage,
             "stage_label": (live or {}).get("label") or STAGE_LABEL.get(imp.stage or "", None), "pct": pct,
             "stage_done": (live or {}).get("done"), "stage_total": (live or {}).get("total"),
@@ -705,3 +817,12 @@ def parse_csv(content: bytes) -> tuple[pd.DataFrame, dict]:
     layout = "debit/credit columns" if det["layout_kind"] == "separate debit and credit columns" else "single amount column"
     return parsed.rows, {"rows_in_file": det["rows_parsed"], "rows_valid": det["rows_valid"],
                          "rows_dropped": det["rows_parsed"] - det["rows_valid"], "layout": layout, "detection": det}
+
+
+_locks: dict[int, threading.Lock] = {}
+_locks_guard = threading.Lock()
+
+
+def _profile_lock(uid: int) -> threading.Lock:
+    with _locks_guard:
+        return _locks.setdefault(uid, threading.Lock())
