@@ -230,9 +230,36 @@ The earlier C1, C4 and C6 tests (`test_statement_fixes.py`) still pass. The thre
 
 **Remaining limitations (not release blockers by the audits' criteria, stated plainly):**
 - **Look-alikes on the same account:** rows with the same date, amount and direction but genuinely different narration text are still **counted until reviewed**; they are flagged.
-- **Concurrent starts:** imports are serialised per profile within one process. Across processes, two starts at the same instant are still caught by the run-time duplicate re-check, not prevented outright.
+- **Concurrent starts:** imports are serialised per profile. Only one server process may use a database (see Phase 4 closure below).
 - **Crashed imports:** they are recovered once their heartbeat is 120 s old (at start-up or when import status is read), so a crashed import can show "running" for up to 2 minutes.
 - **Analysis time:** the stage after a 150k-row import takes about 13–16 s; it is explained on screen.
 - **Accuracy:** real-bank classification accuracy is unmeasured; only synthetic templates were tested. Merchant names are heuristic.
 - **Format and upload method:** CSV only. An upload must declare its size, which browsers and the app's own client always do.
 - **Not re-audited:** this round has not been independently re-audited.
+
+
+## Phase 4 closure (final targeted checks)
+
+Only two areas were checked, as requested. No broad audit.
+
+1. **Immutable account identity for undo.**
+   - **The problem:** SQLite reuses a deleted row's integer id, which is how an undo could reach another user's account.
+   - **What changed:** every bank account now gets a random, never-reused `uid` (new nullable column; existing rows were not rewritten). An import records the `uid` of the account it creates. Undo deletes an account only if the **owner and the `uid` both match**. Sandbox copies get their own `uid`.
+   - **Tests** (`tests/test_phase4_final.py`):
+     - The account is deleted *without* the My Data path, so only the uid can protect it. The test asserts SQLite really handed the same id to user 2's new account with the same bank name and last 4 digits. User 1's undo then leaves it alone: Rs 7,77,777 and user 2's net worth unchanged.
+     - Positive control: undo still removes the account it really created, and net worth returns to 0.
+2. **One server process per database.**
+   - **What changed:** at start-up the backend takes an exclusive OS lock on `<database>.lock` (`app/process_lock.py`). A second process on the same database exits with "Another Finora server process is already using finora.db…", so it can never recover or modify the first process's imports. The OS releases the lock if the process dies. This is a restriction, not multi-process support. PostgreSQL deployments must follow the same one-process rule (documented, not lock-enforced).
+   - **Tests:** a child process holding the lock makes `acquire` fail, and the lock is free again after it dies. Two **real uvicorn servers** started on the same database: the second exits non-zero with that message and the first keeps serving.
+
+**Targeted test run:** `test_phase4_final.py`, `test_statement_release.py`, `test_statement_fixes.py` and `test_sandbox.py` gave **48 passed, rc=0**. All tests use the temporary database copy.
+
+**Development database after the checks:** integrity ok, transactions 327,196, audit rows 85 (unchanged by the tests).
+
+**Accepted, non-critical limitations:**
+- CSV-only imports.
+- Unmeasured real-bank classification accuracy.
+- Look-alike rows on the same account counted until reviewed.
+- Up to 2 minutes before a crashed import is rolled back.
+- About 13–16 s of analysis after a 150k-row import.
+- Heuristic merchant names.

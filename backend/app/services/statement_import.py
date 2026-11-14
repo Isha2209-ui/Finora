@@ -406,6 +406,7 @@ def run(imp_id: int) -> None:
             db.flush()
             account_id = created_account.id
             imp.account_id = account_id
+            imp.detection = {**(imp.detection or {}), "created_account_uid": created_account.uid}   # for crash/failure cleanup
             db.commit()
         # ---- save in short chunks
         _stage(db, imp, "saving")
@@ -479,7 +480,8 @@ def run(imp_id: int) -> None:
                        "duplicates_near": int(near.sum()), "target_label": _target_label(db, imp.statement_kind, account_id, card_id),
                        "already_on_other_accounts": int(elsewhere.sum()), "already_on_other_accounts_by": elsewhere_on,
                        "created_account_fingerprint": ([created_account.bank_name, created_account.account_masked]
-                                                       if created_account is not None else None)}
+                                                       if created_account is not None else None),
+                       "created_account_uid": created_account.uid if created_account is not None else None}
         imp.rows_processed = int(len(rows))
         db.commit()                                   # one commit: balance change + summary (rows already saved above)
         COMMITTED.add(imp_id)
@@ -630,6 +632,9 @@ def _is_created_by(acc: M.BankAccount | None, imp: M.StatementImport) -> bool:
     if acc is None or acc.user_id != imp.user_id:
         return False
     s = imp.summary or {}
+    uid = s.get("created_account_uid") or (imp.detection or {}).get("created_account_uid")
+    if uid:                                             # immutable identity: the only test for imports that recorded it
+        return acc.uid == uid
     fp = s.get("created_account_fingerprint")
     if fp is None:
         new_acc = ((imp.detection or {}).get("options") or {}).get("new_account") or {}

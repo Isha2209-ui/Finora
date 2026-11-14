@@ -13,6 +13,7 @@ Profile kinds (users.kind):
 
 PAN is never stored in plain text: only a salted SHA-256 hash (for demo lookup) and a masked form.
 """
+import secrets
 from datetime import date, datetime
 
 from sqlalchemy import (JSON, Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text,
@@ -105,6 +106,10 @@ class BankAccount(Base):
     # Where `balance` came from: "manual" (typed by the person / demo data) or "statement" (the closing running
     # balance of an imported statement that reconciled). A statement balance is a balance AS OF that date, not "today".
     balance_as_of: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # Immutable identity. SQLite can hand a deleted row's integer id to a new row (even another user's), so anything
+    # that must refer to "this exact account" later (statement-import undo) uses this random uid, never the id.
+    # Accounts that existed before this column have NULL and are never matched by uid.
+    uid: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True, default=lambda: secrets.token_hex(16))
     balance_source: Mapped[str | None] = mapped_column(String(20), nullable=True)
 
 

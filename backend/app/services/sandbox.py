@@ -40,6 +40,7 @@ def _copy_rows(db: Session, src_id: int, dst_id: int) -> int:
         for r in db.scalars(select(model).where(model.user_id == src_id).order_by(model.id)).all():
             data = _row(r)
             data["user_id"] = dst_id
+            data.pop("uid", None)                       # every copy gets its own immutable uid
             new = model(**data)
             db.add(new)
             db.flush()

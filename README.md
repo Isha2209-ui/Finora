@@ -18,6 +18,8 @@ AI assistant that can only state numbers the backend has computed.
 ./run.sh        # starts backend + frontend
 ```
 
+**One server process per database.** The backend locks `backend/finora.db.lock` at start-up; a second backend (or `uvicorn --workers 2`) on the same database refuses to start. Run tests freely while it runs: they use a temporary copy of the database.
+
 Open **http://localhost:5173**, create a local account (e-mail + password) and sign in. In VS Code: `Cmd+Shift+B` runs the same thing ("Run Finora").
 
 After signing in you choose **Explore demo identity** or **Build my financial identity**.

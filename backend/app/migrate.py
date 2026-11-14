@@ -26,7 +26,7 @@ _COLUMNS = {
     "income_records": [("import_id", "INTEGER", None), ("raw_description", "VARCHAR(200)", None),
                        ("classified_by", "VARCHAR(40)", None), ("confidence", "FLOAT", None), ("needs_review", "BOOLEAN", "0"),
                        ("review_reason", "VARCHAR(160)", None)],
-    "bank_accounts": [("balance_as_of", "DATE", None), ("balance_source", "VARCHAR(20)", None)],
+    "bank_accounts": [("balance_as_of", "DATE", None), ("balance_source", "VARCHAR(20)", None), ("uid", "VARCHAR(32)", None)],
     "statement_imports": [("heartbeat_at", "TIMESTAMP", None), ("cancel_requested", "BOOLEAN", "0"), ("progress_pct", "FLOAT", None)],
 }
 

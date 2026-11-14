@@ -11,7 +11,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func, inspect, select
 
-from . import migrate
+from . import migrate, process_lock
 from . import models as M
 from .cfo import llm
 from .config import CORS_ORIGINS, CSRF_HEADER, DATABASE_URL, IS_PRODUCTION, SESSION_COOKIE
@@ -26,6 +26,7 @@ from .security import install_log_scrubbing
 async def lifespan(app: FastAPI):
     """First run: create tables, load the demo data and train the models automatically."""
     install_log_scrubbing()
+    process_lock.acquire(DATABASE_URL)          # exactly one server process per database (see app/process_lock.py)
     if not inspect(engine).has_table("users"):
         Base.metadata.create_all(engine)
     changes = migrate.run(engine)
