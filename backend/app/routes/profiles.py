@@ -158,7 +158,8 @@ def transactions(ctx: ProfileCtx = Depends(profile_reader), db: Session = Depend
         f = flagged.get(t.ref)
         items.append({"id": t.id, "ref": t.ref, "date": t.date.isoformat(), "amount": t.amount, "type": t.type,
                       "description": t.raw_description, "merchant": t.merchant, "category": t.category,
-                      "category_source": t.category_source,
+                      "category_source": t.category_source, "confidence": t.confidence, "needs_review": bool(t.needs_review),
+                      "review_reason": t.review_reason, "flags": t.flags, "import_id": t.import_id, "balance_after": t.balance_after,
                       "source": cards.get(t.card_id) or accts.get(t.account_id) or "-", "source_kind": "card" if t.card_id else "account",
                       "anomaly_score": scores.get(t.ref), "flagged": f is not None,
                       "severity": f["severity"] if f else None, "reasons": f["reasons"] if f else None})
@@ -180,7 +181,7 @@ def recategorise(tx_id: int, body: S.CategoryPatch, ctx: ProfileCtx = Depends(pr
     cat = standardise_category(body.category)
     if cat not in ALL_CATEGORIES:
         raise HTTPException(422, f"Unknown category. Choose one of: {', '.join(ALL_CATEGORIES)}")
-    t.category, t.category_source = cat, "user"
+    t.category, t.category_source, t.needs_review, t.review_reason = cat, "user", False, None
     db.commit()
     common.invalidate(user.id)
     return {"id": t.id, "category": t.category, "category_source": t.category_source}

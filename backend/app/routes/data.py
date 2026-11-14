@@ -101,7 +101,8 @@ async def upload(request: Request, file: UploadFile = File(...), account_id: int
     if not account_id and not card_id:
         account_id = db.scalar(select(M.BankAccount.id).where(M.BankAccount.user_id == user.id).order_by(M.BankAccount.is_primary.desc()))
     try:
-        res = statement_import.import_statement(db, user, content, account_id, card_id)
+        res = statement_import.import_statement(db, user, content, account_id, card_id, app_user_id=ctx.account.id,
+                                                filename=Path(file.filename or "statement.csv").name)
     except ValueError as e:
         audit(db, "statement.upload", request=request, app_user_id=ctx.account.id, profile_id=user.id, outcome="failed")
         raise HTTPException(422, str(e))

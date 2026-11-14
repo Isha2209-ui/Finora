@@ -102,6 +102,10 @@ class BankAccount(Base):
     balance: Mapped[float] = mapped_column(Float)
     interest_rate: Mapped[float] = mapped_column(Float)
     is_primary: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Where `balance` came from: "manual" (typed by the person / demo data) or "statement" (the closing running
+    # balance of an imported statement that reconciled). A statement balance is a balance AS OF that date, not "today".
+    balance_as_of: Mapped[date | None] = mapped_column(Date, nullable=True)
+    balance_source: Mapped[str | None] = mapped_column(String(20), nullable=True)
 
 
 class CreditCard(Base):
@@ -141,6 +145,13 @@ class IncomeRecord(Base):
     amount: Mapped[float] = mapped_column(Float)
     source: Mapped[str] = mapped_column(String(80))  # Salary | Bonus | Client payment | Rent | Interest
     date: Mapped[date] = mapped_column(Date, index=True)
+    # Statement-import provenance (NULL for demo data and manual entries)
+    import_id: Mapped[int | None] = mapped_column(Integer, index=True, nullable=True)
+    raw_description: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    classified_by: Mapped[str | None] = mapped_column(String(40), nullable=True)  # rule name | user
+    confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    needs_review: Mapped[bool] = mapped_column(Boolean, default=False)
+    review_reason: Mapped[str | None] = mapped_column(String(160), nullable=True)
 
 
 class Transaction(Base):
@@ -159,6 +170,13 @@ class Transaction(Base):
     merchant: Mapped[str | None] = mapped_column(String(80), nullable=True)
     # Ground-truth label for planted unusual transactions: evaluation ONLY, never a model input.
     injected_anomaly_label: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Statement-import provenance (NULL for demo data and manual entries)
+    import_id: Mapped[int | None] = mapped_column(Integer, index=True, nullable=True)
+    balance_after: Mapped[float | None] = mapped_column(Float, nullable=True)  # running balance printed on the statement
+    confidence: Mapped[float | None] = mapped_column(Float, nullable=True)  # categoriser probability (category_source=model)
+    needs_review: Mapped[bool] = mapped_column(Boolean, default=False)
+    review_reason: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    flags: Mapped[str | None] = mapped_column(String(80), nullable=True)  # comma list: refund, transfer, possible_duplicate
 
 
 class RecurringPayment(Base):
@@ -357,4 +375,42 @@ class ChatMessage(Base):
     role: Mapped[str] = mapped_column(String(12))  # user | assistant
     content: Mapped[str] = mapped_column(Text)
     meta: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+# ---------------------------------------------------------------- statement imports
+class StatementImport(Base):
+    """One uploaded statement file: detection, mapping, progress, outcome and what is needed to undo it."""
+    __tablename__ = "statement_imports"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = _fk("users")
+    app_user_id: Mapped[int | None] = mapped_column(Integer, index=True, nullable=True)
+    filename: Mapped[str] = mapped_column(String(120))
+    sha256: Mapped[str] = mapped_column(String(64), index=True)
+    size_bytes: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(20), default="preview")  # preview|queued|running|done|failed|cancelled|undone
+    stage: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    statement_kind: Mapped[str] = mapped_column(String(10), default="bank")  # bank | card
+    account_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    card_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    detection: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # format, encoding, delimiter, header row, mapping
+    rows_total: Mapped[int] = mapped_column(Integer, default=0)
+    rows_processed: Mapped[int] = mapped_column(Integer, default=0)
+    summary: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    previous_balance: Mapped[float | None] = mapped_column(Float, nullable=True)  # restored on undo
+    previous_balance_as_of: Mapped[date | None] = mapped_column(Date, nullable=True)
+    previous_balance_source: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class CategoryRule(Base):
+    """A correction the person made, remembered for future imports: narrations whose merchant key matches get this category."""
+    __tablename__ = "category_rules"
+    __table_args__ = (UniqueConstraint("user_id", "merchant_key"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = _fk("users")
+    merchant_key: Mapped[str] = mapped_column(String(80))
+    category: Mapped[str] = mapped_column(String(40))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

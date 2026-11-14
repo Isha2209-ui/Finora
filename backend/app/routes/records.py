@@ -166,6 +166,10 @@ def patch(record_type: str, item_id: int, body: dict, request: Request, ctx: Pro
         db.execute(update(M.BankAccount).where(M.BankAccount.user_id == ctx.profile.id).values(is_primary=False))
     for k, v in (rt.to_db(merged) if rt.to_db else merged).items():
         setattr(row, k, v)
+    if rt.key == "bank_accounts" and "balance" in changed:
+        row.balance_source, row.balance_as_of = "manual", None     # a typed balance is no longer the statement's verified one
+    if rt.key == "transactions" and "category" in changed:
+        row.category_source, row.needs_review, row.review_reason = "user", False, None
     _changed(rt, merged, ctx.profile.id, request, ctx, db, "update", row.id, changed)
     db.refresh(row)
     return _out(rt, row)

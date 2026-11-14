@@ -20,6 +20,13 @@ _COLUMNS = {
               ("expires_at", "TIMESTAMP", None)],
     "reports": [("app_user_id", "INTEGER", None)],
     "chat_messages": [("app_user_id", "INTEGER", None)],
+    # Phase 4: statement-import provenance
+    "transactions": [("import_id", "INTEGER", None), ("balance_after", "FLOAT", None), ("confidence", "FLOAT", None),
+                     ("needs_review", "BOOLEAN", "0"), ("review_reason", "VARCHAR(160)", None), ("flags", "VARCHAR(80)", None)],
+    "income_records": [("import_id", "INTEGER", None), ("raw_description", "VARCHAR(200)", None),
+                       ("classified_by", "VARCHAR(40)", None), ("confidence", "FLOAT", None), ("needs_review", "BOOLEAN", "0"),
+                       ("review_reason", "VARCHAR(160)", None)],
+    "bank_accounts": [("balance_as_of", "DATE", None), ("balance_source", "VARCHAR(20)", None)],
 }
 
 
@@ -55,7 +62,9 @@ def run(engine: Engine) -> list[str]:
                      "CREATE INDEX IF NOT EXISTS ix_users_kind ON users (kind)",
                      "CREATE INDEX IF NOT EXISTS ix_users_expires_at ON users (expires_at)",
                      "CREATE INDEX IF NOT EXISTS ix_chat_messages_app_user_id ON chat_messages (app_user_id)",
-                     "CREATE INDEX IF NOT EXISTS ix_reports_app_user_id ON reports (app_user_id)"):
+                     "CREATE INDEX IF NOT EXISTS ix_reports_app_user_id ON reports (app_user_id)",
+                     "CREATE INDEX IF NOT EXISTS ix_transactions_import_id ON transactions (import_id)",
+                     "CREATE INDEX IF NOT EXISTS ix_income_records_import_id ON income_records (import_id)"):
             try:
                 conn.execute(text(stmt))
             except Exception:  # pragma: no cover - index already present under another name

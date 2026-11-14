@@ -55,7 +55,9 @@ LOGIN_MAX_FAILURES = _int("LOGIN_MAX_FAILURES", 5)        # per email, per windo
 LOGIN_IP_MAX_ATTEMPTS = _int("LOGIN_IP_MAX_ATTEMPTS", 30)  # per IP, per window
 LOGIN_WINDOW_SECONDS = _int("LOGIN_WINDOW_SECONDS", 900)
 REGISTER_IP_MAX = _int("REGISTER_IP_MAX", 10)              # per IP, per hour
-UPLOAD_MAX_BYTES = _int("UPLOAD_MAX_BYTES", 5_000_000)
+UPLOAD_MAX_BYTES = _int("UPLOAD_MAX_BYTES", 25_000_000)   # statement CSVs: one or two years of history
+STATEMENT_MAX_ROWS = _int("STATEMENT_MAX_ROWS", 150_000)
+IMPORT_TMP_DIR = Path(os.getenv("IMPORT_TMP_DIR", BASE_DIR / "uploads" / "pending"))  # files awaiting confirmation; deleted after import
 UPLOAD_MAX_PER_HOUR = _int("UPLOAD_MAX_PER_HOUR", 30)
 CHAT_MAX_PER_MINUTE = _int("CHAT_MAX_PER_MINUTE", 20)
 ENABLE_RETRAIN_ENDPOINT = _bool("ENABLE_RETRAIN_ENDPOINT", not IS_PRODUCTION)
@@ -68,5 +70,5 @@ if IS_PRODUCTION:
     if not COOKIE_SECURE:
         raise RuntimeError("FINORA_ENV=production requires COOKIE_SECURE=true (HTTPS only cookies).")
 
-for d in (ARTIFACTS_DIR, REPORTS_DIR):
+for d in (ARTIFACTS_DIR, REPORTS_DIR, IMPORT_TMP_DIR):
     d.mkdir(parents=True, exist_ok=True)

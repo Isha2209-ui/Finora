@@ -18,7 +18,7 @@ from .config import CORS_ORIGINS, CSRF_HEADER, DATABASE_URL, IS_PRODUCTION
 from .database import Base, SessionLocal, engine
 from .ml import registry
 from .routes import auth as auth_routes
-from .routes import data, planning, profiles, records
+from .routes import data, planning, profiles, records, statements
 from .security import install_log_scrubbing
 
 
@@ -42,6 +42,11 @@ async def lifespan(app: FastAPI):
         purged = sandbox.purge_expired(db)
     if purged:
         print(f"[finora] Removed {purged} expired demo sandbox(es).")
+    with SessionLocal() as db:
+        from .services import statement_import
+        rolled = statement_import.recover_interrupted(db)
+    if rolled:
+        print(f"[finora] Rolled back {rolled} statement import(s) interrupted by a restart.")
     if not all(registry.status().values()):
         print("[finora] Models not found - training (about 40 seconds)...")
         from .ml import train
@@ -75,6 +80,7 @@ app.include_router(profiles.router)
 app.include_router(planning.router)
 app.include_router(data.router)
 app.include_router(records.router)
+app.include_router(statements.router)
 
 
 @app.get("/api/health", tags=["System"], summary="Service status")
