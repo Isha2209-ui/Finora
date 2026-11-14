@@ -23,6 +23,7 @@ export function FinoraProvider({ children }) {
     try {
       const [p, a] = await Promise.all([api.profile(id), rerun ? api.analyze(id) : api.analysis(id)])
       setProfile(p); setAnalysis(a)
+      return a
     }
     catch (e) { setError(e.message); if (e.status === 404) { sessionStorage.removeItem('finora.profile'); setProfileId(null) } }
     finally { setLoading(false) }

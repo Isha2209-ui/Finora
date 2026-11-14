@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   Activity, BadgeIndianRupee, Bot, BrainCircuit, CreditCard, Database, FileText, Flame, Landmark, Lightbulb, LogOut,
-  Clock, Eye, FlaskConical, MessageSquare, PiggyBank, RefreshCw, Repeat, Scale, ScanSearch, TrendingUp, UserRound, Wallet,
+  Clock, Eye, FlaskConical, MessageSquare, PencilLine, PiggyBank, RefreshCw, Repeat, Scale, ScanSearch, TrendingUp, UserRound, Wallet,
 } from 'lucide-react'
 import { api } from '../api'
 import { useAuth } from '../auth.jsx'
@@ -11,7 +11,7 @@ import ChatPanel from './ChatPanel.jsx'
 import { Badge, cx } from './ui.jsx'
 
 const NAV = [
-  ['Overview', [['/identity', 'Financial Identity', UserRound], ['/accounts', 'Accounts & Cards', Landmark], ['/investments', 'Investments & Assets', TrendingUp]]],
+  ['Overview', [['/identity', 'Financial Identity', UserRound], ['/records', 'My Data (add & edit)', PencilLine], ['/accounts', 'Accounts & Cards', Landmark], ['/investments', 'Investments & Assets', TrendingUp]]],
   ['Intelligence', [['/transactions', 'Transaction Intelligence', ScanSearch], ['/forecast', 'Cash-Flow Forecast', Activity], ['/credit', 'Credit & Debt', CreditCard], ['/budget', 'Budget, Savings & Tax', PiggyBank]]],
   ['Planning', [['/fire', 'FIRE & Retirement', Flame], ['/decision', 'Decision Simulator', Scale], ['/cfo', 'AI CFO', Bot], ['/recommendations', 'Recommendations', Lightbulb]]],
   ['System', [['/reports', 'Reports', FileText], ['/models', 'Model Lab', BrainCircuit], ['/data', 'Profile & Data', Database]]],
@@ -66,7 +66,7 @@ export default function Layout({ children }) {
           ))}
         </nav>
         <div className="border-t border-line p-3 text-[10.5px] leading-relaxed text-faint">
-          Synthetic demo data. Educational guidance, not a substitute for a licensed financial advisor.
+          {profile?.kind === 'private' ? 'Your own data, visible only to your account.' : 'Synthetic demo data.'} Educational guidance, not a substitute for a licensed financial advisor.
         </div>
       </aside>
 
@@ -77,13 +77,14 @@ export default function Layout({ children }) {
               <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-raised text-sm font-semibold text-accent">{p.name.split(' ').map((w) => w[0]).slice(0, 2).join('')}</div>
               <div className="min-w-0">
                 <div className="truncate text-sm font-medium">{p.name} <span className="font-normal text-muted">· {p.age} · {p.occupation}, {p.city}</span></div>
-                <div className="num text-xs text-faint">PAN {p.pan_masked} · {p.internal_id}</div>
+                <div className="num text-xs text-faint">{p.pan_masked ? `PAN ${p.pan_masked} · ` : ''}{p.internal_id}</div>
               </div>
             </div>
           ) : <div className="text-sm text-muted">Loading profile…</div>}
           {profile?.read_only && <Badge tone="warn"><Eye size={12} /> Read-only demo</Badge>}
           <div className="flex-1" />
-          {hs && <Badge tone={hs.score >= 65 ? 'good' : hs.score >= 45 ? 'warn' : 'bad'}><Wallet size={12} /> Health {hs.score}/100 · {hs.band}</Badge>}
+          {hs && (hs.score == null ? <Badge><Wallet size={12} /> Health score: not enough data</Badge>
+            : <Badge tone={hs.score >= 65 ? 'good' : hs.score >= 45 ? 'warn' : 'bad'}><Wallet size={12} /> Health {hs.score}/100 · {hs.band}</Badge>)}
           <button onClick={() => refresh({ rerun: true })} title="Re-run the full analysis" className="rounded-lg border border-line bg-raised p-2 text-muted hover:text-ink">
             <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
           </button>

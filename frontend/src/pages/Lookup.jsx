@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ArrowRight, BadgeIndianRupee, Clock, FlaskConical, Lock, ShieldCheck, UserPlus, UserRound } from 'lucide-react'
 import { api } from '../api'
 import { useAuth } from '../auth.jsx'
@@ -19,7 +20,8 @@ export default function Lookup() {
   const [busy, setBusy] = useState(null)
   const [err, setErr] = useState(null)
   const [pan, setPan] = useState('')
-  const [np, setNp] = useState({ name: account?.display_name || '', age: 28, employment_type: 'salaried', city: '', monthly_income: '', bank_balance: '' })
+  const [np, setNp] = useState({ name: account?.display_name || '', age: 28, employment_type: 'salaried', city: '', retirement_age_target: 60 })
+  const navigate = useNavigate()
 
   useEffect(() => {
     api.health().then(setHealth).catch((e) => setHealth({ error: e.message }))
@@ -33,9 +35,10 @@ export default function Lookup() {
   const build = (e) => {
     e.preventDefault()
     run('build', async () => {
-      const body = { name: np.name.trim(), age: Number(np.age), employment_type: np.employment_type, monthly_income: Number(np.monthly_income), bank_balance: Number(np.bank_balance || 0) }
+      const body = { name: np.name.trim(), age: Number(np.age), employment_type: np.employment_type, retirement_age_target: Number(np.retirement_age_target) }
       if (np.city.trim()) body.city = np.city.trim()
       select((await api.createProfile(body)).profile.internal_id)
+      navigate('/records')
     })
   }
 
@@ -80,17 +83,16 @@ export default function Lookup() {
 
           <section className="rounded-2xl border border-line bg-surface p-5">
             <div className="flex items-center gap-2"><UserPlus size={18} className="text-accent" /><h2 className="font-semibold">Build my financial identity</h2><Badge tone="good">Private</Badge></div>
-            <p className="mt-1.5 text-sm text-muted">Start a profile that only your account can see. Begin with the basics; add accounts, cards and holdings, or upload a bank statement CSV, from <em>Profile &amp; Data</em>.</p>
+            <p className="mt-1.5 text-sm text-muted">Start a profile that only your account can see. Begin with the basics here, then add your money under <em>My Data</em>.</p>
             <form onSubmit={build} className="mt-4 grid grid-cols-2 gap-3">
               <div className="col-span-2"><Field label="Name"><Input required minLength={2} maxLength={120} value={np.name} onChange={(e) => setNp({ ...np, name: e.target.value })} /></Field></div>
               <Field label="Age"><Input type="number" required min={18} max={80} value={np.age} onChange={(e) => setNp({ ...np, age: e.target.value })} /></Field>
               <Field label="Employment"><Select value={np.employment_type} onChange={(e) => setNp({ ...np, employment_type: e.target.value })}><option value="salaried">Salaried</option><option value="self_employed">Self-employed</option></Select></Field>
-              <Field label="Monthly take-home income (₹)"><Input type="number" required min={1} value={np.monthly_income} onChange={(e) => setNp({ ...np, monthly_income: e.target.value })} /></Field>
-              <Field label="Main bank balance (₹)"><Input type="number" min={0} value={np.bank_balance} onChange={(e) => setNp({ ...np, bank_balance: e.target.value })} /></Field>
-              <div className="col-span-2"><Field label="City (optional)"><Input maxLength={80} value={np.city} onChange={(e) => setNp({ ...np, city: e.target.value })} /></Field></div>
+              <Field label="City (optional)"><Input maxLength={80} value={np.city} onChange={(e) => setNp({ ...np, city: e.target.value })} /></Field>
+              <Field label="Target retirement age"><Input type="number" required min={30} max={75} value={np.retirement_age_target} onChange={(e) => setNp({ ...np, retirement_age_target: e.target.value })} /></Field>
               <div className="col-span-2"><Button icon={UserPlus} loading={busy === 'build'} className="w-full">Create my private profile</Button></div>
             </form>
-            <p className="mt-2 text-[11px] leading-relaxed text-faint">Your stated income is recorded as six months of income so the first analysis has something to work with. You can replace it with real statements later.</p>
+            <p className="mt-2 text-[11px] leading-relaxed text-faint">Your profile starts empty. Next you add accounts, income, cards, loans and investments yourself (or upload a statement). Finora never fills in numbers for you; anything it cannot calculate yet is shown as not available.</p>
           </section>
         </div>
 

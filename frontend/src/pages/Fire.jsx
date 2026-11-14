@@ -13,8 +13,23 @@ export default function Fire() {
     nominal_return_pct: base.nominal_return_pct, inflation_pct: base.inflation_pct, withdrawal_rate_pct: base.withdrawal_rate_pct, step_up_pct: base.annual_step_up_pct }
   const [p, setP] = useState(init)
   const [r, setR] = useState(null)
+  const [typed, setTyped] = useState('')
   useEffect(() => { const t = setTimeout(() => api.fire(profileId, p).then(setR).catch(() => {}), 180); return () => clearTimeout(t) }, [profileId, p])
   if (!r) return <Loading full label="Projecting…" />
+  if (r.available === false) return (
+    <>
+      <PageHeader title="FIRE & Retirement" subtitle="Financial Independence, Retire Early: when your investments can pay for your life." />
+      <Card title="A projection needs your yearly expenses" subtitle={r.reason}>
+        <KV rows={[['Invested towards retirement (known)', inr(r.inputs.current_corpus)], ['Going in each month (your SIPs)', inr(r.inputs.monthly_investment)]]} />
+        <form className="mt-4 flex flex-wrap items-end gap-2" onSubmit={(e) => { e.preventDefault(); if (Number(typed) > 0) setP({ ...p, annual_expenses: Number(typed) }) }}>
+          <label className="block"><span className="mb-1 block text-xs text-muted">Expected yearly expenses in retirement (₹)</span>
+            <input type="number" min={1} required value={typed} onChange={(e) => setTyped(e.target.value)} className="w-56 rounded-xl border border-line bg-bg px-3 py-2 text-sm" /></label>
+          <Button icon={Flame}>Project with this figure</Button>
+        </form>
+        <div className="mt-3"><Note>Finora will not guess your expenses. A figure you type here is used only for this projection and is labelled as yours; add transactions or upload a statement to have it measured.</Note></div>
+      </Card>
+    </>
+  )
   const liq = r.runway
   const changed = JSON.stringify(p) !== JSON.stringify(init)
   const S = ({ k, label, min, max, step, fmt }) => (
@@ -22,17 +37,20 @@ export default function Fire() {
       <input type="range" min={min} max={max} step={step} value={p[k]} onChange={(e) => setP({ ...p, [k]: Number(e.target.value) })} className="mt-1 w-full" /></div>
   )
   const maxInv = Math.max(200000, Math.round(base.monthly_investment * 4 / 10000) * 10000)
+  const expBase = base.annual_expenses ?? p.annual_expenses
+  const rw = (x) => (x == null ? '—' : `${x} mo`)
   return (
     <>
       <PageHeader title="FIRE & Retirement" subtitle="Financial Independence, Retire Early: when your investments can pay for your life. Projections update live as you move the sliders.">
         {changed && <Button variant="ghost" icon={RotateCcw} onClick={() => setP(init)}>Reset to my data</Button>}
       </PageHeader>
+      {r.expenses_source === 'entered by you for this projection' && <div className="mb-4"><Note tone="info">Using yearly expenses you entered ({inr(p.annual_expenses)}), not measured spending.</Note></div>}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <Stat label="FIRE age" value={r.fire_age ?? '75+'} tone={r.on_track ? 'good' : 'warn'} icon={Flame} sub={r.fire_age ? `${r.years_to_fire} years from now · baseline ${r.baseline.fire_age ?? '75+'}` : 'not reached by 75 at this pace'} />
         <Stat label="FIRE number" value={inr(r.fire_number)} sub={`${inr(r.inputs.annual_expenses)}/yr ÷ ${r.inputs.withdrawal_rate_pct}%`} />
         <Stat label={`Corpus at ${r.retirement_age_target}`} value={inr(r.corpus_at_target_age)} tone={r.on_track ? 'good' : 'bad'} sub={r.on_track ? 'on track for your target' : `short by ${inr(r.shortfall_at_target_age)}`} />
-        <Stat label="Success probability" value={pct(r.success_probability_pct, 0)} tone={r.success_probability_pct >= 70 ? 'good' : r.success_probability_pct >= 40 ? 'warn' : 'bad'} sub={`${r.monte_carlo.runs.toLocaleString()} market scenarios`} />
-        <Stat label="Runway if income stops" value={`${liq.runway_months} mo`} tone={liq.runway_months >= 6 ? 'good' : liq.runway_months >= 3 ? 'warn' : 'bad'} sub={`${liq.runway_months_essentials_only} mo on essentials only`} />
+        <Stat label="Success probability" value={pct(r.success_probability_pct, 0)} tone={r.success_probability_pct >= 70 ? 'good' : r.success_probability_pct >= 40 ? 'warn' : 'bad'} sub={`${(r.monte_carlo?.runs ?? 0).toLocaleString()} market scenarios`} />
+        <Stat label="Runway if income stops" value={rw(liq.runway_months)} tone={liq.runway_months == null ? 'ink' : liq.runway_months >= 6 ? 'good' : liq.runway_months >= 3 ? 'warn' : 'bad'} sub={liq.runway_months == null ? 'needs measured monthly expenses' : `${rw(liq.runway_months_essentials_only)} on essentials only`} />
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[1fr_330px]">
@@ -53,7 +71,7 @@ export default function Fire() {
           <div className="space-y-4">
             <S k="monthly_investment" label="Monthly investment" min={0} max={maxInv} step={1000} fmt={(v) => inr(v, { compact: false })} />
             <S k="retirement_age" label="Target retirement age" min={Math.max(35, a.profile.age + 2)} max={70} step={1} fmt={(v) => v} />
-            <S k="annual_expenses" label="Annual expenses in retirement" min={Math.round(base.annual_expenses * 0.5 / 10000) * 10000} max={Math.round(base.annual_expenses * 2 / 10000) * 10000} step={10000} fmt={(v) => inr(v)} />
+            <S k="annual_expenses" label="Annual expenses in retirement" min={Math.round(expBase * 0.5 / 10000) * 10000} max={Math.round(expBase * 2 / 10000) * 10000} step={10000} fmt={(v) => inr(v)} />
             <S k="nominal_return_pct" label="Expected return" min={6} max={15} step={0.5} fmt={(v) => `${v}%`} />
             <S k="inflation_pct" label="Inflation" min={3} max={9} step={0.5} fmt={(v) => `${v}%`} />
             <S k="withdrawal_rate_pct" label="Safe withdrawal rate" min={2.5} max={5} step={0.1} fmt={(v) => `${v}%`} />
@@ -79,8 +97,8 @@ export default function Fire() {
             { key: 'b', label: 'In future rupees', right: true, render: (x) => <span className="text-muted">{inr(x.corpus_future_rupees)}</span> }]} />
         </Card>
         <Card title="Runway and assumptions">
-          <KV rows={[['Liquid savings', inr(liq.emergency_pool)], ['Runway at current spending', `${liq.runway_months} months`], ['Runway including stocks and equity funds', `${liq.runway_months_incl_market} months`],
-            ['Real return (after inflation)', pct(r.inputs.real_return_pct)], ['Monte Carlo outcome range at target', `${inr(r.monte_carlo.p10)} – ${inr(r.monte_carlo.p90)}`]]} />
+          <KV rows={[['Liquid savings', inr(liq.emergency_pool)], ['Runway at current spending', rw(liq.runway_months)], ['Runway including stocks and equity funds', rw(liq.runway_months_incl_market)],
+            ['Real return (after inflation)', pct(r.inputs.real_return_pct)], ['Monte Carlo outcome range at target', `${inr(r.monte_carlo?.p10)} – ${inr(r.monte_carlo?.p90)}`]]} />
           <div className="mt-2 space-y-2"><Note>{liq.definition}</Note><Note>{r.corpus_definition} {r.expense_definition}</Note></div>
         </Card>
       </div>

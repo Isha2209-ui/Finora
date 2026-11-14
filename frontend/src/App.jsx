@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 import Layout from './components/Layout.jsx'
 import { ErrorBox, Loading } from './components/ui.jsx'
 import Accounts from './pages/Accounts.jsx'
@@ -14,6 +15,7 @@ import Investments from './pages/Investments.jsx'
 import Lookup from './pages/Lookup.jsx'
 import ModelLab from './pages/ModelLab.jsx'
 import Recommendations from './pages/Recommendations.jsx'
+import Records from './pages/Records.jsx'
 import Reports from './pages/Reports.jsx'
 import Transactions from './pages/Transactions.jsx'
 import { useAuth } from './auth.jsx'
@@ -31,9 +33,11 @@ export default function App() {
       {error ? <ErrorBox message={error} onRetry={() => refresh()} />
         : !analysis || loading && !analysis ? <Loading full label="Running models and calculations…" />
           : (
+            <ErrorBoundary>
             <Routes>
               <Route path="/" element={<Navigate to="/identity" replace />} />
               <Route path="/identity" element={<Identity />} />
+              <Route path="/records" element={<Records />} />
               <Route path="/accounts" element={<Accounts />} />
               <Route path="/investments" element={<Investments />} />
               <Route path="/transactions" element={<Transactions />} />
@@ -49,6 +53,7 @@ export default function App() {
               <Route path="/data" element={<DataManagement />} />
               <Route path="*" element={<Navigate to="/identity" replace />} />
             </Routes>
+            </ErrorBoundary>
           )}
     </Layout>
   )

@@ -14,7 +14,12 @@ export default function Identity() {
   const risk = ml.credit_risk
   return (
     <>
-      <PageHeader title="Financial Identity" subtitle={`Everything ${a.profile.name.split(' ')[0]} owns and owes, in one place - across ${nw && Object.keys(nw.breakdown).length} asset classes, analysed for ${cf.period.months} months (${monthLabel(cf.period.from)} – ${monthLabel(cf.period.to)}).`} />
+      <PageHeader title="Financial Identity" subtitle={`Everything ${a.profile.name.split(' ')[0]} owns and owes, in one place - across ${Object.keys(nw.breakdown).length} asset classes` + (cf.period ? `, analysed for ${cf.period.months} months (${monthLabel(cf.period.from)} – ${monthLabel(cf.period.to)}).` : '. No income or spending history yet.')} />
+      {a.completeness?.missing?.length > 0 && (
+        <Link to="/records" className="mb-5 flex items-center gap-2 rounded-xl border border-info/30 bg-info/10 px-3.5 py-2.5 text-sm text-info">
+          <Info size={15} /> Data completeness {a.completeness.score_pct}%. Not yet provided: {a.completeness.missing.slice(0, 4).join(', ')}. Results that need them show “—”. <span className="ml-auto flex items-center gap-1">Add data <ArrowRight size={13} /></span>
+        </Link>
+      )}
 
       {a.alerts.filter((x) => x.level !== 'info').length > 0 && (
         <div className="mb-5 grid gap-2 md:grid-cols-2">
@@ -31,15 +36,17 @@ export default function Identity() {
         <Stat label="Net worth" value={inr(nw.net_worth)} tone={nw.net_worth >= 0 ? 'ink' : 'bad'} icon={Wallet}
           sub={nw.change_over_period != null ? `${nw.change_over_period >= 0 ? '▲' : '▼'} ${inr(Math.abs(nw.change_over_period))} over 12 months` : null} />
         <Stat label="Total assets" value={inr(nw.total_assets)} icon={TrendingUp} sub={`Liabilities ${inr(nw.total_liabilities)} · ${pct(nw.debt_to_assets_pct)} of assets`} />
-        <Stat label="Monthly surplus (avg)" value={inr(cf.avg_monthly_savings)} tone={cf.avg_monthly_savings >= 0 ? 'good' : 'bad'} icon={Landmark}
-          sub={`Income ${inr(cf.avg_monthly_income)} · spend ${inr(cf.avg_monthly_expenses)} · saves ${pct(cf.avg_savings_rate_pct)}`} />
-        <Stat label="FIRE age (projected)" value={fire.fire_age ?? '75+'} tone={fire.on_track ? 'good' : 'warn'} icon={Flame}
-          sub={`Target ${fire.retirement_age_target} · ${pct(fire.progress_pct)} of FIRE number · runway ${liq.runway_months} mo`} />
+        <Stat label="Monthly surplus (avg)" value={inr(cf.avg_monthly_savings)} tone={cf.avg_monthly_savings == null ? 'ink' : cf.avg_monthly_savings >= 0 ? 'good' : 'bad'} icon={Landmark}
+          sub={cf.avg_monthly_savings == null ? `Needs ${[!cf.income_known && 'income', !cf.spending_known && 'spending history'].filter(Boolean).join(' and ')}` : `Income ${inr(cf.avg_monthly_income)} · spend ${inr(cf.avg_monthly_expenses)} · saves ${pct(cf.avg_savings_rate_pct)}`} />
+        {fire.available === false
+          ? <Stat label="FIRE age (projected)" value="—" icon={Flame} sub="Needs spending history to know your yearly expenses" />
+          : <Stat label="FIRE age (projected)" value={fire.fire_age ?? '75+'} tone={fire.on_track ? 'good' : 'warn'} icon={Flame}
+              sub={`Target ${fire.retirement_age_target} · ${pct(fire.progress_pct)} of FIRE number · runway ${liq.runway_months ?? '—'} mo`} />}
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-3">
         <Card title="Net worth trend" subtitle="Month-end assets minus liabilities" className="xl:col-span-2">
-          <div className="h-64">
+          {nw.history.length < 2 ? <p className="py-20 text-center text-sm text-muted">A trend needs month-end history, which builds up from your statements over time.</p> : <div className="h-64">
             <ResponsiveContainer>
               <AreaChart data={nw.history} margin={{ left: 0, right: 8, top: 8 }}>
                 <defs><linearGradient id="nw" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#2dd4bf" stopOpacity={0.35} /><stop offset="100%" stopColor="#2dd4bf" stopOpacity={0} /></linearGradient></defs>
@@ -49,10 +56,11 @@ export default function Identity() {
                 <Area type="monotone" dataKey="net_worth" name="Net worth" stroke="#2dd4bf" strokeWidth={2} fill="url(#nw)" />
               </AreaChart>
             </ResponsiveContainer>
-          </div>
+          </div>}
         </Card>
         <Card title="Financial health score" subtitle={hs.method}>
-          <div className="flex items-baseline gap-3"><div className={cx('num text-5xl font-semibold', hs.score >= 65 ? 'text-good' : hs.score >= 45 ? 'text-warn' : 'text-bad')}>{hs.score}</div><div className="text-sm text-muted">/ 100 · {hs.band}</div></div>
+          <div className="flex items-baseline gap-3"><div className={cx('num text-5xl font-semibold', hs.score == null ? 'text-faint' : hs.score >= 65 ? 'text-good' : hs.score >= 45 ? 'text-warn' : 'text-bad')}>{hs.score ?? '—'}</div><div className="text-sm text-muted">/ 100 · {hs.band}</div></div>
+          {Object.keys(hs.not_assessed || {}).length > 0 && <p className="mt-1 text-xs text-faint">Not assessed: {Object.entries(hs.not_assessed).map(([k, v]) => `${k} (${v})`).join('; ')}.</p>}
           <div className="mt-1 h-48">
             <ResponsiveContainer>
               <RadarChart data={pillars} outerRadius="62%" margin={{ left: 30, right: 30 }}><PolarGrid stroke="#1f2a40" /><PolarAngleAxis dataKey="pillar" tick={{ fontSize: 10.5, fill: '#8695ad' }} />
@@ -88,15 +96,15 @@ export default function Identity() {
         <Card title="Liquidity" subtitle="How quickly money can be reached">
           <KV rows={[['Immediate (bank, cash)', inr(liq.immediate)], ['Within a week (FDs, debt funds)', inr(liq.within_a_week)], ['Market-linked (stocks, equity funds)', inr(liq.market_linked)], ['Locked (property, EPF/PPF, jewellery)', inr(liq.locked)]]} />
           <div className="mt-3"><Meter value={liq.emergency_fund_months || 0} max={6} tone={(liq.emergency_fund_months || 0) >= 6 ? 'good' : (liq.emergency_fund_months || 0) >= 3 ? 'warn' : 'bad'}
-            label={<><span>Emergency fund</span><span className="num">{liq.emergency_fund_months} of 6 months</span></>} /></div>
+            label={<><span>Emergency fund</span><span className="num">{liq.emergency_fund_months == null ? 'needs monthly expenses' : `${liq.emergency_fund_months} of 6 months`}</span></>} /></div>
         </Card>
       </div>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MiniLink to="/credit" title="Credit" value={credit.has_cards ? pct(credit.overall_utilisation_pct, 0) : 'No cards'} sub={credit.has_cards ? `utilisation · default risk ${risk?.overall_default_probability_pct ?? '—'}% (${risk?.overall_risk_band ?? '—'})` : 'Nothing to report'}
           tone={!credit.has_cards ? 'neutral' : credit.overall_utilisation_pct < 30 ? 'good' : credit.overall_utilisation_pct < 50 ? 'warn' : 'bad'} />
-        <MiniLink to="/credit" title="Debt load" value={pct(debt.emi_to_income_pct, 0)} sub={`of income goes to EMIs · ${debt.risk_band}`} tone={{ none: 'good', low: 'good', moderate: 'warn', high: 'bad', 'very high': 'bad' }[debt.risk_band]} />
-        <MiniLink to="/investments" title="Investments" value={inr(inv.current_value)} sub={`${inv.total_gain >= 0 ? '+' : ''}${pct(inv.total_gain_pct)} overall · SIPs ${inr(inv.sip_monthly_total)}/mo`} tone={inv.total_gain >= 0 ? 'good' : 'bad'} />
+        <MiniLink to="/credit" title="Debt load" value={pct(debt.emi_to_income_pct, 0)} sub={debt.risk_band === 'unknown' ? 'EMI share needs your income' : `of income goes to EMIs · ${debt.risk_band}`} tone={{ none: 'good', low: 'good', moderate: 'warn', high: 'bad', 'very high': 'bad' }[debt.risk_band]} />
+        <MiniLink to="/investments" title="Investments" value={inr(inv.current_value)} sub={inv.total_gain_pct == null ? `No holdings recorded · SIPs ${inr(inv.sip_monthly_total)}/mo` : `${inv.total_gain >= 0 ? '+' : ''}${pct(inv.total_gain_pct)} overall · SIPs ${inr(inv.sip_monthly_total)}/mo`} tone={inv.total_gain >= 0 ? 'good' : 'bad'} />
         <MiniLink to="/transactions" title="Unusual transactions" value={ml.anomaly?.flagged_count ?? 0} sub={`flagged of ${ml.anomaly?.transactions_scored ?? 0} scored`} tone={(ml.anomaly?.flagged?.some((f) => f.severity === 'high')) ? 'warn' : 'good'} />
       </div>
 
@@ -111,6 +119,7 @@ export default function Identity() {
         </Card>
         <Card title="Top priorities" action={<Link to="/recommendations" className="flex items-center gap-1 text-xs text-accent">All {a.recommendations.length} <ArrowRight size={12} /></Link>}>
           <ul className="space-y-2.5">
+            {a.recommendations.length === 0 && <li className="text-sm text-muted">No recommendations yet - most checks need income and spending history.</li>}
             {a.recommendations.slice(0, 4).map((r) => (
               <li key={r.code} className="flex items-start gap-2.5 text-sm"><Badge tone={r.priority}>{r.priority}</Badge>
                 <div className="min-w-0"><div className="font-medium">{r.finding}</div><div className="text-xs text-muted">{r.action}</div></div></li>

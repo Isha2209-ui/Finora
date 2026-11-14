@@ -10,7 +10,8 @@ export default function Budget() {
   const { cash_flow: cf, budget: b, liquidity: liq, idle_money: idle, insurance: ins } = a
   const cats = cf.category_totals.filter((c) => c.total > 0)
   const [tax, setTax] = useState(a.tax)
-  const [form, setForm] = useState({ gross_income: a.tax.gross_income, sec_80c: a.tax.old.deduction_breakup?.['80C'] || 0, sec_80d: a.tax.old.deduction_breakup?.['80D'] || 0, home_loan_interest: a.tax.old.deduction_breakup?.['24(b) home loan interest'] || 0, hra_exemption: 0 })
+  const db = a.tax.old?.deduction_breakup || {}
+  const [form, setForm] = useState({ gross_income: a.tax.gross_income ?? '', sec_80c: db['80C'] || 0, sec_80d: db['80D'] || 0, home_loan_interest: db['24(b) home loan interest'] || 0, hra_exemption: 0 })
   const [busy, setBusy] = useState(false)
   const calc = async () => { setBusy(true); try { setTax(await api.tax({ ...Object.fromEntries(Object.entries(form).map(([k, v]) => [k, Number(v) || 0])), gross_income: Number(form.gross_income) || 1, salaried: a.profile.employment_type === 'salaried' })) } finally { setBusy(false) } }
   return (
@@ -20,7 +21,7 @@ export default function Budget() {
         <Stat label="Savings rate (12 mo)" value={pct(cf.avg_savings_rate_pct)} tone={cf.avg_savings_rate_pct >= 20 ? 'good' : cf.avg_savings_rate_pct >= 0 ? 'warn' : 'bad'} sub={`${inr(cf.avg_monthly_savings)} a month · guideline 20%+`} />
         <Stat label="Essentials / income" value={pct(cf.essential_to_income_pct, 0)} sub="rent, utilities, groceries, health, fuel…" />
         <Stat label="Discretionary / income" value={pct(cf.discretionary_to_income_pct, 0)} tone={cf.discretionary_to_income_pct > 30 ? 'warn' : 'ink'} sub="dining, shopping, travel, entertainment" />
-        <Stat label="Months in deficit" value={`${cf.months_in_deficit} of ${cf.period.months}`} tone={cf.months_in_deficit ? 'bad' : 'good'} sub={`spending varies ±${pct(cf.expense_volatility_pct, 0)}`} />
+        <Stat label="Months in deficit" value={cf.months_in_deficit == null ? '—' : `${cf.months_in_deficit} of ${cf.period.months}`} tone={cf.months_in_deficit ? 'bad' : 'good'} sub={`spending varies ±${pct(cf.expense_volatility_pct, 0)}`} />
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-3">
@@ -76,7 +77,7 @@ export default function Budget() {
           { key: 'typical_amount', label: 'Typical monthly', right: true, render: (r) => inr(r.typical_amount) }]} />
       </Card>
 
-      <Card title={`Income tax: old vs new regime · FY ${tax.financial_year}`} subtitle="Slabs, standard deduction and Section 87A rebate for a resident individual under 60" className="mt-4">
+      <Card title={`Income tax: old vs new regime${tax.financial_year ? ` · FY ${tax.financial_year}` : ''}`} subtitle="Slabs, standard deduction and Section 87A rebate for a resident individual under 60" className="mt-4">
         <div className="grid gap-6 xl:grid-cols-[1fr_1.2fr]">
           <div className="grid grid-cols-2 gap-3">
             <Field label="Gross annual income (₹)"><Input type="number" value={form.gross_income} onChange={(e) => setForm({ ...form, gross_income: e.target.value })} /></Field>
@@ -86,7 +87,7 @@ export default function Budget() {
             <Field label="HRA exemption"><Input type="number" value={form.hra_exemption} onChange={(e) => setForm({ ...form, hra_exemption: e.target.value })} /></Field>
             <div className="flex items-end"><Button onClick={calc} loading={busy} className="w-full">Compare</Button></div>
           </div>
-          <div>
+          {tax.available === false ? <div className="text-sm text-muted">Your income is not recorded, so there is no estimate from your profile. Type a gross annual income and press Compare.</div> : <div>
             <div className="grid grid-cols-2 gap-3">
               {['new', 'old'].map((r) => (
                 <div key={r} className={`rounded-xl border p-3 ${tax.better_regime === r ? 'border-good/40 bg-good/10' : 'border-line bg-raised/50'}`}>
@@ -98,7 +99,7 @@ export default function Budget() {
             </div>
             <p className="mt-3 text-sm">The <span className="font-medium text-good">{tax.better_regime} regime</span> saves {inr(tax.saving_with_better, { compact: false })}. The old regime only wins once deductions exceed about {inr(tax.old_regime_breakeven_deductions)}.</p>
             <div className="mt-2"><Note>{tax.assumptions.join(' · ')}.</Note></div>
-          </div>
+          </div>}
         </div>
       </Card>
     </>

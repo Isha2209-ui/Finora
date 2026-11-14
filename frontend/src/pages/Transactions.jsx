@@ -41,7 +41,7 @@ export default function Transactions() {
 
       <div className="mt-4 grid gap-4 xl:grid-cols-3">
         <Card title="Flagged transactions" subtitle={s.severity_rule} className="xl:col-span-2">
-          {data.flagged.length === 0 ? <p className="py-6 text-center text-sm text-good">Nothing unusual found.</p> : (
+          {!s.transactions_scored ? <p className="py-6 text-center text-sm text-muted">No transactions yet. Add them under My Data or upload a statement.</p> : data.flagged.length === 0 ? <p className="py-6 text-center text-sm text-good">Nothing unusual found.</p> : (
             <ul className="max-h-80 space-y-2 overflow-y-auto pr-1">
               {data.flagged.map((x) => (
                 <li key={x.transaction_id} className="rounded-xl border border-line bg-raised/50 p-3">
@@ -59,7 +59,7 @@ export default function Transactions() {
           <div className="mt-3"><Note>{s.disclaimer}</Note></div>
         </Card>
         <Card title="Flags by month">
-          <div className="h-56"><ResponsiveContainer><BarChart data={s.by_month} margin={{ left: -18 }}><CartesianGrid vertical={false} />
+          <div className="h-56"><ResponsiveContainer><BarChart data={s.by_month || []} margin={{ left: -18 }}><CartesianGrid vertical={false} />
             <XAxis dataKey="month" tickFormatter={monthLabel} tickLine={false} axisLine={false} interval={1} /><YAxis allowDecimals={false} tickLine={false} axisLine={false} />
             <Tooltip {...chartTooltip} labelFormatter={monthLabel} /><Bar dataKey="flagged" name="Flagged" fill="#fbbf24" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></div>
           <ul className="mt-2 space-y-1 text-[13px]">{(s.by_category || []).map((c) => <li key={c.category} className="flex justify-between"><span className="text-muted">{c.category} · {c.count}</span><span className="num">{inr(c.amount)}</span></li>)}</ul>

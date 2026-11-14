@@ -49,7 +49,9 @@ export default function Decision() {
 
         <div className="space-y-4">
           {err && <ErrorBox message={err} />}
-          {!plan && !err && <Card><div className="py-16 text-center text-sm text-muted">Enter the details and press <span className="text-ink">Should I buy it?</span><br />Finora compares your plan with alternatives such as a bigger down payment or waiting.</div></Card>}
+          {res?.available === false && <Card title="Not enough information for a verdict"><p className="text-sm text-muted">{res.message}</p>
+            <a href="/records" className="mt-3 inline-block text-sm text-accent hover:underline">Add your income and transactions →</a></Card>}
+          {!plan && !err && res?.available !== false && <Card><div className="py-16 text-center text-sm text-muted">Enter the details and press <span className="text-ink">Should I buy it?</span><br />Finora compares your plan with alternatives such as a bigger down payment or waiting.</div></Card>}
           {plan && (<>
             <div className={cx('rounded-2xl border p-5', vcls)}>
               <div className="flex items-center gap-3"><VIcon size={28} /><div><div className="text-xs uppercase tracking-wider opacity-80">Verdict for {res.item.name}</div><div className="text-2xl font-semibold tracking-tight">{plan.verdict}</div></div>
