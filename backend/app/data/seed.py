@@ -1,6 +1,7 @@
 """Create all tables and load the demo identities + training population.
 
 Usage:  python -m app.data.seed            (drops and recreates everything)
+        python -m app.data.seed --force    (required when accounts or private profiles exist: they are deleted too)
 """
 from __future__ import annotations
 
@@ -130,5 +131,22 @@ def run(n_population: int = N_POPULATION, verbose: bool = True):
         print(f"Seeded 4 demo identities + {n_population} population users in {time.time() - t0:.1f}s")
 
 
+def _user_data_present() -> tuple[int, int]:
+    from sqlalchemy import func, inspect, select
+    insp = inspect(engine)
+    if not insp.has_table("app_users"):
+        return 0, 0
+    with SessionLocal() as db:
+        accounts = db.scalar(select(func.count()).select_from(M.AppUser)) or 0
+        own = db.scalar(select(func.count()).select_from(M.User).where(M.User.kind.in_(["private", "sandbox"]))) or 0 \
+            if "kind" in {c["name"] for c in insp.get_columns("users")} else 0
+    return accounts, own
+
+
 if __name__ == "__main__":
+    import sys
+    accounts, own = _user_data_present()
+    if (accounts or own) and "--force" not in sys.argv:
+        sys.exit(f"Refusing to reseed: {accounts} account(s) and {own} private/sandbox profile(s) would be deleted. "
+                 "Re-run with --force if that is what you want.")
     run()

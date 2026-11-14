@@ -9,8 +9,10 @@ from .conftest import DEMO
 @pytest.mark.parametrize("pan,uid", list(DEMO.items()))
 def test_lookup_ok(client, pan, uid):
     r = client.post("/api/lookup", json={"pan": pan.lower()})
-    assert r.status_code == 200 and r.json()["profile"]["internal_id"] == uid
-    assert r.json()["profile"]["pan_masked"] == pan[:5] + "****" + pan[-1]
+    prof = r.json()["profile"]
+    assert r.status_code == 200 and prof["kind"] == "sandbox"                # a private, editable copy of the template
+    assert prof["name"] == client.get(f"/api/profiles/{uid}").json()["name"]
+    assert prof["pan_masked"] == pan[:5] + "****" + pan[-1]
     assert pan not in r.text                                            # the full PAN is never echoed back
 
 

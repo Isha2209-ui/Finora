@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -12,24 +12,69 @@ from .. import schemas as S
 from ..database import get_db
 from ..services import pan as P
 from ..services.cleaning import ALL_CATEGORIES, standardise_category
-from ..auth import Current, ProfileCtx, can_read, current_account, profile_reader, profile_writer
+from ..auth import Current, ProfileCtx, audit, can_read, current_account, profile_reader, profile_writer
+from ..config import SANDBOX_TTL_HOURS
+from ..services import sandbox
 from . import common
 
 router = APIRouter(prefix="/api", tags=["Profiles & analysis"])
 
 
-@router.post("/lookup", summary="Find a profile by PAN (sent in the body, never in the URL)")
-def lookup(body: S.LookupIn, cur: Current = Depends(current_account), db: Session = Depends(get_db)):
+DEMO_NOTICE = ("You are exploring a synthetic demo identity. It does not belong to a real person and no bank data was fetched: "
+               "Finora never uses a PAN to look up real financial information. This is your own private copy - edit it freely, "
+               "use Reset to restore the original, and it is deleted automatically {hours} hours after you opened it.")
+
+DEMO_DESCRIPTIONS = {"balanced": "Salaried, balanced saver", "spender": "High spender, three credit cards",
+                     "loan_heavy": "Home, car and personal loans", "irregular": "Freelancer, irregular income"}
+
+
+def _explore(db: Session, template: M.User, cur: Current, request: Request) -> dict:
+    sandbox.purge_expired(db)
+    sb, created = sandbox.open_for(db, template, cur.user.id)
+    audit(db, "demo.explore", request=request, app_user_id=cur.user.id, profile_id=sb.id,
+          detail={"template": template.internal_id, "created": created})
+    return {"found": True, "created": created, "profile": common.public_profile(sb),
+            "notice": DEMO_NOTICE.format(hours=SANDBOX_TTL_HOURS)}
+
+
+@router.get("/demo/templates", summary="The four synthetic demo identities you can explore")
+def demo_templates(cur: Current = Depends(current_account), db: Session = Depends(get_db)):
+    rows = db.scalars(select(M.User).where(M.User.kind == "template").order_by(M.User.id)).all()
+    return [{"template_id": t.internal_id, "name": t.name, "pan_masked": t.pan_masked, "age": t.age, "occupation": t.occupation,
+             "city": t.city, "description": DEMO_DESCRIPTIONS.get(t.archetype, ""), "synthetic": True} for t in rows]
+
+
+@router.post("/demo/explore", summary="Open your own editable, expiring copy (sandbox) of a demo identity")
+def explore_demo(body: S.ExploreIn, request: Request, cur: Current = Depends(current_account), db: Session = Depends(get_db)):
+    t = db.scalar(select(M.User).where(M.User.internal_id == body.template_id, M.User.kind == "template"))
+    if t is None:
+        raise HTTPException(404, "Unknown demo identity.")
+    return _explore(db, t, cur, request)
+
+
+@router.post("/lookup", summary="Open a demo identity by its demo identifier (sent in the body, never in the URL)")
+def lookup(body: S.LookupIn, request: Request, cur: Current = Depends(current_account), db: Session = Depends(get_db)):
     err = P.validation_error(body.pan)
     if err:
         raise HTTPException(422, err)
-    # Only the four synthetic demo templates can be found this way. A PAN never unlocks any other data.
-    user = db.scalar(select(M.User).where(M.User.pan_hash == P.hash_pan(body.pan), M.User.kind == "template"))
-    if user is None:
-        raise HTTPException(404, "No financial profile is linked to this PAN. Try one of the demo identifiers.")
-    return {"found": True, "profile": common.public_profile(user),
-            "notice": "Demo identifier mapped to a synthetic profile. A real PAN does not give access to anyone's financial data; "
-                      "production access would use the RBI Account Aggregator framework with user consent."}
+    # Only the four synthetic demo identifiers resolve. Any other PAN - including a real one - finds nothing,
+    # because Finora has no connection to banks, credit bureaus or the income-tax department.
+    t = db.scalar(select(M.User).where(M.User.pan_hash == P.hash_pan(body.pan), M.User.kind == "template"))
+    if t is None:
+        raise HTTPException(404, "That is not one of the demo identifiers. Finora cannot fetch real financial data from a PAN - "
+                                 "explore a demo identity or build your own profile instead.")
+    return _explore(db, t, cur, request)
+
+
+@router.post("/profiles/{internal_id}/reset", summary="Reset a demo sandbox to the original demo identity")
+def reset_sandbox(request: Request, ctx: ProfileCtx = Depends(profile_writer), db: Session = Depends(get_db)):
+    if ctx.profile.kind != "sandbox":
+        raise HTTPException(422, "Only demo sandboxes can be reset.")
+    old_id = ctx.profile.id
+    sb = sandbox.reset(db, ctx.profile)
+    common.invalidate(old_id)
+    audit(db, "demo.reset", request=request, app_user_id=ctx.account.id, profile_id=sb.id)
+    return {"reset": True, "profile": common.public_profile(sb)}
 
 
 @router.get("/profiles", summary="Profiles you can open: the demo templates plus your own (PAN shown masked only)")

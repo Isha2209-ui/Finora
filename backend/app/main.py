@@ -37,6 +37,11 @@ async def lifespan(app: FastAPI):
         print("[finora] Empty database - seeding demo data (about 20 seconds)...")
         from .data import seed
         seed.run()
+    with SessionLocal() as db:
+        from .services import sandbox
+        purged = sandbox.purge_expired(db)
+    if purged:
+        print(f"[finora] Removed {purged} expired demo sandbox(es).")
     if not all(registry.status().values()):
         print("[finora] Models not found - training (about 40 seconds)...")
         from .ml import train

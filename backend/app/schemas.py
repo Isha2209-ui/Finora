@@ -11,6 +11,10 @@ class LookupIn(BaseModel):
     pan: str = Field(..., description="Demo PAN-like identifier, e.g. ABCDE1234F")
 
 
+class ExploreIn(BaseModel):
+    template_id: str = Field(..., max_length=32)
+
+
 class FireIn(BaseModel):
     monthly_investment: float | None = Field(None, ge=0)
     retirement_age: int | None = Field(None, ge=30, le=75)

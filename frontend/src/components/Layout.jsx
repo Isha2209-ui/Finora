@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   Activity, BadgeIndianRupee, Bot, BrainCircuit, CreditCard, Database, FileText, Flame, Landmark, Lightbulb, LogOut,
-  Eye, MessageSquare, PiggyBank, RefreshCw, Repeat, Scale, ScanSearch, TrendingUp, UserRound, Wallet,
+  Clock, Eye, FlaskConical, MessageSquare, PiggyBank, RefreshCw, Repeat, Scale, ScanSearch, TrendingUp, UserRound, Wallet,
 } from 'lucide-react'
+import { api } from '../api'
 import { useAuth } from '../auth.jsx'
 import { useFinora } from '../store.jsx'
 import ChatPanel from './ChatPanel.jsx'
@@ -15,6 +16,25 @@ const NAV = [
   ['Planning', [['/fire', 'FIRE & Retirement', Flame], ['/decision', 'Decision Simulator', Scale], ['/cfo', 'AI CFO', Bot], ['/recommendations', 'Recommendations', Lightbulb]]],
   ['System', [['/reports', 'Reports', FileText], ['/models', 'Model Lab', BrainCircuit], ['/data', 'Profile & Data', Database]]],
 ]
+
+function SandboxBanner({ profile }) {
+  const { select, refresh } = useFinora()
+  const [busy, setBusy] = useState(false)
+  const hours = Math.max(0, Math.round((new Date(profile.expires_at + 'Z') - Date.now()) / 36e5))
+  const reset = async () => {
+    if (!window.confirm('Reset this demo copy? Every change you made to it will be discarded.')) return
+    setBusy(true)
+    try { const r = await api.resetSandbox(profile.internal_id); select(r.profile.internal_id); refresh({ rerun: true }) } finally { setBusy(false) }
+  }
+  return (
+    <div className="no-print flex items-center gap-3 border-b border-warn/25 bg-warn/8 px-6 py-1.5 text-xs text-warn">
+      <FlaskConical size={13} /> <span><b>Demo identity, simulated data.</b> This is your private copy of a fictional person; no real bank data is involved.</span>
+      <span className="flex items-center gap-1 text-warn/80"><Clock size={12} /> deleted in {hours} h</span>
+      <div className="flex-1" />
+      <button onClick={reset} disabled={busy} className="rounded-md border border-warn/40 px-2 py-0.5 hover:bg-warn/15 disabled:opacity-50">{busy ? 'Resetting…' : 'Reset demo'}</button>
+    </div>
+  )
+}
 
 export default function Layout({ children }) {
   const { analysis, profile, signOut, refresh, loading } = useFinora()
@@ -74,6 +94,7 @@ export default function Layout({ children }) {
           <div className="hidden max-w-40 truncate text-xs text-faint xl:block" title={account?.email}>{account?.display_name || account?.email}</div>
           <button onClick={logout} title="Sign out of your account" className="rounded-lg border border-line bg-raised p-2 text-muted hover:text-ink"><LogOut size={15} /></button>
         </header>
+        {profile?.kind === 'sandbox' && <SandboxBanner profile={profile} />}
         <div className="flex min-h-0 flex-1">
           <main key={loc.pathname} className="rise min-w-0 flex-1 overflow-y-auto px-6 py-6">{children}</main>
           {chat && loc.pathname !== '/cfo' && <div className="no-print w-[380px] shrink-0 border-l border-line bg-surface/60"><ChatPanel onClose={() => setChat(false)} /></div>}

@@ -237,9 +237,10 @@ def test_templates_are_read_only(bob):
     assert after["category"] == tx["category"]
 
 
-def test_lookup_only_finds_templates(alice):
+def test_lookup_only_resolves_demo_identifiers_to_an_own_sandbox(alice):
     r = alice.post("/api/lookup", json={"pan": "ABCDE1234F"})
-    assert r.status_code == 200 and r.json()["profile"]["kind"] == "template" and r.json()["profile"]["read_only"]
+    assert r.status_code == 200 and r.json()["profile"]["kind"] == "sandbox" and not r.json()["profile"]["read_only"]
+    assert alice.post("/api/lookup", json={"pan": "TESTP1234Q"}).status_code == 404
 
 
 def test_chat_history_and_reports_are_per_account_even_on_templates(alice, bob):

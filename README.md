@@ -20,7 +20,10 @@ AI assistant that can only state numbers the backend has computed.
 
 Open **http://localhost:5173**, create a local account (e-mail + password) and sign in. In VS Code: `Cmd+Shift+B` runs the same thing ("Run Finora").
 
-Demo PANs: `ABCDE1234F` (balanced saver) · `PQRST5678K` (overspender, 3 cards) · `LMNOP2345D` (loan-heavy) · `XYZAB9876C` (freelancer)
+After signing in you choose **Explore demo identity** or **Build my financial identity**.
+
+- **Demo identities** are four fictional people with synthetic data (demo identifiers `ABCDE1234F` balanced saver · `PQRST5678K` overspender with 3 cards · `LMNOP2345D` loan-heavy · `XYZAB9876C` freelancer). Opening one gives you a private **sandbox** copy: edit anything, press **Reset demo** to restore it, and it is deleted after 24 hours. The four originals are read-only templates and never change.
+- **Your own profile** is private to your account. No bank, bureau or government system is ever contacted: a real PAN finds nothing.
 
 | Needs | Notes |
 |---|---|
@@ -31,9 +34,9 @@ Demo PANs: `ABCDE1234F` (balanced saver) · `PQRST5678K` (overspender, 3 cards) 
 Useful commands (inside `backend/` with the venv active):
 
 ```bash
-pytest -q                    # 206 tests
+pytest -q                    # 217 tests
 python -m app.ml.train       # retrain all models, rewrite artifacts/metrics.json
-python -m app.data.seed      # reset the database to the original demo data
+python -m app.data.seed      # rebuild demo data (refuses if accounts exist; --force deletes them too)
 ```
 
 API documentation (Swagger): http://127.0.0.1:8001/docs
