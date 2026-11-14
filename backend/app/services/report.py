@@ -151,8 +151,14 @@ def build_pdf(a: dict, briefing_text: str | None = None, metrics: dict | None = 
     # ---------------- 4 anomalies
     story.append(Paragraph("4. Transaction anomaly analysis (Isolation Forest)", H1))
     an = ml.get("anomaly", {})
-    story.append(Paragraph(f"{an.get('transactions_scored', 0)} transactions scored; {an.get('flagged_count', 0)} flagged as unusual "
-                           f"(total {rs(an.get('flagged_amount_total'))}). {_t(an.get('disclaimer', ''))}", P))
+    if an.get("available") is False or "transactions_scored" not in an:
+        story.append(Paragraph("Unusual-spending detection is not active: no anomaly model has passed its acceptance criteria yet "
+                               "(the real-data model awaits a blinded human review). Nothing in this report is flagged by a model.", P))
+    else:
+        story.append(Paragraph(f"{an.get('transactions_scored', 0)} transactions scored; {an.get('flagged_count', 0)} flagged as unusual "
+                               f"(total {rs(an.get('flagged_amount_total'))}). {_t(an.get('disclaimer', ''))}", P))
+        if an.get("model_note"):
+            story.append(Paragraph(_t(an["model_note"]), S))
     if an.get("flagged"):
         table([["Date", "Merchant / category", "Source", "Amount", "x typical", "Severity", "Reason"]] +
               [[f["date"], f"{f['merchant'] or ''} ({f['category']})", f["source"], rs(f["amount"]), f["times_typical"], f["severity"], f["reasons"][0]]
@@ -171,7 +177,9 @@ def build_pdf(a: dict, briefing_text: str | None = None, metrics: dict | None = 
               [[c["category"], rs(c["predicted"]), rs(c["three_month_avg"]), f"{c['change_vs_3m_avg_pct']}%", rs(c["suggested_budget"])] for c in fc["category_predictions"]],
               widths=[38 * mm, 32 * mm, 34 * mm, 24 * mm, 34 * mm])
     else:
-        story.append(Paragraph(_t(fc.get("note") or "Not enough history to forecast."), P))
+        story.append(Paragraph(_t("No approved forecasting model: the model trained on real data so far (one UK account) did not beat "
+                                  "a simple 3-month average, so Finora does not forecast." if fc.get("model_status") == "awaiting_approved_model"
+                                  else (fc.get("note") or "Not enough history to forecast.")), P))
 
     # ---------------- 6 credit & debt
     story.append(Paragraph("6. Credit, loans and EMI assessment", H1))
@@ -234,10 +242,14 @@ def build_pdf(a: dict, briefing_text: str | None = None, metrics: dict | None = 
     kv([("Term life cover", rs(ins["term_cover"])), ("Guideline", rs(ins["recommended_term_cover"]) if ins["recommended_term_cover"] is not None else NA + " (needs income)"), ("Health cover", rs(ins["health_cover"])), ("Guideline", rs(ins["recommended_health_cover"]))])
     pe = ml.get("peers", {})
     if pe.get("comparison"):
-        story.append(Paragraph(f"Closest peer group: <b>{_t(pe['peer_group'])}</b> ({pe['peer_group_size']} of {pe['population_size']} people).", P))
-        table([["Metric", "You", "Peer median", "Everyone", "Better than"]] + [[c["metric"], f"{c['you']}%", f"{c['peer_group_median']}%", f"{c['everyone_median']}%", f"{c['better_than_pct_of_people']}% of people"] for c in pe["comparison"]],
+        story.append(Paragraph(f"Closest peer group: <b>{_t(pe['peer_group'])}</b> " + (f"({pe['peer_group_share_pct']}% of US households, about {pe['peer_group_households_millions']} million of {pe['population_households_millions']} million)" if "peer_group_share_pct" in pe else f"({pe.get('peer_group_size')} of {pe.get('population_size')} people)") + ".", P))
+        ratios = pe.get("units", "").startswith("ratios")       # SCF comparison values are ratios, not percentages
+        u, who = ("", "US households") if ratios else ("%", "people")
+        table([["Metric", "You", "Peer median", "All US households" if ratios else "Everyone", "Better than"]] +
+              [[c["metric"], f"{c['you']}{u}", f"{c['peer_group_median']}{u}", f"{c['everyone_median']}{u}", f"{c['better_than_pct_of_people']}% of {who}"]
+               for c in pe["comparison"]],
               widths=[50 * mm, 22 * mm, 28 * mm, 24 * mm, 36 * mm])
-    elif pe.get("note"):
+    if pe.get("note"):
         story.append(Paragraph(_t(pe["note"]), S))
 
     # ---------------- 11 recommendations
@@ -260,23 +272,33 @@ def build_pdf(a: dict, briefing_text: str | None = None, metrics: dict | None = 
         rows = [["Model", "Trained on", "Key result", "Baseline"]]
         m = metrics.get("credit_risk")
         if m:
-            rows.append(["Credit risk (XGBoost)", f"{m['rows']:,} real card accounts (UCI)", f"ROC-AUC {m['xgboost']['roc_auc']} (5-fold CV {m['cv_roc_auc_mean']})", f"Logistic regression {m['baseline_logistic_regression']['roc_auc']}"])
+            x = m["test"]["xgboost"]
+            rows.append(["Credit risk (XGBoost)", "30,000 real card accounts (Taiwan, 2005)",
+                         f"Test ROC-AUC {x['roc_auc']} (5-fold CV {m['cross_validation']['xgboost_roc_auc_mean']})",
+                         f"Logistic regression {m['test']['logistic_regression_baseline']['roc_auc']}"])
         m = metrics.get("categoriser")
         if m:
-            rows.append(["Transaction categoriser", f"{m['training_rows']:,} labelled narrations", f"Macro-F1 {m['unseen_formats_test']['macro_f1']} on unseen statement formats", f"Keyword rules {m['unseen_formats_test']['keyword_rule_macro_f1']}"])
+            h = m["held_out_merchants_oklahoma"]
+            rows.append(["Merchant categoriser", f"{m['training']['rows']:,} real US card descriptors",
+                         f"Macro-F1 {h['macro_f1']} on merchants never seen", f"Keyword rules {h['keyword_rule_macro_f1']}"])
         m = metrics.get("anomaly")
         if m:
-            rows.append(["Anomaly detector (Isolation Forest)", f"{m['training_transactions']:,} transactions", f"F1 {m['isolation_forest']['f1']} on planted test cases", f"3x-median rule {m['baseline_rule_3x_category_median']['f1']}"])
+            rows.append(["Unusual-spending detector", f"{m['training_transactions']:,} real cardholder transactions",
+                         "Accuracy not yet measured (blinded human review pending)", "-"])
         m = metrics.get("forecast")
         if m:
-            t = m["total_expense"]
-            rows.append(["Cash-flow forecaster (XGBoost)", f"{t['train_rows']:,} user-months", f"MAE {rs(t['xgboost']['mae'])} ({t['xgboost']['mape_pct']}%)", f"3-month average {rs(t['baseline_3_month_average']['mae'])}"])
+            e = m["evaluation"]
+            rows.append(["Spending forecast (experimental)", "One real UK person's account (MoneyVis)",
+                         f"MAE GBP {e['xgboost']['mae']:,.0f} over {e['test_months']} months", f"3-month average GBP {e['baseline_moving_average_3m']['mae']:,.0f}"])
         m = metrics.get("peers")
         if m:
-            rows.append(["Peer groups (K-Means)", f"{m['users']} users", f"k={m['chosen_k']}, silhouette {m['silhouette']}", f"Davies-Bouldin {m['davies_bouldin']}"])
+            rows.append(["Peer groups (K-Means)", "US households (Federal Reserve SCF 2022)",
+                         f"k={m['chosen_k']}, stable across imputations (ARI {m['stability']['cross_implicate_ari_mean']})", "-"])
         table(rows, widths=[42 * mm, 42 * mm, 52 * mm, 38 * mm])
-        story.append(Paragraph("All metrics are measured on held-out data the models did not see during training. Transaction models use synthetic data; "
-                               "the credit-risk model uses real data (Taiwan, 2005) and captures patterns, not Indian bureau scores.", S))
+        story.append(Paragraph("Every active model is trained on real data and measured on data it did not see during training. None is "
+                               "trained on Indian data: credit risk is a Taiwan 2005 benchmark, merchant categories come from US purchase "
+                               "cards, the forecast is trained on one UK person, and peer groups are US households. Models without an "
+                               "approved real-data version are not used.", S))
 
     def footer(canvas, doc):
         canvas.saveState()

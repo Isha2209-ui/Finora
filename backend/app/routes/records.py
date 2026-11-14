@@ -86,8 +86,11 @@ def _apply_category(rt: RecordType, data: dict) -> dict:
         data["category"] = standardise_category(data["category"])
         data["category_source"] = "user"
     else:
-        p = categoriser.predict(registry.get("categoriser"), [data["description"]])[0]
-        data["category"], data["category_source"] = p["category"], "model"
+        p = categoriser.safe_predict([data["description"]])[0]
+        # source: "rule" (bank-side rule), "model" (approved categoriser; confidence stored), "none" (no approved model:
+        # left uncategorised for the person to set - never labelled as a model decision)
+        data["category"], data["category_source"] = p["category"], p["source"]
+        data["confidence"], data["needs_review"] = p.get("confidence"), bool(p.get("needs_review"))
     return data
 
 
@@ -157,7 +160,7 @@ def patch(record_type: str, item_id: int, body: dict, request: Request, ctx: Pro
     if rt.key == "transactions":
         if "category" in body:
             merged = _apply_category(rt, merged)
-        elif "description" in body and row.category_source == "model":
+        elif "description" in body and row.category_source in ("model", "rule", "none"):   # never a user's own choice
             merged["category"] = None
             merged = _apply_category(rt, merged)            # re-predict a model-assigned category for the new text
         else:

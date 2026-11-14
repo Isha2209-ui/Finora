@@ -18,7 +18,7 @@ from .config import CORS_ORIGINS, CSRF_HEADER, DATABASE_URL, IS_PRODUCTION, SESS
 from .database import Base, SessionLocal, engine
 from .ml import registry
 from .routes import auth as auth_routes
-from .routes import data, plan, planning, profiles, records, statements
+from .routes import data, plan, planning, profiles, records, review, statements
 from .security import install_log_scrubbing
 
 
@@ -48,10 +48,9 @@ async def lifespan(app: FastAPI):
         rolled = statement_import.recover_interrupted(db)
     if rolled:
         print(f"[finora] Rolled back {rolled} statement import(s) interrupted by a restart.")
-    if not all(registry.status().values()):
-        print("[finora] Models not found - training (about 40 seconds)...")
-        from .ml import train
-        train.run()
+    waiting = [n for n, ok in registry.status().items() if not ok]
+    if waiting:   # never auto-train: real-data training needs approved datasets (python -m app.ml.train)
+        print(f"[finora] No approved (active) real-data model: {', '.join(waiting)}. These features show as unavailable.")
     yield
 
 
@@ -125,6 +124,7 @@ app.include_router(data.router)
 app.include_router(records.router)
 app.include_router(statements.router)
 app.include_router(plan.router)
+app.include_router(review.router)
 app.add_middleware(UploadGuard)      # outermost: runs before the body is read
 
 

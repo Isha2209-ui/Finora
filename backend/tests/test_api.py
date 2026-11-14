@@ -22,8 +22,15 @@ def test_lookup_invalid(client, pan, code):
 
 
 def test_health_and_profiles(client):
+    # Phase 6: health reports exactly which models have an ACTIVE approved real-data version (not "all trained")
+    from app.ml import provenance as PV, registry
     h = client.get("/api/health").json()
-    assert h["status"] == "ok" and all(h["models"].values()) and h["users"] >= 244
+    assert h["status"] == "ok" and h["users"] >= 244
+    assert set(h["models"]) == set(registry.NAMES)
+    assert all(h["models"][n] == (n in PV.active()) for n in registry.NAMES)
+    assert h["models"]["credit_risk"] and h["models"]["peers"]          # both pass their acceptance criteria
+    # the forecast fails its baseline criterion: it may run only as EXPERIMENTAL, never as accepted
+    assert PV.status_of("forecast") in (None, "experimental")
     assert len(client.get("/api/profiles").json()) >= 4
     assert client.get("/api/profiles/NOPE").status_code == 404
 
@@ -60,11 +67,18 @@ def test_profiles_show_their_designed_situations(analyses):
     assert "DEFICIT" in codes(a2) and "HIGH_EMI" in codes(a3) and "HEALTH_COVER" in codes(a4)
 
 
-def test_planted_anomalies_are_caught(client):
+def test_flags_are_explained_or_detection_is_reported_as_off(client):
+    # Was "planted anomalies are caught": that measured the synthetic-trained model on its own planted cases (Phase 6: removed).
+    # Now: with an active model every flag carries reasons; without one, nothing is flagged and the page says detection is off.
+    from app.ml import provenance as PV
     for uid in DEMO.values():
         t = client.get(f"/api/profiles/{uid}/transactions", params={"flagged_only": True, "limit": 200}).json()
-        assert t["anomaly_summary"]["flagged_count"] >= 1
-        assert all(i["flagged"] and i["reasons"] for i in t["items"])
+        if "anomaly" in PV.active():
+            assert t["anomaly_summary"]["available"] is True
+            assert all(i["flagged"] and i["reasons"] for i in t["items"])
+        else:
+            assert t["anomaly_summary"]["available"] is False and t["anomaly_summary"]["note"]
+            assert t["items"] == [] and t["flagged"] == [] and t["anomaly_summary"]["flagged_count"] is None
 
 
 def test_transactions_filters(client):
@@ -113,9 +127,21 @@ def test_tax_and_payoff(client):
     assert client.post("/api/profiles/FINORA_USER_001/payoff", json={"extra_monthly": 0}).json()["has_debt"] in (True, False)
 
 
-def test_reports(client):
+def test_reports(client, monkeypatch):
+    # every section must be in the PDF (was: size > 20 kB, a proxy). Page compression is switched off so the text is searchable.
+    from reportlab import rl_config
+    from app.ml import provenance as PV
+    monkeypatch.setattr(rl_config, "pageCompression", 0)
     r = client.get("/api/profiles/FINORA_USER_003/report.pdf")
     assert r.status_code == 200 and r.content[:5] == b"%PDF-" and len(r.content) > 20000
+    for heading in ["1. Overall financial summary", "2. Financial identity and net worth", "3. Income and expenditure",
+                    "4. Transaction anomaly analysis", "5. Cash-flow forecast", "6. Credit, loans and EMI assessment",
+                    "7. Savings, budget and liquidity", "8. Investments", "9. Financial independence", "10. Protection and peer comparison",
+                    "11. Financial concerns", "12. Model evaluation"]:
+        assert heading.encode() in r.content, heading
+    if "anomaly" not in PV.active():
+        assert b"Unusual-spending detection is not active" in r.content
+    assert b"US households" in r.content and b"Taiwan" in r.content
     z = client.get("/api/profiles/FINORA_USER_003/export.zip")
     assert z.status_code == 200 and z.content[:2] == b"PK"
     c = client.get("/api/profiles/FINORA_USER_003/transactions.csv")
@@ -124,10 +150,17 @@ def test_reports(client):
 
 
 def test_model_lab_and_categorise(client):
+    from app.ml import categoriser, provenance as PV
     m = client.get("/api/models/metrics").json()
-    assert {"credit_risk", "categoriser", "anomaly", "forecast", "peers"} <= set(m)
+    assert set(n for n in m if not n.startswith("_") and n != "status") == set(n for n in PV.active() if n != "_history")
+    lab = client.get("/api/models/lab").json()
+    assert [x["name"] for x in lab["models"]][:5] == ["credit_risk", "categoriser", "anomaly", "forecast", "peers"]
     c = client.post("/api/categorise", json={"texts": ["UPI/DR/1234567890/ZOMATO/HDFC/zomato@ybl", "ATM WDL SBI ATM DELHI"]}).json()
-    assert [x["category"] for x in c] == ["Dining", "Cash"]
+    assert c[1]["category"] == "Cash" and c[1]["source"] == "rule"            # bank-side: rules
+    z = c[0]                                                                  # an Indian merchant: no claimed accuracy
+    assert z["source"] in ("model", "none") and (z["category"] is not None or z["needs_review"])
+    if z["source"] == "model":
+        assert 0 <= z["confidence"] <= 1 and z["needs_review"] == (True if categoriser.SUGGESTION_ONLY else z["confidence"] < 0.5)
 
 
 def test_full_lifecycle_create_upload_analyse_delete(client):
@@ -148,20 +181,26 @@ def test_full_lifecycle_create_upload_analyse_delete(client):
         up = client.post(f"/api/profiles/{uid}/upload", files={"file": ("stmt.csv", io.BytesIO("\n".join(rows).encode()), "text/csv")})
         assert up.status_code == 200, up.text
         u = up.json()
-        assert u["transactions_added"] == 43 and u["categorised_by_model"] == 43
-        assert u["by_category"]["Rent"] == 7 and u["by_category"]["Dining"] == 7 and u["by_category"]["Shopping"] == 8
+        # every row is categorised: Rent by the bank-side rule (exact), merchant rows by the approved categoriser (or left for review)
+        assert u["transactions_added"] == 43 and u["by_category"]["Rent"] == 7 and sum(u["by_category"].values()) == 43
+        assert u["categorised_by_model"] == 43 - 7 and set(u["decided_by"]) <= {"model", "rule", "none"}
         again = client.post(f"/api/profiles/{uid}/upload", files={"file": ("stmt.csv", io.BytesIO("\n".join(rows).encode()), "text/csv")}).json()
         assert again["transactions_added"] == 0 and again["duplicates_skipped"] == 43      # re-upload is idempotent
         a = client.get(f"/api/profiles/{uid}/analysis").json()
         assert a["ml_errors"] == {} and a["cash_flow"]["avg_monthly_expenses"] > 20000
-        flagged = [f for f in a["ml"]["anomaly"]["flagged"] if f["amount"] == 48000]
-        assert flagged and flagged[0]["severity"] == "high"                                  # the model catches it on brand-new data
-        assert a["ml"]["forecast"]["available"]
+        from app.ml import provenance as PV
+        for name in ("anomaly", "forecast"):     # active -> real output; not approved -> explicitly reported as off
+            assert a["ml"][name].get("available", True) is (name in PV.active()) or a["ml"][name]["available"] is True
+            if name not in PV.active():
+                assert a["ml"][name]["model_status"] == "awaiting_approved_model"
+        if "anomaly" in PV.active():
+            flagged = [f for f in a["ml"]["anomaly"]["flagged"] if f["amount"] == 48000]
+            assert flagged and flagged[0]["severity"] == "high"
         tx = client.get(f"/api/profiles/{uid}/transactions", params={"limit": 1}).json()["items"][0]
         p = client.patch(f"/api/profiles/{uid}/transactions/{tx['id']}", json={"category": "food"}).json()
         assert p["category"] == "Dining" and p["category_source"] == "user"
         add = client.post(f"/api/profiles/{uid}/transactions", json={"date": "2026-10-28", "amount": 420, "description": "UPI/DR/999/ZOMATO/HDFC/zomato@ybl"}).json()
-        assert add["category"] == "Dining" and add["category_source"] == "model"
+        assert add["category_source"] in ("model", "none") and (add["category"] is not None or add["needs_review"])
         assert client.delete(f"/api/profiles/{uid}/transactions/{add['id']}").status_code == 200
         assert client.patch(f"/api/profiles/{uid}", json={"retirement_age_target": 52}).json()["retirement_age_target"] == 52
         bad = client.post(f"/api/profiles/{uid}/upload", files={"file": ("x.csv", io.BytesIO(b"foo,bar\n1,2\n"), "text/csv")})

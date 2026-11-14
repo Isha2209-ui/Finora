@@ -59,6 +59,10 @@ class CategoryPatch(BaseModel):
     category: str
 
 
+class SuggestionDecision(BaseModel):
+    action: Literal["accept", "reject"]
+
+
 class TransactionIn(BaseModel):
     date: date
     amount: float = Field(..., gt=0)

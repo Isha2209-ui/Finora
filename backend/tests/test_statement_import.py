@@ -110,6 +110,8 @@ def test_unquoted_thousands_separators_are_repaired_only_when_unambiguous():
 
 
 # ---------------------------------------------------------------- full import into the pipeline
+from app.ml import categoriser  # noqa: E402
+BANK_SIDE = {"Rent", "EMI", "Cash", "Transfer", "Investment", "Card Payment"}       # rules, not ML (Phase 6, Option A)
 def test_bank_import_classifies_against_ground_truth(ivy):
     s = ivy.bank["summary"]
     assert ivy.bank["status"] == "done" and ivy.bank["pct"] == 100.0
@@ -129,9 +131,23 @@ def test_bank_import_classifies_against_ground_truth(ivy):
     with SessionLocal() as db:
         imp = ivy.bank["id"]
         txs = db.scalars(select(M.Transaction).where(M.Transaction.import_id == imp)).all()
-        got = Counter(t.category for t in txs if t.type == "debit")
-    want = Counter(r.truth for r in BANK if r.type == "debit")
-    assert got == want
+        got_side = Counter(t.category for t in txs if t.type == "debit" and t.category in BANK_SIDE)
+        merch = [t for t in txs if t.type == "debit" and t.category not in BANK_SIDE]
+    # bank-side classes (rules) are exact
+    assert got_side == Counter(r.truth for r in BANK if r.type == "debit" and r.truth in BANK_SIDE)
+    # merchant rows: decided by the approved categoriser (confidence stored; < 0.5 sent for review) or left for the person.
+    # Phase 6: the categoriser is trained on US card data, so its accuracy on these Indian narrations is NOT asserted
+    # (it was 100% only for the synthetic-trained model on its own synthetic narrations).
+    assert len(merch) == sum(r.type == "debit" and r.truth not in BANK_SIDE for r in BANK)
+    for t in merch:
+        assert t.category_source in ("model", "none", "user_rule")
+        if t.category_source == "model":
+            assert t.confidence is not None and bool(t.needs_review) == (True if categoriser.SUGGESTION_ONLY else t.confidence < 0.5)
+        if t.category_source == "none":
+            assert t.category is None and t.needs_review
+    truth = {r.desc: r.truth for r in BANK}
+    agree = sum(truth.get(t.raw_description) == t.category for t in merch) / len(merch)
+    print(f"merchant-category agreement with the fixture's labels (information only, not a claim): {agree:.0%}")
     # account attribution and the verified closing balance
     assert all(t.account_id == ivy.acc and t.card_id is None for t in txs)
     assert s["balance"]["applied"] and s["balance"]["closing_balance"] == BANK[-1].balance
@@ -164,10 +180,20 @@ def test_import_flows_into_identity_cash_flow_and_models(ivy):
     # net worth moved by exactly the balance change of the imported account
     assert a["net_worth"]["net_worth"] - b["net_worth"]["net_worth"] == pytest.approx(BANK[-1].balance - 50000, abs=0.5)
     assert a["health_score"]["score"] is not None and b["health_score"]["score"] is None
-    assert a["fire"]["available"] and a["tax"]["available"] and a["ml"]["forecast"]["available"]
+    assert a["fire"]["available"] and a["tax"]["available"] and a["ml_errors"] == {}
+    from app.ml import provenance as PV
     from app.ml.anomaly import NOT_SCORED
-    scored = sum(1 for r in BANK + CARD if r.type == "debit" and r.truth not in NOT_SCORED)
-    assert a["ml"]["anomaly"]["transactions_scored"] == scored and a["ml_errors"] == {}     # every imported spend is scored
+    if "forecast" in PV.active():
+        assert a["ml"]["forecast"]["available"]
+    else:                                        # the trained forecaster failed its baseline: reported as off, not an error
+        assert a["ml"]["forecast"]["model_status"] == "awaiting_approved_model"
+    if "anomaly" in PV.active():
+        with SessionLocal() as db:
+            uid = db.scalar(select(M.User.id).where(M.User.internal_id == ivy.pid))
+            cats = db.scalars(select(M.Transaction.category).where(M.Transaction.user_id == uid, M.Transaction.type == "debit")).all()
+        assert a["ml"]["anomaly"]["transactions_scored"] == sum(c not in NOT_SCORED for c in cats)   # every imported spend scored
+    else:
+        assert a["ml"]["anomaly"]["available"] is False
     assert len(a["recommendations"]) > 0
     pdf = ivy.get(f"/api/profiles/{ivy.pid}/report.pdf")
     assert pdf.status_code == 200 and pdf.content[:4] == b"%PDF"
@@ -376,7 +402,7 @@ def test_review_queue_and_corrections_change_the_numbers(ivy):
     assert p2p["count"] == sum(r.truth == "unrecognised" for r in BANK) and "not counted as income" in p2p["reason"]
     income_before = ivy.get(f"/api/profiles/{ivy.pid}/analysis").json()["cash_flow"]["avg_monthly_income"]
     r = ivy.post(f"/api/profiles/{ivy.pid}/review/classify",
-                 json={"items": [{"kind": i["kind"], "id": i["id"]} for i in p2p["items"]], "income_type": "Other income", "remember": True})
+                 json={"items": p2p["refs"], "income_type": "Other income", "remember": True})
     assert r.json()["moved_between_income_and_spending"] == p2p["count"] and r.json()["rules_saved"] == 1
     income_after = ivy.get(f"/api/profiles/{ivy.pid}/analysis").json()["cash_flow"]["avg_monthly_income"]
     assert income_after - income_before == pytest.approx(p2p["total"] / 24, abs=0.05)

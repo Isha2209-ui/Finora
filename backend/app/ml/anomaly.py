@@ -91,14 +91,23 @@ def _severity(ratio: float, share: float) -> str:
     return "high" if ratio >= 8 else "medium" if ratio >= 4 else "low"
 
 
+def _distribution(scores: np.ndarray, threshold: float, bins: int = 20) -> dict:
+    """Histogram of this person's anomaly scores and the model's own decision threshold (scores above it are flagged)."""
+    lo, hi = float(min(scores.min(), threshold)), float(max(scores.max(), threshold))
+    counts, edges = np.histogram(scores, bins=bins, range=(lo, hi))
+    return {"bins": [{"from": round(float(edges[i]), 4), "to": round(float(edges[i + 1]), 4), "count": int(c)} for i, c in enumerate(counts)],
+            "threshold": round(threshold, 4), "scored": int(len(scores))}
+
+
 def analyse(art: dict, ident) -> dict:
     tx = ident.transactions.copy()
     tx["user_id"] = ident.uid
     f = build_features(tx)
     if f.empty:
         return {"transactions_scored": 0, "flagged_count": 0, "flagged": [], "by_category": []}
-    f["score"] = -art["model"].score_samples(f[FEATURES])
-    f["flag"] = art["model"].predict(f[FEATURES]) == -1
+    feats = art.get("features", FEATURES)
+    f["score"] = -art["model"].score_samples(f[feats])
+    f["flag"] = art["model"].predict(f[feats]) == -1
     acct = {a["id"]: f"{a['bank_name']} {a['account_masked']}" for a in ident.accounts}
     card = {c["id"]: f"{c['issuer']} {c['card_name']} ••{c['last4']}" for c in ident.cards}
     cat_max = f.groupby("category")["amount"].transform("max")
@@ -132,6 +141,8 @@ def analyse(art: dict, ident) -> dict:
         "flagged": flagged, "by_category": by_cat,
         "by_month": [{"month": k, "flagged": int(v)} for k, v in monthly.items()],
         "scores": {r["ref"]: round(float(r["score"]), 4) for _, r in f.iterrows()},
+        "score_distribution": _distribution(f["score"].to_numpy(), float(-art["model"].offset_)),
         "severity_rule": "high: 8x+ your typical amount in that category; medium: 4x+; low: otherwise.",
         "disclaimer": "Unusual does not mean fraudulent. These are transactions worth a second look, not fraud probabilities.",
+        "model_note": art.get("deployment_label"),
     }

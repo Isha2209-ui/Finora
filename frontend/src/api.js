@@ -101,6 +101,11 @@ export const api = {
   deleteRule: (id, ruleId) => request(`/profiles/${id}/category-rules/${ruleId}`, { method: 'DELETE' }),
   insights: (id, params = {}) => request(`/profiles/${id}/insights?` + new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([, v]) => v !== '' && v != null)))),
   metrics: () => request('/models/metrics'),
-  retrain: () => request('/models/retrain', { method: 'POST' }),
+  modelLab: () => request('/models/lab'),
+  creditScore: (body) => request('/models/credit-risk/score', { method: 'POST', body }),
+  decideSuggestion: (id, txId, action) => request(`/profiles/${id}/transactions/${txId}/suggestion`, { method: 'POST', body: { action } }),
+  anomalyReview: () => request('/models/anomaly-review'),
+  anomalyLabel: (itemId, label, note = '') => request(`/models/anomaly-review/${itemId}`, { method: 'PUT', body: { label, note } }),
+  anomalyReviewProgress: () => request('/models/anomaly-review/progress'),
   url: (path) => `${BASE}/api${path}`,
 }

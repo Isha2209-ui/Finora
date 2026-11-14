@@ -22,6 +22,14 @@ def _inr(x) -> str:
 PRIORITY_ORDER = {"high": 0, "medium": 1, "low": 2}
 
 
+def _src(ml: dict, name: str, label: str) -> str:
+    """Source label of an ML-based recommendation; says so when the model is experimental (not validated)."""
+    info = (ml.get(name) or {}).get("model_info") or {}
+    if info.get("status") == "experimental":
+        return label + (" - experimental, not human-validated" if name == "anomaly" else " - experimental, less accurate than a 3-month average in testing")
+    return label
+
+
 def build(snap: dict, ml: dict) -> list[dict]:
     cf, liq, cred, debt = snap["cash_flow"], snap["liquidity"], snap["credit"], snap["debt"]
     ins, inv, idle, bud, fire, alloc = snap["insurance"], snap["investments"], snap["idle_money"], snap["budget"], snap["fire"], snap["allocation"]
@@ -179,7 +187,7 @@ def build(snap: dict, ml: dict) -> list[dict]:
             "; ".join(f"{f['date']} {f['merchant'] or f['category']} {_inr(f['amount'])} ({f['times_typical']}× typical) via {f['source']}" for f in serious[:3]),
             "These amounts are far outside your normal pattern. Unusual is not the same as fraudulent.",
             "Confirm you made these payments; if any is unfamiliar, contact the bank/card issuer and block the card.",
-            sum(f["amount"] for f in serious), f"{_inr(sum(f['amount'] for f in serious))} of spending to verify.", "Anomaly detector (Isolation Forest)")
+            sum(f["amount"] for f in serious), f"{_inr(sum(f['amount'] for f in serious))} of spending to verify.", _src(ml, "anomaly", "Anomaly detector (Isolation Forest)"))
 
     # ---- 9. forecast
     fc = ml.get("forecast") or {}
@@ -189,7 +197,7 @@ def build(snap: dict, ml: dict) -> list[dict]:
                 f"Predicted spend {_inr(fc['predicted_total_expense'])} (range {_inr(fc['range']['low'])}-{_inr(fc['range']['high'])}) vs expected income {_inr(fc['expected_income'])}.",
                 "The forecaster projects spending above income based on your recent pattern.",
                 "Hold spending in " + (", ".join(fc["top_increase_drivers"]) or "discretionary categories") + " to the suggested budgets this month.",
-                -fc["projected_surplus"], f"Projected shortfall {_inr(-fc['projected_surplus'])}.", "Cash-flow forecaster (XGBoost)")
+                -fc["projected_surplus"], f"Projected shortfall {_inr(-fc['projected_surplus'])}.", _src(ml, "forecast", "Cash-flow forecaster (XGBoost)"))
         rising = [c for c in fc["category_predictions"] if c["trend"] == "rising" and c["predicted"] - c["three_month_avg"] > 1500][:2]
         for c in rising:
             add(f"RISING_{c['category'].upper()}", "low", f"{c['category']} spending is forecast to rise",
@@ -197,7 +205,7 @@ def build(snap: dict, ml: dict) -> list[dict]:
                 "A rising category is the cheapest place to act before it becomes a habit.",
                 f"Set a {c['category']} budget of {_inr(c['suggested_budget'])} for next month.",
                 (c["predicted"] - c["suggested_budget"]) * 12, f"About {_inr((c['predicted'] - c['suggested_budget']) * 12)} a year if held.",
-                "Cash-flow forecaster (XGBoost)")
+                _src(ml, "forecast", "Cash-flow forecaster (XGBoost)"))
 
     # ---- 10. budget overspend
     for lim in bud["category_limits"][:3]:

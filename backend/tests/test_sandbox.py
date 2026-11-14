@@ -86,7 +86,9 @@ def test_sandbox_analysis_matches_the_template(carol, analyses):
     assert a["net_worth"]["net_worth"] == pytest.approx(t["net_worth"]["net_worth"], abs=1)
     assert a["health_score"]["score"] == pytest.approx(t["health_score"]["score"], abs=0.1)
     assert a["ml"]["credit_risk"]["overall_risk_band"] == t["ml"]["credit_risk"]["overall_risk_band"]
-    assert a["ml"]["anomaly"]["flagged_count"] == t["ml"]["anomaly"]["flagged_count"]
+    for k in ("available", "model_status", "transactions_scored", "flagged_count"):   # same result as the template, active or not
+        assert a["ml"]["anomaly"].get(k) == t["ml"]["anomaly"].get(k), k
+    assert a["ml"]["peers"] == t["ml"]["peers"] and a["ml"]["forecast"].get("available") == t["ml"]["forecast"].get("available")
     assert {r["code"] for r in a["recommendations"]} == {r["code"] for r in t["recommendations"]}
 
 

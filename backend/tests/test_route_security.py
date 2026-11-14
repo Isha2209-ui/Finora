@@ -24,7 +24,9 @@ NON_PROFILE_MUTATIONS = {
     ("POST", "/api/lookup"): "needs session; opens caller's own sandbox",
     ("POST", "/api/demo/explore"): "needs session; opens caller's own sandbox",
     ("POST", "/api/profiles"): "needs session; creates a profile owned by the caller",
-    ("POST", "/api/models/retrain"): "needs session; disabled in production",
+    ("POST", "/api/models/retrain"): "needs session; always 410 (training is a local CLI step)",
+    ("POST", "/api/models/credit-risk/score"): "needs session; pure model inference on supplied inputs, nothing stored",
+    ("PUT", "/api/models/anomaly-review/{item_id}"): "needs a full (non-guest) session; writes only the caller's own review label",
     ("POST", "/api/tax/compare"): "pure calculation, no data",
     ("POST", "/api/categorise"): "pure model inference on supplied text, no data",
 }

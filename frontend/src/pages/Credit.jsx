@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ShieldAlert, ShieldCheck } from 'lucide-react'
 import { api } from '../api'
-import { Badge, Card, Empty, KV, Meter, Note, PageHeader, Stat, Table } from '../components/ui.jsx'
+import { Badge, Card, Empty, KV, Meter, Note, PageHeader, Stat, Table, cx } from '../components/ui.jsx'
 import { inr, pct } from '../format'
 import { useFinora } from '../store.jsx'
 
@@ -47,6 +47,7 @@ export default function Credit() {
               <Note>{risk.interpretation}</Note>
             </div>
           )}
+          <div className="mt-3"><Note tone="warn">Model-generated estimate, not an official credit score. Trained on 30,000 Taiwanese card accounts (2005); test ROC-AUC 0.783 against 0.760 for a logistic-regression baseline. Not validated for Indian borrowers.</Note></div>
         </Card>
         <Card title="Loans" subtitle={debt.note} pad={false}>
           <Table dense rows={debt.loans} empty="No loans" columns={[
@@ -60,6 +61,8 @@ export default function Credit() {
           {debt.has_debt && <div className="px-5 pb-4"><Meter value={debt.emi_to_income_pct || 0} max={60} tone={bandTone[debt.risk_band]} label={<><span>EMI load</span><span className="num">{pct(debt.emi_to_income_pct, 0)} of income (comfortable limit 40%)</span></>} /></div>}
         </Card>
       </div>
+
+      <CreditWhatIf />
 
       <Card title="Debt payoff planner" subtitle="Month-by-month simulation of every loan and card. Avalanche = highest interest first; snowball = smallest balance first." className="mt-4">
         {!plan?.has_debt ? <p className="py-6 text-center text-sm text-good">No debt to plan for.</p> : (
@@ -88,5 +91,52 @@ export default function Credit() {
         )}
       </Card>
     </>
+  )
+}
+
+
+const STATUS = [[-2, 'No card use'], [-1, 'Paid in full'], [0, 'Paid part (revolving)'], [1, '1 month late'], [2, '2 months late'], [3, '3+ months late']]
+
+function CreditWhatIf() {
+  const [age, setAge] = useState(30)
+  const [limit, setLimit] = useState(100000)
+  const [months, setMonths] = useState(Array.from({ length: 6 }, () => ({ status: 0, bill: 40000, paid: 5000 })))
+  const [res, setRes] = useState(null)
+  const [err, setErr] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const set = (i, k, v) => setMonths((m) => m.map((x, j) => (j === i ? { ...x, [k]: Number(v) } : x)))
+  const run = async () => {
+    setBusy(true); setErr(null)
+    try { setRes(await api.creditScore({ age: Number(age), credit_limit: Number(limit), months })) } catch (e) { setErr(e.message) } finally { setBusy(false) }
+  }
+  const cell = 'w-full rounded-lg border border-line bg-bg px-2 py-1 text-xs outline-none focus:border-accent'
+  return (
+    <Card title="Score a card history" subtitle="Enter six months of a card's statements (most recent first). The real credit-risk model scores it and SHAP shows what drove the result. Nothing is saved." className="mt-4">
+      <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
+        <div>
+          <div className="mb-3 flex flex-wrap gap-3 text-xs">
+            <label className="flex items-center gap-2">Age <input type="number" min={18} max={100} value={age} onChange={(e) => setAge(e.target.value)} className={cx(cell, 'w-20')} /></label>
+            <label className="flex items-center gap-2">Credit limit (₹) <input type="number" min={1} value={limit} onChange={(e) => setLimit(e.target.value)} className={cx(cell, 'w-32')} /></label>
+          </div>
+          <table className="w-full text-xs"><thead><tr className="text-left text-faint"><th className="py-1 font-medium">Month</th><th className="font-medium">Payment status</th><th className="font-medium">Bill (₹)</th><th className="font-medium">Paid (₹)</th></tr></thead>
+            <tbody>{months.map((m, i) => (
+              <tr key={i}><td className="py-1 pr-2 text-muted">{i === 0 ? 'Latest' : `${i} back`}</td>
+                <td className="pr-2"><select value={m.status} onChange={(e) => set(i, 'status', e.target.value)} className={cell}>{STATUS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></td>
+                <td className="pr-2"><input type="number" value={m.bill} onChange={(e) => set(i, 'bill', e.target.value)} className={cell} /></td>
+                <td><input type="number" min={0} value={m.paid} onChange={(e) => set(i, 'paid', e.target.value)} className={cell} /></td></tr>))}</tbody></table>
+          <button onClick={run} disabled={busy} className="mt-3 rounded-xl bg-accent px-4 py-2 text-sm font-medium text-bg disabled:opacity-50">{busy ? 'Scoring…' : 'Score with the model'}</button>
+          {err && <p className="mt-2 text-xs text-bad">{err}</p>}
+        </div>
+        <div>
+          {!res ? <p className="text-sm text-muted">The result appears here: the probability of missing next month's payment, its band, and every input's contribution.</p> : <>
+            <div className="flex items-baseline gap-3"><span className="num text-3xl font-semibold">{res.default_probability_pct}%</span><Badge tone={bandTone[res.risk_band]}>{res.risk_band}</Badge></div>
+            <p className="text-xs text-muted">Average in the training data: {res.population_base_rate_pct}% · model {res.model.version} (test ROC-AUC {res.model.test_roc_auc})</p>
+            <ul className="mt-3 space-y-1 text-xs">{res.factors.slice(0, 8).map((f) => (
+              <li key={f.factor} className="flex items-center gap-2"><span className={`num w-12 shrink-0 text-right font-mono ${f.shap > 0 ? 'text-bad' : 'text-good'}`}>{f.shap > 0 ? '+' : ''}{f.shap.toFixed(2)}</span>
+                <span className="text-muted">{f.factor} <span className="text-faint">= {f.value}</span> · {f.effect}</span></li>))}</ul>
+            <div className="mt-3"><Note tone="warn">{res.limitation}</Note></div></>}
+        </div>
+      </div>
+    </Card>
   )
 }

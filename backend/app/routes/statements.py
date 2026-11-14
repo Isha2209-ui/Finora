@@ -200,7 +200,7 @@ def _labels(db: Session, uid: int) -> dict:
 
 def _item_tx(t: M.Transaction, lab) -> dict:
     return {"kind": "tx", "id": t.id, "date": t.date.isoformat(), "description": t.raw_description, "amount": t.amount, "type": t.type,
-            "merchant": t.merchant or merchant_name(t.raw_description), "classified_as": t.category, "category_source": t.category_source,
+            "merchant": t.merchant or merchant_name(t.raw_description), "classified_as": t.category or "Not categorised yet", "category_source": t.category_source,
             "confidence": t.confidence, "reason": t.review_reason, "flags": t.flags, "import_id": t.import_id,
             "source": lab["card"].get(t.card_id) or lab["acc"].get(t.account_id) or "-"}
 
@@ -215,24 +215,32 @@ def _item_inc(r: M.IncomeRecord, lab) -> dict:
 @router.get("/profiles/{internal_id}/review", summary="Rows that need your review, grouped by counterparty")
 def review_queue(ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db), import_id: int | None = None,
                  limit: int = Query(300, ge=1, le=2000)):
+    """Groups are built from ALL rows that need review (so a group's count, total and `refs` are complete and "apply to
+    group" changes every row in it); `limit` caps the number of groups returned, and each group shows at most
+    ITEMS_PER_GROUP detailed rows."""
     uid, lab = ctx.profile.id, _labels(db, ctx.profile.id)
     qt = select(M.Transaction).where(M.Transaction.user_id == uid, M.Transaction.needs_review.is_(True))
     qi = select(M.IncomeRecord).where(M.IncomeRecord.user_id == uid, M.IncomeRecord.needs_review.is_(True))
     if import_id:
         qt, qi = qt.where(M.Transaction.import_id == import_id), qi.where(M.IncomeRecord.import_id == import_id)
-    total = (db.scalar(select(func.count()).select_from(qt.subquery())) or 0) + (db.scalar(select(func.count()).select_from(qi.subquery())) or 0)
-    items = [_item_tx(t, lab) for t in db.scalars(qt.order_by(M.Transaction.date.desc()).limit(limit))] + \
-            [_item_inc(r, lab) for r in db.scalars(qi.order_by(M.IncomeRecord.date.desc()).limit(limit))]
+    items = [_item_tx(t, lab) for t in db.scalars(qt.order_by(M.Transaction.date.desc()))] + \
+            [_item_inc(r, lab) for r in db.scalars(qi.order_by(M.IncomeRecord.date.desc()))]
     groups: dict[tuple, dict] = {}
     for it in items:
         key = (it["merchant"].upper(), it["type"], it["classified_as"])
         g = groups.setdefault(key, {"merchant": it["merchant"], "type": it["type"], "classified_as": it["classified_as"],
-                                    "reason": it["reason"], "count": 0, "total": 0.0, "items": []})
+                                    "reason": it["reason"], "count": 0, "total": 0.0, "items": [], "refs": []})
         g["count"] += 1
         g["total"] = round(g["total"] + it["amount"], 2)
-        g["items"].append(it)
+        g["refs"].append({"kind": it["kind"], "id": it["id"]})
+        if len(g["items"]) < ITEMS_PER_GROUP:
+            g["items"].append(it)
     out = sorted(groups.values(), key=lambda g: (-g["count"], -g["total"]))
-    return {"total": total, "groups": out, "categories": ALL_CATEGORIES, "income_types": INCOME_CLASSES}
+    return {"total": len(items), "groups_total": len(out), "groups": out[:limit], "categories": ALL_CATEGORIES,
+            "income_types": INCOME_CLASSES}
+
+
+ITEMS_PER_GROUP = 25
 
 
 class ItemRef(BaseModel):

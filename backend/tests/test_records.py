@@ -13,7 +13,18 @@ from sqlalchemy import select
 from app import models as M
 from app.database import SessionLocal
 
+from app.ml import provenance as PV
+
 from .conftest import signed_in_client
+
+
+def latest_trained(name):
+    """The newest TRAINED real-data artifact of a model (active or not), checksum-verified."""
+    import json, joblib
+    d = sorted((PV.REAL_DIR / name).glob("*/provenance.json"))[-1].parent
+    prov = json.loads((d / "provenance.json").read_text())
+    assert prov["data_status"] == "real" and PV.sha256(d / "model.joblib") == prov["artifact"]["sha256"]
+    return joblib.load(d / "model.joblib")
 
 VALID = {
     "bank_accounts": {"bank_name": "HDFC Bank", "account_type": "savings", "last4": "1234", "balance": 250000, "interest_rate": 3.0, "is_primary": True},
@@ -186,12 +197,18 @@ def test_delete_with_dependents_needs_cascade_and_never_drops_loans(erin):
 
 def test_transactions_are_categorised_by_the_model_unless_given(erin):
     pid = new_private(erin, "Cats")
+    from app.ml import categoriser
     t = rec(erin, pid, "transactions", VALID["transactions"])
-    assert t["category"] == "Dining" and t["category_source"] == "model"
+    # merchant text: decided by the approved categoriser, with its confidence stored and low confidence sent for review
+    # (which category it picks for an Indian narration is not asserted: Indian accuracy is not established)
+    want = categoriser.safe_predict([VALID["transactions"]["description"]])[0]
+    assert t["category_source"] == want["source"] and t["category"] == want["category"]
+    if want["source"] == "model":
+        assert t["confidence"] == want["confidence"] and t["needs_review"] == (True if categoriser.SUGGESTION_ONLY else want["confidence"] < 0.5)
     t2 = rec(erin, pid, "transactions", {**VALID["transactions"], "category": "Groceries"})
     assert t2["category"] == "Groceries" and t2["category_source"] == "user"
     p = erin.patch(f"/api/profiles/{pid}/records/transactions/{t['id']}", json={"description": "ATM WDL SBI ATM DELHI"}).json()
-    assert p["category"] == "Cash" and p["category_source"] == "model"     # model-assigned category follows the new text
+    assert p["category"] == "Cash" and p["category_source"] == "rule"      # a suggested category follows the new text (Cash: rule)
     p = erin.patch(f"/api/profiles/{pid}/records/transactions/{t2['id']}", json={"description": "ATM WDL SBI ATM DELHI"}).json()
     assert p["category"] == "Groceries"                                    # a category the user chose is kept
 
@@ -255,7 +272,9 @@ def test_every_entry_flows_into_the_analysis(erin):
     assert a["liquidity"]["runway_months"] == round(300000 / 50000, 2)
     assert a["fire"]["available"] and a["fire"]["inputs"]["annual_expenses"] == (50000 - 15000) * 12   # EMIs excluded in retirement
     assert a["health_score"]["score"] is not None and "Savings" in a["health_score"]["pillars"]
-    assert a["ml"]["anomaly"]["transactions_scored"] >= 0 and a["ml"]["forecast"]["available"] is False   # < 6 months
+    an = a["ml"]["anomaly"]                                       # scored when an approved model is active, else reported as off
+    assert (an.get("available") is False and an["model_status"] == "awaiting_approved_model") or an["transactions_scored"] >= 0
+    assert a["ml"]["forecast"]["available"] is False                # < 6 months (and no approved forecaster)
     fire_before = a["fire"]
 
     rec(erin, pid, "sips", {**VALID["sips"], "amount": 20000})
@@ -309,18 +328,39 @@ def test_model_outputs_follow_the_entered_data(erin):
                              (11, 2500 + m * 50, "POS 4521XXXXXXXX1234 AMAZON BANGALORE")]:   # a normal monthly Shopping habit
             rec(erin, pid, "transactions", {"date": f"2026-{m:02d}-{d:02d}", "amount": amt, "description": desc, "account_id": acct})
     a = analysis(erin, pid)
-    assert a["ml"]["forecast"]["available"] and a["ml"]["forecast"]["expected_income"] is not None
-    assert a["ml"]["peers"]["available"]
-    n_before, flagged_before = a["ml"]["anomaly"]["transactions_scored"], a["ml"]["anomaly"]["flagged_count"]
+    fc = a["ml"]["forecast"]
+    if "forecast" in PV.active():
+        assert fc["available"] and fc["expected_income"] is not None
+    else:                                                         # the trained forecaster failed its baseline: explicitly off
+        assert fc["available"] is False and fc["model_status"] == "awaiting_approved_model"
+    assert a["ml"]["peers"]["available"] and a["ml"]["peers"]["comparison"]    # 8 ratios computed from the entered records
+    assert a["ml"]["credit_risk"]
     big = rec(erin, pid, "transactions", {"date": "2026-10-25", "amount": 48000, "description": "POS 4521XXXXXXXX1234 MYNTRA MUMBAI",
                                           "account_id": acct})
+    # The real-data anomaly model (trained on Oklahoma cardholder histories) applied to THIS person's entered transactions,
+    # whether or not it is activated: a purchase ~16x their usual Shopping amount must be flagged with a high severity.
+    from app.ml import anomaly
+    from app.services.loader import load_identity
+    art = latest_trained("anomaly")
+    with SessionLocal() as db:
+        uid = db.scalar(select(M.User.id).where(M.User.internal_id == pid))
+        out = anomaly.analyse(art, load_identity(db, uid))
+    hit = [f for f in out["flagged"] if f["amount"] == 48000]
+    with SessionLocal() as db:
+        cats = db.scalars(select(M.Transaction.category).where(M.Transaction.user_id == uid, M.Transaction.type == "debit")).all()
+    assert out["transactions_scored"] == sum(c not in anomaly.NOT_SCORED for c in cats)   # every scoreable entry is scored
+    assert hit and hit[0]["severity"] == "high"
+    assert out["flagged_count"] <= 3                              # the ordinary monthly habit is not flagged wholesale
     a = analysis(erin, pid)
-    assert a["ml"]["anomaly"]["transactions_scored"] == n_before + 1
-    hit = [f for f in a["ml"]["anomaly"]["flagged"] if f["amount"] == 48000]
-    assert hit and hit[0]["severity"] == "high" and a["ml"]["anomaly"]["flagged_count"] > flagged_before
-    assert "VERIFY_TXN" in {r["code"] for r in a["recommendations"]}
+    codes = {r["code"] for r in a["recommendations"]}
+    if "anomaly" in PV.active():
+        assert "VERIFY_TXN" in codes and any(f["amount"] == 48000 for f in a["ml"]["anomaly"]["flagged"])
+    else:                                                         # an unapproved model never drives a recommendation
+        assert "VERIFY_TXN" not in codes and a["ml"]["anomaly"]["available"] is False
     erin.delete(f"/api/profiles/{pid}/records/transactions/{big['id']}")
-    assert not any(f["amount"] == 48000 for f in analysis(erin, pid)["ml"]["anomaly"]["flagged"])
+    with SessionLocal() as db:
+        out = anomaly.analyse(art, load_identity(db, uid))
+    assert not any(f["amount"] == 48000 for f in out["flagged"])  # deleting the entry removes the flag
 
 
 def test_reports_export_chat_and_planners_use_manual_data(erin):

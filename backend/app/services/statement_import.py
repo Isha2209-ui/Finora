@@ -338,7 +338,11 @@ def run(imp_id: int) -> None:
         own_acc = {a.account_masked[-4:] for a in accounts if a.id != account_id and a.account_masked}
         own_cards = {c.last4 for c in cards if c.id != card_id and c.last4}
         target = ("card", card_id) if imp.statement_kind == "card" else ("account", account_id)
-        rows, cstats = classify(rows, kind=imp.statement_kind, art=registry.get("categoriser"), rules=rules,
+        try:
+            cat_art = registry.get("categoriser")
+        except registry.ModelUnavailable:
+            cat_art = None
+        rows, cstats = classify(rows, kind=imp.statement_kind, art=cat_art, rules=rules,
                                 own_account_last4=own_acc, own_card_last4=own_cards, history=history, this_account=target,
                                 salary_months=salary_months, progress=lambda d, n: _progress(imp_id, "categorising", d, n))
         _stage(db, imp, "patterns")

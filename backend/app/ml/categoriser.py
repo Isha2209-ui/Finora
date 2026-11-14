@@ -145,3 +145,86 @@ def predict(art: dict, texts: list[str]) -> list[dict]:
         k = int(np.argmax(row))
         out.append({"category": str(classes[k]), "confidence": round(float(row[k]), 3), "needs_review": bool(row[k] < 0.5)})
     return out
+
+
+# ---------------------------------------------------------------- bank-side categories: RULES, not ML (Phase 6 decision, Option A)
+# Rent, EMI, Investment, Transfer, Card Payment and Cash are bank-side transaction types, not merchant categories, and no real
+# labelled data exists for them. They are recognised by these narration rules, applied BEFORE the model and labelled "rule".
+BANK_SIDE_RULES = [
+    ("Card Payment", re.compile(r"credit\s*card|\bcc\s*(?:payment|pymt|bill)|card\s*(?:bill|payment)|\bcred\b|cardpay", re.I)),
+    ("Transfer", re.compile(r"\bself\b|own\s*(?:a/?c|acc|account)|\bsweep\b|trf\s+to\s+self|\bto\s+own\b", re.I)),
+    ("Investment", re.compile(r"\bsip\b|mutual\s*fund|\bmf\b|bse\s*(?:star|ltd)|\bcams\b|kfin|zerodha|groww|\bnps\b|\bppf\b|"
+                              r"\belss\b|\bnifty\b|flexi\s*cap|large\s*cap|small\s*cap|index\s*fund", re.I)),
+    ("EMI", re.compile(r"\bemi\b|\bloan\b|home\s*fin|\bnach\b.*(?:fin|bank|capital)|\becs\b", re.I)),
+    ("Rent", re.compile(r"\brent\b|landlord", re.I)),
+    ("Cash", re.compile(r"\batm\b|cash\s*(?:wdl|withdrawal)|\bnwd\b|\batw\b|cashpoint", re.I)),
+]
+
+
+def bank_side_rule(text: str) -> str | None:
+    for cat, rx in BANK_SIDE_RULES:
+        if rx.search(str(text)):
+            return cat
+    return None
+
+
+# Phase 6 (2026-11-15): the approved categoriser passes its acceptance criteria on held-out US merchants and on DC, but it is not
+# validated on Indian bank narrations, and on Finora's Indian-format test narrations its confident predictions agreed with the
+# intended category only ~44% of the time. Until real labelled Indian data exists, every model category is a SUGGESTION that
+# the person confirms (needs_review=True); rules and the person's own choices are not affected.
+SUGGESTION_ONLY = True
+
+
+def safe_predict(texts: list[str]) -> list[dict]:
+    """Bank-side rules first, then the APPROVED real-data model if one is available. Each result says who decided:
+    source = 'rule' | 'model' | 'none' (no approved model: the category is left empty for the person to set)."""
+    from . import registry
+    out: list[dict | None] = []
+    todo = []
+    for i, t in enumerate(texts):
+        c = bank_side_rule(t)
+        if c:
+            out.append({"category": c, "confidence": 1.0, "needs_review": False, "source": "rule"})
+        else:
+            out.append(None)
+            todo.append(i)
+    if todo:
+        try:
+            art = registry.get("categoriser")
+            preds = predict(art, [texts[i] for i in todo])
+            for i, p in zip(todo, preds):
+                out[i] = {**p, "source": "model", "needs_review": True if SUGGESTION_ONLY else p["needs_review"]}
+        except registry.ModelUnavailable:
+            for i in todo:
+                out[i] = {"category": None, "confidence": None, "needs_review": True, "source": "none"}
+    return out
+
+
+_NAMES: dict[int, object] = {}
+
+
+def explain(art: dict, text: str, k: int = 4) -> list[str]:
+    """The text fragments that pushed the linear model towards its predicted class (TF-IDF weight x class coefficient).
+    Real model internals, not a made-up rationale. Fragments are character n-grams or words from the descriptor."""
+    pipe = art["model"]
+    feats, clf = pipe.named_steps["tfidf"], pipe.named_steps["clf"]
+    key = id(pipe)
+    if key not in _NAMES:
+        _NAMES[key] = feats.get_feature_names_out()
+    names = _NAMES[key]
+    x = feats.transform([text])
+    k_cls = int(np.argmax(clf.predict_proba(x)[0]))
+    coef = clf.coef_[k_cls] if clf.coef_.shape[0] > 1 else clf.coef_[0]
+    row = x.tocoo()
+    contrib = sorted(((v * coef[j], names[j]) for j, v in zip(row.col, row.data)), reverse=True)
+    out, seen = [], set()
+    for c, name in contrib:
+        if c <= 0:
+            break
+        frag = name.split("__", 1)[-1].strip()
+        if len(frag) >= 3 and frag.lower() not in seen and not any(frag.lower() in s_ for s_ in seen):
+            seen.add(frag.lower())
+            out.append(frag)
+        if len(out) >= k:
+            break
+    return out

@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   Activity, BadgeIndianRupee, Bot, BrainCircuit, CreditCard, Database, FileText, Flame, Landmark, Lightbulb, LogOut,
-  Clock, Compass, Eye, FileUp, FlaskConical, ListChecks, Sparkles, MessageSquare, PencilLine, PiggyBank, RefreshCw, Repeat, Scale, ScanSearch, TrendingUp, UserRound, Wallet,
-} from 'lucide-react'
+  Clock, Compass, Eye, FileUp, FlaskConical, ListChecks, Sparkles, MessageSquare, PencilLine, PiggyBank, RefreshCw, Repeat, Scale, ScanSearch, TrendingUp, UserRound, Wallet, Radar, Users } from 'lucide-react'
 import { api } from '../api'
 import { useAuth } from '../auth.jsx'
 import { useFinora } from '../store.jsx'
@@ -13,7 +12,7 @@ import { Badge, cx } from './ui.jsx'
 const NAV = [
   ['Plan', [['/plan', 'Finora Plan', Compass]]],
   ['Overview', [['/identity', 'Financial Identity', UserRound], ['/records', 'My Data (add & edit)', PencilLine], ['/statements', 'Import Statements', FileUp], ['/accounts', 'Accounts & Cards', Landmark], ['/investments', 'Investments & Assets', TrendingUp]]],
-  ['Intelligence', [['/insights', 'Statement Intelligence', Sparkles], ['/review', 'Review & Corrections', ListChecks], ['/transactions', 'Transaction Intelligence', ScanSearch], ['/forecast', 'Cash-Flow Forecast', Activity], ['/credit', 'Credit & Debt', CreditCard], ['/budget', 'Budget, Savings & Tax', PiggyBank]]],
+  ['Intelligence', [['/insights', 'Statement Intelligence', Sparkles], ['/review', 'Review & Corrections', ListChecks], ['/transactions', 'Transaction Intelligence', ScanSearch], ['/scanner', 'Anomaly Scanner', Radar], ['/forecast', 'Cash-Flow Forecast', Activity], ['/credit', 'Credit & Debt', CreditCard], ['/peers', 'Peer Benchmarking', Users], ['/budget', 'Budget, Savings & Tax', PiggyBank]]],
   ['Planning', [['/fire', 'FIRE & Retirement', Flame], ['/decision', 'Decision Simulator', Scale], ['/cfo', 'AI CFO', Bot], ['/recommendations', 'Recommendations', Lightbulb]]],
   ['System', [['/reports', 'Reports', FileText], ['/models', 'Model Lab', BrainCircuit], ['/data', 'Profile & Data', Database]]],
 ]

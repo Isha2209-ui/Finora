@@ -53,7 +53,7 @@ function Group({ g, profileId, readOnly, incomeTypes, onDone, onError }) {
   const [remember, setRemember] = useState(true)
   const [busy, setBusy] = useState(false)
   const credit = g.type === 'credit'
-  const items = g.items.map((i) => ({ kind: i.kind, id: i.id }))
+  const items = g.refs || g.items.map((i) => ({ kind: i.kind, id: i.id }))   // refs = every row in the group, not just those shown
   const run = async (fn) => { setBusy(true); onError(null); try { await fn(); onDone() } catch (e) { onError(e.message) } finally { setBusy(false) } }
   const apply = () => {
     const [kind, value] = choice.split(':')
@@ -86,7 +86,7 @@ function Group({ g, profileId, readOnly, incomeTypes, onDone, onError }) {
           </div>
         )}
       </div>
-      {open && <div className={cx('border-t border-line')}><Table dense rows={g.items} columns={[
+      {open && <div className={cx('border-t border-line')}>{g.count > g.items.length && <p className="px-5 pt-2 text-xs text-muted">Showing the latest {g.items.length} of {g.count} rows; actions apply to all {g.count}.</p>}<Table dense rows={g.items} columns={[
         { key: 'date', label: 'Date', render: (r) => dateLabel(r.date) },
         { key: 'description', label: 'As on the statement', className: 'max-w-[420px] truncate font-mono text-[11.5px]' },
         { key: 'source', label: 'Account / card' },

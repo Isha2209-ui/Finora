@@ -50,9 +50,11 @@ def test_c1_identical_same_day_rows_are_counted_in_totals():
                  (f"10/{m}/2026", "UPI/DR/2222/BIGBASKET/ICIC/bigbasket@ybl/Payment", 3000, None)]
     _, s = _import(c, pid, _csv(rows), account_id=acc)
     assert s["summary"]["transactions_added"] == 12
+    # both identical same-day metro rows are stored and counted (whatever category the categoriser suggests for them)
+    metro = c.get(f"/api/profiles/{pid}/transactions", params={"search": "DMRC", "limit": 50}).json()
+    assert metro["total"] == 8 and sum(t["amount"] for t in metro["items"]) == 1600      # 2 x 200 x 4 months, not 800
     i = c.get(f"/api/profiles/{pid}/insights").json()
-    travel = next(x for x in i["where"]["categories"] if x["category"] == "Travel")
-    assert travel["total"] == 1600                                       # 2 x 200 x 4 months, not 800
+    assert sum(x["total"] for x in i["where"]["categories"]) == 4 * 3400
     assert _analysis(c, pid)["cash_flow"]["avg_monthly_expenses"] == pytest.approx(3400, abs=0.01)
 
 
@@ -108,7 +110,8 @@ def test_c3_unrelated_equal_amounts_do_not_become_transfers():
     # the same day a Rs 600 Swiggy order leaves the HDFC account
     _, s = _import(c, pid, _csv([("05/07/2026", "UPI/DR/402918376152/SWIGGY/YESB/swiggy@ybl/Payment", 600, None)]), "hdfc.csv",
                    account_id=acc)
-    assert s["summary"]["transfers"] == 0 and s["summary"]["spend_by_category"] == {"Dining": 600.0}
+    assert s["summary"]["transfers"] == 0                                 # the Swiggy order is spending, not a transfer
+    assert sum(s["summary"]["spend_by_category"].values()) == 600.0 and not {"Transfer", "Card Payment"} & set(s["summary"]["spend_by_category"])
     assert _analysis(c, pid)["cash_flow"]["avg_monthly_expenses"] == pytest.approx(600, abs=0.01)
     # a genuine own transfer (generic narration, other side already a transfer) is still paired
     _import(c, pid, _csv([("08/07/2026", "IMPS/P2A/777/SELF TRANSFER", 5000, None)]), "out.csv", account_id=other)
@@ -308,8 +311,20 @@ def test_atm_withdrawals_are_not_recurring_commitments():
     _import(c, pid, F.hdfc(BANK), account_id=acc)
     items = c.get(f"/api/profiles/{pid}/insights").json()["recurring"]["items"]
     assert not any(i["category"] == "Cash" for i in items)
-    assert next(i for i in items if i["category"] == "Rent")["kind"] == "bill"
-    assert next(i for i in items if i["category"] == "Subscriptions")["kind"] == "subscription"
+    assert next(i for i in items if i["category"] == "Rent")["kind"] == "bill"                  # Rent: a bank-side rule
+    # Netflix is detected as recurring whatever the categoriser suggests; once the person confirms "Subscriptions" in the
+    # review screen it is reported as a subscription
+    nf = next(i for i in items if "NETFLIX" in i["merchant"].upper())
+    if nf["category"] != "Subscriptions":
+        with SessionLocal() as db:
+            uid = db.scalar(select(M.User.id).where(M.User.internal_id == pid))
+            ids = db.scalars(select(M.Transaction.id).where(M.Transaction.user_id == uid,
+                                                            M.Transaction.raw_description.like("%NETFLIX%"))).all()
+        r = c.post(f"/api/profiles/{pid}/review/classify", json={"items": [{"kind": "tx", "id": i} for i in ids], "category": "Subscriptions"})
+        assert r.status_code == 200
+        items = c.get(f"/api/profiles/{pid}/insights").json()["recurring"]["items"]
+        nf = next(i for i in items if "NETFLIX" in i["merchant"].upper())
+    assert nf["category"] == "Subscriptions" and nf["kind"] == "subscription"
 
 
 def test_oversized_upload_is_refused_before_the_body_is_read(monkeypatch):

@@ -441,3 +441,19 @@ class PlanAssumption(Base):
     status: Mapped[str] = mapped_column(String(12), default="accepted")                     # accepted | dismissed
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class AnomalyReviewLabel(Base):
+    """A PERSON's judgement of one item in the blinded anomaly review sample (Phase 6, part B).
+    Reviewers never see model scores, flags or the sampling stratum. The label is perceived unusualness for that
+    cardholder, NOT confirmed fraud. Labels are only ever written by a signed-in reviewer through the review API."""
+    __tablename__ = "anomaly_review_labels"
+    __table_args__ = (UniqueConstraint("sample_version", "item_id", "reviewer_id"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    sample_version: Mapped[str] = mapped_column(String(40), index=True)
+    item_id: Mapped[str] = mapped_column(String(12))
+    reviewer_id: Mapped[int] = mapped_column(ForeignKey("app_users.id", ondelete="CASCADE"), index=True)
+    label: Mapped[str] = mapped_column(String(20))        # usual | somewhat_unusual | very_unusual | cannot_tell
+    note: Mapped[str] = mapped_column(String(500), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

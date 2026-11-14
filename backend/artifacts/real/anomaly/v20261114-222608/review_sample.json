@@ -1,0 +1,7822 @@
+{
+ "version": "v20261114-222608",
+ "design": {
+  "S1_model_flagged": {
+   "population": 5260,
+   "sampled": 150,
+   "selection_probability": 0.028517110266159697
+  },
+  "S2_rule_flagged_only": {
+   "population": 57550,
+   "sampled": 75,
+   "selection_probability": 0.0013032145960034753
+  },
+  "S3_neither": {
+   "population": 310792,
+   "sampled": 75,
+   "selection_probability": 0.0002413189528687997
+  }
+ },
+ "items": [
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.35351,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-09-26",
+    "merchant": "ATT BILL PAYMENT",
+    "merchant_category": "TELECOMMUNICATION SERV.INCLUD. LOCAL/L.D",
+    "category": "Utilities",
+    "amount": 75.12,
+    "holder_category_history": {
+     "transactions": 136,
+     "median": 82.58,
+     "p25": 47.72,
+     "p75": 181.92,
+     "max_other": 424.33
+    },
+    "holder_transactions_that_month": 14,
+    "same_day_same_category": 3
+   },
+   "item_id": "r001"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.73071,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-06-18",
+    "merchant": "SCHOOLSIN",
+    "merchant_category": "MISCELLANEOUS GENERAL MERCHANDISE STORES",
+    "category": "Shopping",
+    "amount": 4969.23,
+    "holder_category_history": {
+     "transactions": 170,
+     "median": 89.84,
+     "p25": 39.91,
+     "p75": 217.92,
+     "max_other": 11877.15
+    },
+    "holder_transactions_that_month": 25,
+    "same_day_same_category": 2
+   },
+   "item_id": "r002"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.47371,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-08-20",
+    "merchant": "AMZN Mktp US TQ4745B92",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 676.45,
+    "holder_category_history": {
+     "transactions": 188,
+     "median": 89.97,
+     "p25": 35.04,
+     "p75": 238.34,
+     "max_other": 4566.65
+    },
+    "holder_transactions_that_month": 16,
+    "same_day_same_category": 1
+   },
+   "item_id": "r003"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.69416,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-12-13",
+    "merchant": "SOUTH CENTRAL INDUSTRIE",
+    "merchant_category": "MISCELLANEOUS GENERAL MERCHANDISE STORES",
+    "category": "Shopping",
+    "amount": 3980.38,
+    "holder_category_history": {
+     "transactions": 159,
+     "median": 128.13,
+     "p25": 57.0,
+     "p75": 368.56,
+     "max_other": 4624.0
+    },
+    "holder_transactions_that_month": 56,
+    "same_day_same_category": 1
+   },
+   "item_id": "r004"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.4357,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-10-29",
+    "merchant": "AMZN Mktp US X73AX53V3",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 299.0,
+    "holder_category_history": {
+     "transactions": 372,
+     "median": 78.68,
+     "p25": 35.42,
+     "p75": 200.0,
+     "max_other": 4864.97
+    },
+    "holder_transactions_that_month": 45,
+    "same_day_same_category": 7
+   },
+   "item_id": "r005"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.76459,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-10-17",
+    "merchant": "SYSCO CORP",
+    "merchant_category": "NON-DURABLE GOODS NOT ELSEWHERE CLASSIFI",
+    "category": "Other",
+    "amount": 26584.92,
+    "holder_category_history": {
+     "transactions": 306,
+     "median": 415.26,
+     "p25": 114.0,
+     "p75": 1432.58,
+     "max_other": 39189.29
+    },
+    "holder_transactions_that_month": 40,
+    "same_day_same_category": 14
+   },
+   "item_id": "r006"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.5086,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-03-18",
+    "merchant": "AMERICAN AIR0018094885251",
+    "merchant_category": "AMERICAN AIRLINES",
+    "category": "Travel",
+    "amount": 708.2,
+    "holder_category_history": {
+     "transactions": 5238,
+     "median": 342.5,
+     "p25": 5.0,
+     "p75": 553.96,
+     "max_other": 10490.5
+    },
+    "holder_transactions_that_month": 677,
+    "same_day_same_category": 29
+   },
+   "item_id": "r007"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.35437,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-05-05",
+    "merchant": "THE GARAGE 786",
+    "merchant_category": "EATING PLACES  RESTAURANTS",
+    "category": "Dining",
+    "amount": 59.41,
+    "holder_category_history": {
+     "transactions": 94,
+     "median": 70.75,
+     "p25": 29.32,
+     "p75": 143.99,
+     "max_other": 381.75
+    },
+    "holder_transactions_that_month": 17,
+    "same_day_same_category": 3
+   },
+   "item_id": "r008"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.58201,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-27",
+    "merchant": "MARRIOTT DC GEORGETWN",
+    "merchant_category": "MARRIOTT",
+    "category": "Travel",
+    "amount": 717.73,
+    "holder_category_history": {
+     "transactions": 53,
+     "median": 36.0,
+     "p25": 20.36,
+     "p75": 296.2,
+     "max_other": 1542.0
+    },
+    "holder_transactions_that_month": 8,
+    "same_day_same_category": 3
+   },
+   "item_id": "r009"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.68221,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-06-30",
+    "merchant": "LAKE REGION ELECTRIC",
+    "merchant_category": "UTILITIES-ELEC/GAS/HEAT OIL/SANITARY/WTR",
+    "category": "Utilities",
+    "amount": 4837.04,
+    "holder_category_history": {
+     "transactions": 631,
+     "median": 202.79,
+     "p25": 118.94,
+     "p75": 942.5,
+     "max_other": 5000.0
+    },
+    "holder_transactions_that_month": 22,
+    "same_day_same_category": 10
+   },
+   "item_id": "r010"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.66325,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-06-22",
+    "merchant": "MMS GOV SOLUTION LLC",
+    "merchant_category": "LAB/MEDICAL/DENTAL/OPHTHALMIC HOSPITAL E",
+    "category": "Other",
+    "amount": 11004.37,
+    "holder_category_history": {
+     "transactions": 1354,
+     "median": 606.66,
+     "p25": 228.76,
+     "p75": 1603.12,
+     "max_other": 13535.88
+    },
+    "holder_transactions_that_month": 178,
+    "same_day_same_category": 2
+   },
+   "item_id": "r011"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.69698,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-07-19",
+    "merchant": "SP DRINK ZYN",
+    "merchant_category": "MISC FOOD STORES-SPECIALITY CONVENIENCE",
+    "category": "Groceries",
+    "amount": 937.5,
+    "holder_category_history": {
+     "transactions": 8,
+     "median": 45.01,
+     "p25": 25.05,
+     "p75": 60.06,
+     "max_other": 61.42
+    },
+    "holder_transactions_that_month": 15,
+    "same_day_same_category": 1
+   },
+   "item_id": "r012"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.7137,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-11-20",
+    "merchant": "HOT SPRINGS EMBASSY SU",
+    "merchant_category": "EMBASSY SUITES",
+    "category": "Travel",
+    "amount": 3989.18,
+    "holder_category_history": {
+     "transactions": 25,
+     "median": 238.04,
+     "p25": 117.0,
+     "p75": 736.95,
+     "max_other": 9300.9
+    },
+    "holder_transactions_that_month": 26,
+    "same_day_same_category": 1
+   },
+   "item_id": "r013"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.50727,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-09-13",
+    "merchant": "STAPLES",
+    "merchant_category": "STATIONERY OFFICE SUPPLIES PRINTING AND",
+    "category": "Shopping",
+    "amount": 781.56,
+    "holder_category_history": {
+     "transactions": 24,
+     "median": 217.87,
+     "p25": 91.03,
+     "p75": 382.59,
+     "max_other": 1895.1
+    },
+    "holder_transactions_that_month": 3,
+    "same_day_same_category": 1
+   },
+   "item_id": "r014"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.7248,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-25",
+    "merchant": "AMZN Mktp US NC2S12WC3",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 3468.0,
+    "holder_category_history": {
+     "transactions": 319,
+     "median": 79.05,
+     "p25": 29.99,
+     "p75": 232.16,
+     "max_other": 12617.23
+    },
+    "holder_transactions_that_month": 31,
+    "same_day_same_category": 4
+   },
+   "item_id": "r015"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.41997,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-10-17",
+    "merchant": "STAPLES       00105288",
+    "merchant_category": "STATIONARY  OFFICE AND SCHOOL SUPPLY STO",
+    "category": "Shopping",
+    "amount": 158.98,
+    "holder_category_history": {
+     "transactions": 25,
+     "median": 36.94,
+     "p25": 22.92,
+     "p75": 102.38,
+     "max_other": 454.97
+    },
+    "holder_transactions_that_month": 10,
+    "same_day_same_category": 1
+   },
+   "item_id": "r016"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.34827,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-01-24",
+    "merchant": "FEDEX82921769",
+    "merchant_category": "COURIER SERVICES-AIR OR GROUND FREIGHT F",
+    "category": "Other",
+    "amount": 51.09,
+    "holder_category_history": {
+     "transactions": 78,
+     "median": 79.62,
+     "p25": 45.0,
+     "p75": 335.0,
+     "max_other": 6500.0
+    },
+    "holder_transactions_that_month": 13,
+    "same_day_same_category": 1
+   },
+   "item_id": "r017"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.42534,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-09-23",
+    "merchant": "HOLIDAY INN EXPRESS",
+    "merchant_category": "HOLIDAY INNS",
+    "category": "Travel",
+    "amount": 116.17,
+    "holder_category_history": {
+     "transactions": 23,
+     "median": 98.0,
+     "p25": 98.0,
+     "p75": 107.09,
+     "max_other": 855.06
+    },
+    "holder_transactions_that_month": 23,
+    "same_day_same_category": 5
+   },
+   "item_id": "r018"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.35018,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-03-23",
+    "merchant": "STAPLES",
+    "merchant_category": "STATIONERY OFFICE SUPPLIES PRINTING AND",
+    "category": "Shopping",
+    "amount": 63.01,
+    "holder_category_history": {
+     "transactions": 107,
+     "median": 54.97,
+     "p25": 18.81,
+     "p75": 102.35,
+     "max_other": 3757.34
+    },
+    "holder_transactions_that_month": 70,
+    "same_day_same_category": 1
+   },
+   "item_id": "r019"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.71767,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-06",
+    "merchant": "KAY ELECTRIC COOP",
+    "merchant_category": "UTILITIES-ELEC/GAS/HEAT OIL/SANITARY/WTR",
+    "category": "Utilities",
+    "amount": 2813.44,
+    "holder_category_history": {
+     "transactions": 394,
+     "median": 101.67,
+     "p25": 34.34,
+     "p75": 219.95,
+     "max_other": 4776.0
+    },
+    "holder_transactions_that_month": 68,
+    "same_day_same_category": 14
+   },
+   "item_id": "r020"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.68193,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-07-19",
+    "merchant": "LOWES #00205",
+    "merchant_category": "HOME SUPPLY WAREHOUSE STORES",
+    "category": "Shopping",
+    "amount": 972.22,
+    "holder_category_history": {
+     "transactions": 44,
+     "median": 53.76,
+     "p25": 24.95,
+     "p75": 120.02,
+     "max_other": 449.28
+    },
+    "holder_transactions_that_month": 11,
+    "same_day_same_category": 1
+   },
+   "item_id": "r021"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.39201,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-08-22",
+    "merchant": "JOURNYHSE   0001741350016",
+    "merchant_category": "TRAVEL AGENCIES",
+    "category": "Travel",
+    "amount": 9.0,
+    "holder_category_history": {
+     "transactions": 391,
+     "median": 196.0,
+     "p25": 94.0,
+     "p75": 370.44,
+     "max_other": 1664.0
+    },
+    "holder_transactions_that_month": 84,
+    "same_day_same_category": 6
+   },
+   "item_id": "r022"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.55791,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-26",
+    "merchant": "THOMSON WEST TCD",
+    "merchant_category": "PROFESSIONAL SERVICES NOT ELSEWHERE CLAS",
+    "category": "Other",
+    "amount": 2300.5,
+    "holder_category_history": {
+     "transactions": 329,
+     "median": 173.0,
+     "p25": 80.0,
+     "p75": 625.0,
+     "max_other": 24800.0
+    },
+    "holder_transactions_that_month": 37,
+    "same_day_same_category": 3
+   },
+   "item_id": "r023"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.43381,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-08-11",
+    "merchant": "TFS FISHERSCI ECOM FSE",
+    "merchant_category": "LAB/MEDICAL/DENTAL/OPHTHALMIC HOSPITAL E",
+    "category": "Other",
+    "amount": 855.68,
+    "holder_category_history": {
+     "transactions": 232,
+     "median": 256.32,
+     "p25": 110.93,
+     "p75": 503.91,
+     "max_other": 2817.6
+    },
+    "holder_transactions_that_month": 27,
+    "same_day_same_category": 3
+   },
+   "item_id": "r024"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.63686,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-09",
+    "merchant": "OXFORD NANOPORE TECHNOLO",
+    "merchant_category": "MEDICAL AND DENTAL LABORATORIES",
+    "category": "Other",
+    "amount": 3249.0,
+    "holder_category_history": {
+     "transactions": 79,
+     "median": 120.0,
+     "p25": 58.42,
+     "p75": 482.02,
+     "max_other": 3249.0
+    },
+    "holder_transactions_that_month": 13,
+    "same_day_same_category": 1
+   },
+   "item_id": "r025"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.775,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-09-26",
+    "merchant": "AMAZON.COM T128G65B0",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 4150.0,
+    "holder_category_history": {
+     "transactions": 672,
+     "median": 65.91,
+     "p25": 28.55,
+     "p75": 165.79,
+     "max_other": 3270.0
+    },
+    "holder_transactions_that_month": 81,
+    "same_day_same_category": 9
+   },
+   "item_id": "r026"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.39452,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-12-19",
+    "merchant": "VALLEY LASER",
+    "merchant_category": "CHARITABLE AND SOCIAL SERVICE ORGANIZATI",
+    "category": "Other",
+    "amount": 1034.85,
+    "holder_category_history": {
+     "transactions": 55,
+     "median": 472.68,
+     "p25": 122.5,
+     "p75": 1316.0,
+     "max_other": 4345.37
+    },
+    "holder_transactions_that_month": 14,
+    "same_day_same_category": 3
+   },
+   "item_id": "r027"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.79052,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-22",
+    "merchant": "CENTRAL OKLAHOMAWINLSN",
+    "merchant_category": "PLUMBING & HEATING EQUIPMENT AND SUPPLIE",
+    "category": "Other",
+    "amount": 24239.05,
+    "holder_category_history": {
+     "transactions": 225,
+     "median": 325.79,
+     "p25": 131.72,
+     "p75": 1000.0,
+     "max_other": 11938.51
+    },
+    "holder_transactions_that_month": 24,
+    "same_day_same_category": 4
+   },
+   "item_id": "r028"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.53877,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-09-08",
+    "merchant": "IC WILLARD B4CKIN",
+    "merchant_category": "INTERCONTINENTAL HOTELS",
+    "category": "Travel",
+    "amount": 1179.21,
+    "holder_category_history": {
+     "transactions": 10,
+     "median": 273.65,
+     "p25": 13.0,
+     "p75": 501.54,
+     "max_other": 694.68
+    },
+    "holder_transactions_that_month": 12,
+    "same_day_same_category": 1
+   },
+   "item_id": "r029"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.80681,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-06-18",
+    "merchant": "UTILITY DATA SERVICES  IN",
+    "merchant_category": "INFORMATION RETRIEVAL SERVICES",
+    "category": "Other",
+    "amount": 3090.0,
+    "holder_category_history": {
+     "transactions": 66,
+     "median": 20.0,
+     "p25": 16.0,
+     "p75": 31.0,
+     "max_other": 899.99
+    },
+    "holder_transactions_that_month": 5,
+    "same_day_same_category": 1
+   },
+   "item_id": "r030"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.6981,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-06-12",
+    "merchant": "OK CORRECTIONAL INDUST",
+    "merchant_category": "GOVERNMENT SERVICES NOT ELSEWHERE CLASSI",
+    "category": "Other",
+    "amount": 751.05,
+    "holder_category_history": {
+     "transactions": 27,
+     "median": 29.99,
+     "p25": 19.73,
+     "p75": 68.76,
+     "max_other": 824.2
+    },
+    "holder_transactions_that_month": 7,
+    "same_day_same_category": 1
+   },
+   "item_id": "r031"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.41855,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-12",
+    "merchant": "SOUTHWES    5268092773908",
+    "merchant_category": "SOUTHWEST AIRLINES",
+    "category": "Travel",
+    "amount": 317.96,
+    "holder_category_history": {
+     "transactions": 28,
+     "median": 88.19,
+     "p25": 9.0,
+     "p75": 356.58,
+     "max_other": 1220.8
+    },
+    "holder_transactions_that_month": 10,
+    "same_day_same_category": 2
+   },
+   "item_id": "r032"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.35657,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-08-03",
+    "merchant": "ABSOLUTE SELF STORAGE",
+    "merchant_category": "PUBLIC WAREHOUSING-FARM PROD REFRIDGERAT",
+    "category": "Other",
+    "amount": 305.0,
+    "holder_category_history": {
+     "transactions": 23,
+     "median": 305.0,
+     "p25": 149.95,
+     "p75": 470.0,
+     "max_other": 2500.0
+    },
+    "holder_transactions_that_month": 34,
+    "same_day_same_category": 1
+   },
+   "item_id": "r033"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.35478,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-11-17",
+    "merchant": "SHERWIN WILLIAMS 707904",
+    "merchant_category": "GLASS  PAINT  WALLPAPER STORES",
+    "category": "Shopping",
+    "amount": 60.49,
+    "holder_category_history": {
+     "transactions": 678,
+     "median": 44.64,
+     "p25": 16.96,
+     "p75": 121.3,
+     "max_other": 3774.0
+    },
+    "holder_transactions_that_month": 88,
+    "same_day_same_category": 2
+   },
+   "item_id": "r034"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67987,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-09",
+    "merchant": "Staples Inc VT",
+    "merchant_category": "STATIONERY OFFICE SUPPLIES PRINTING AND",
+    "category": "Shopping",
+    "amount": 2954.53,
+    "holder_category_history": {
+     "transactions": 125,
+     "median": 121.24,
+     "p25": 54.5,
+     "p75": 300.87,
+     "max_other": 7404.13
+    },
+    "holder_transactions_that_month": 28,
+    "same_day_same_category": 1
+   },
+   "item_id": "r035"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.51142,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-06-12",
+    "merchant": "SP SKRETTING USA",
+    "merchant_category": "MEN S AND WOMEN S CLOTHING STORES",
+    "category": "Shopping",
+    "amount": 753.46,
+    "holder_category_history": {
+     "transactions": 42,
+     "median": 121.49,
+     "p25": 48.81,
+     "p75": 230.95,
+     "max_other": 1101.45
+    },
+    "holder_transactions_that_month": 8,
+    "same_day_same_category": 1
+   },
+   "item_id": "r036"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.707,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-11-07",
+    "merchant": "AMAZON.COM WX1J435T3",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 2014.74,
+    "holder_category_history": {
+     "transactions": 293,
+     "median": 53.98,
+     "p25": 31.99,
+     "p75": 156.06,
+     "max_other": 5812.5
+    },
+    "holder_transactions_that_month": 30,
+    "same_day_same_category": 1
+   },
+   "item_id": "r037"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.52968,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-07-02",
+    "merchant": "AMAZON.COM 6K63F7ZQ3 AMZN",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 714.32,
+    "holder_category_history": {
+     "transactions": 153,
+     "median": 83.95,
+     "p25": 42.93,
+     "p75": 197.94,
+     "max_other": 1463.51
+    },
+    "holder_transactions_that_month": 13,
+    "same_day_same_category": 1
+   },
+   "item_id": "r038"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.459,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-01-20",
+    "merchant": "AMZN Mktp US R82UN9E91",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 100.65,
+    "holder_category_history": {
+     "transactions": 42,
+     "median": 23.77,
+     "p25": 12.41,
+     "p75": 94.33,
+     "max_other": 1080.0
+    },
+    "holder_transactions_that_month": 10,
+    "same_day_same_category": 3
+   },
+   "item_id": "r039"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.7504,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-09-11",
+    "merchant": "OK DEPT OF CAREER TECH",
+    "merchant_category": "GOVERNMENT SERVICES NOT ELSEWHERE CLASSI",
+    "category": "Other",
+    "amount": 1534.0,
+    "holder_category_history": {
+     "transactions": 25,
+     "median": 75.0,
+     "p25": 50.0,
+     "p75": 149.0,
+     "max_other": 537.0
+    },
+    "holder_transactions_that_month": 24,
+    "same_day_same_category": 24
+   },
+   "item_id": "r040"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.34867,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-11-02",
+    "merchant": "GRAINGER",
+    "merchant_category": "INDUSTRIAL SUPPLIES NOT ESLEWHERE CLASSI",
+    "category": "Other",
+    "amount": 119.17,
+    "holder_category_history": {
+     "transactions": 31,
+     "median": 225.0,
+     "p25": 104.59,
+     "p75": 718.73,
+     "max_other": 2362.37
+    },
+    "holder_transactions_that_month": 8,
+    "same_day_same_category": 1
+   },
+   "item_id": "r041"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67266,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-21",
+    "merchant": "AMZN Mktp US RI6MH7891",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 1299.97,
+    "holder_category_history": {
+     "transactions": 155,
+     "median": 50.95,
+     "p25": 25.99,
+     "p75": 127.39,
+     "max_other": 4144.1
+    },
+    "holder_transactions_that_month": 38,
+    "same_day_same_category": 3
+   },
+   "item_id": "r042"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.42446,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-06-03",
+    "merchant": "SQ  C DOUGLAS SALON",
+    "merchant_category": "BEAUTY SHOPS AND BARBER SHOPS",
+    "category": "Other",
+    "amount": 48.0,
+    "holder_category_history": {
+     "transactions": 12,
+     "median": 47.55,
+     "p25": 25.0,
+     "p75": 88.56,
+     "max_other": 650.0
+    },
+    "holder_transactions_that_month": 9,
+    "same_day_same_category": 1
+   },
+   "item_id": "r043"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.35613,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-08-30",
+    "merchant": "AMZN Mktp US T30IM97S0",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 152.7,
+    "holder_category_history": {
+     "transactions": 127,
+     "median": 92.93,
+     "p25": 39.86,
+     "p75": 304.44,
+     "max_other": 3071.68
+    },
+    "holder_transactions_that_month": 20,
+    "same_day_same_category": 1
+   },
+   "item_id": "r044"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.72817,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-12-27",
+    "merchant": "OG&E/USPAYMENTSBILLPAY",
+    "merchant_category": "UTILITIES-ELEC/GAS/HEAT OIL/SANITARY/WTR",
+    "category": "Utilities",
+    "amount": 4370.31,
+    "holder_category_history": {
+     "transactions": 388,
+     "median": 80.43,
+     "p25": 47.72,
+     "p75": 427.61,
+     "max_other": 4738.97
+    },
+    "holder_transactions_that_month": 28,
+    "same_day_same_category": 4
+   },
+   "item_id": "r045"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.55293,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-14",
+    "merchant": "AMAZON.COM 8Y03B6CV3",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 370.5,
+    "holder_category_history": {
+     "transactions": 64,
+     "median": 27.44,
+     "p25": 18.61,
+     "p75": 84.36,
+     "max_other": 619.96
+    },
+    "holder_transactions_that_month": 12,
+    "same_day_same_category": 1
+   },
+   "item_id": "r046"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.43989,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-03-13",
+    "merchant": "WWW.VECTORBUILDER.COM",
+    "merchant_category": "TESTING LABORATORIES (NON-MEDICAL)",
+    "category": "Other",
+    "amount": 916.0,
+    "holder_category_history": {
+     "transactions": 69,
+     "median": 359.3,
+     "p25": 158.83,
+     "p75": 510.0,
+     "max_other": 2464.0
+    },
+    "holder_transactions_that_month": 4,
+    "same_day_same_category": 2
+   },
+   "item_id": "r047"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.36207,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-09-07",
+    "merchant": "GRAINGER",
+    "merchant_category": "INDUSTRIAL SUPPLIES NOT ESLEWHERE CLASSI",
+    "category": "Other",
+    "amount": 416.7,
+    "holder_category_history": {
+     "transactions": 777,
+     "median": 301.62,
+     "p25": 118.3,
+     "p75": 739.4,
+     "max_other": 10649.84
+    },
+    "holder_transactions_that_month": 128,
+    "same_day_same_category": 4
+   },
+   "item_id": "r048"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.51222,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-14",
+    "merchant": "BENSON HARDWARE & AUTO",
+    "merchant_category": "HARDWARE STORES",
+    "category": "Shopping",
+    "amount": 489.0,
+    "holder_category_history": {
+     "transactions": 23,
+     "median": 155.0,
+     "p25": 58.49,
+     "p75": 487.54,
+     "max_other": 1490.85
+    },
+    "holder_transactions_that_month": 6,
+    "same_day_same_category": 1
+   },
+   "item_id": "r049"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.6877,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-18",
+    "merchant": "CARAHSOFT TECHNOLOGY CORP",
+    "merchant_category": "COMPUTERS COMPUTER PERIPHERAL EQUIPMENT",
+    "category": "Other",
+    "amount": 5408.48,
+    "holder_category_history": {
+     "transactions": 68,
+     "median": 250.0,
+     "p25": 153.12,
+     "p75": 711.84,
+     "max_other": 9100.0
+    },
+    "holder_transactions_that_month": 15,
+    "same_day_same_category": 2
+   },
+   "item_id": "r050"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.76214,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-21",
+    "merchant": "OK TAX COMM-IVR/PHONE",
+    "merchant_category": "GOVERNMENT SERVICES NOT ELSEWHERE CLASSI",
+    "category": "Other",
+    "amount": 1931.44,
+    "holder_category_history": {
+     "transactions": 30,
+     "median": 30.63,
+     "p25": 12.95,
+     "p75": 100.88,
+     "max_other": 1673.37
+    },
+    "holder_transactions_that_month": 6,
+    "same_day_same_category": 3
+   },
+   "item_id": "r051"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67432,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-26",
+    "merchant": "GRAINGER",
+    "merchant_category": "INDUSTRIAL SUPPLIES NOT ESLEWHERE CLASSI",
+    "category": "Other",
+    "amount": 5986.46,
+    "holder_category_history": {
+     "transactions": 144,
+     "median": 278.74,
+     "p25": 111.99,
+     "p75": 749.59,
+     "max_other": 7836.2
+    },
+    "holder_transactions_that_month": 49,
+    "same_day_same_category": 1
+   },
+   "item_id": "r052"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.71131,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-02",
+    "merchant": "THE PAPER MILL STORE",
+    "merchant_category": "STATIONERY OFFICE SUPPLIES PRINTING AND",
+    "category": "Shopping",
+    "amount": 803.81,
+    "holder_category_history": {
+     "transactions": 12,
+     "median": 99.59,
+     "p25": 77.88,
+     "p75": 139.41,
+     "max_other": 415.93
+    },
+    "holder_transactions_that_month": 14,
+    "same_day_same_category": 1
+   },
+   "item_id": "r053"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.71283,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-01-30",
+    "merchant": "SP THROWER X PRO SHOP",
+    "merchant_category": "SPORTING GOODS STORES",
+    "category": "Shopping",
+    "amount": 2824.1,
+    "holder_category_history": {
+     "transactions": 4,
+     "median": 70.41,
+     "p25": 66.4,
+     "p75": 761.46,
+     "max_other": 73.92
+    },
+    "holder_transactions_that_month": 4,
+    "same_day_same_category": 1
+   },
+   "item_id": "r054"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.3764,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-04-02",
+    "merchant": "AMAZON.COM 5913209M3",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 5.99,
+    "holder_category_history": {
+     "transactions": 26,
+     "median": 60.41,
+     "p25": 37.24,
+     "p75": 121.87,
+     "max_other": 228.11
+    },
+    "holder_transactions_that_month": 13,
+    "same_day_same_category": 2
+   },
+   "item_id": "r055"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.35113,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-06-25",
+    "merchant": "HOLIDAY INN EXPRESS",
+    "merchant_category": "HOLIDAY INNS",
+    "category": "Travel",
+    "amount": 107.0,
+    "holder_category_history": {
+     "transactions": 159,
+     "median": 107.0,
+     "p25": 17.45,
+     "p75": 205.22,
+     "max_other": 935.71
+    },
+    "holder_transactions_that_month": 113,
+    "same_day_same_category": 3
+   },
+   "item_id": "r056"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.71165,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-01-12",
+    "merchant": "QUADIENT LEASING USA P",
+    "merchant_category": "BUSINESS SERVICES NOT ELSEWHERE CLASSIFI",
+    "category": "Other",
+    "amount": 4954.24,
+    "holder_category_history": {
+     "transactions": 135,
+     "median": 179.44,
+     "p25": 108.09,
+     "p75": 350.2,
+     "max_other": 4954.24
+    },
+    "holder_transactions_that_month": 17,
+    "same_day_same_category": 2
+   },
+   "item_id": "r057"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.59416,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-06-24",
+    "merchant": "CDW GOVT #RZ08537",
+    "merchant_category": "COMPUTERS COMPUTER PERIPHERAL EQUIPMENT",
+    "category": "Other",
+    "amount": 4847.2,
+    "holder_category_history": {
+     "transactions": 53,
+     "median": 375.0,
+     "p25": 60.0,
+     "p75": 1266.41,
+     "max_other": 14152.3
+    },
+    "holder_transactions_that_month": 8,
+    "same_day_same_category": 1
+   },
+   "item_id": "r058"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.46108,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-09-08",
+    "merchant": "STAPLES       00105288",
+    "merchant_category": "STATIONARY  OFFICE AND SCHOOL SUPPLY STO",
+    "category": "Shopping",
+    "amount": 120.52,
+    "holder_category_history": {
+     "transactions": 8,
+     "median": 35.05,
+     "p25": 16.79,
+     "p75": 59.38,
+     "max_other": 238.64
+    },
+    "holder_transactions_that_month": 12,
+    "same_day_same_category": 1
+   },
+   "item_id": "r059"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.63037,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-09-08",
+    "merchant": "BRAINERD CHEMICAL CO INC",
+    "merchant_category": "CHEMICALS AND ALLIED PRODUCTS NOT ESLEWH",
+    "category": "Other",
+    "amount": 6992.19,
+    "holder_category_history": {
+     "transactions": 2381,
+     "median": 535.25,
+     "p25": 167.01,
+     "p75": 1810.7,
+     "max_other": 179346.78
+    },
+    "holder_transactions_that_month": 300,
+    "same_day_same_category": 30
+   },
+   "item_id": "r060"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.35555,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-12-05",
+    "merchant": "Google ADS1273283893",
+    "merchant_category": "ADVERTISING SERVICES",
+    "category": "Other",
+    "amount": 1000.0,
+    "holder_category_history": {
+     "transactions": 166,
+     "median": 1000.0,
+     "p25": 1000.0,
+     "p75": 1000.0,
+     "max_other": 4000.0
+    },
+    "holder_transactions_that_month": 22,
+    "same_day_same_category": 2
+   },
+   "item_id": "r061"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.77436,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-09-18",
+    "merchant": "USAC",
+    "merchant_category": "GOVERNMENT SERVICES NOT ELSEWHERE CLASSI",
+    "category": "Other",
+    "amount": 7704.0,
+    "holder_category_history": {
+     "transactions": 19,
+     "median": 30.0,
+     "p25": 30.0,
+     "p75": 327.9,
+     "max_other": 10836.0
+    },
+    "holder_transactions_that_month": 3,
+    "same_day_same_category": 1
+   },
+   "item_id": "r062"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.4189,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-10-17",
+    "merchant": "AMZN Mktp US TD03H9LJ0",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 17.81,
+    "holder_category_history": {
+     "transactions": 33,
+     "median": 44.99,
+     "p25": 22.49,
+     "p75": 100.0,
+     "max_other": 442.22
+    },
+    "holder_transactions_that_month": 3,
+    "same_day_same_category": 2
+   },
+   "item_id": "r063"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.69761,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-01-04",
+    "merchant": "LOWES #01165",
+    "merchant_category": "HOME SUPPLY WAREHOUSE STORES",
+    "category": "Shopping",
+    "amount": 2342.67,
+    "holder_category_history": {
+     "transactions": 33,
+     "median": 250.0,
+     "p25": 167.94,
+     "p75": 431.99,
+     "max_other": 756.09
+    },
+    "holder_transactions_that_month": 6,
+    "same_day_same_category": 1
+   },
+   "item_id": "r064"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.49555,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-25",
+    "merchant": "SQ  A WILKINS CONCRETE CO",
+    "merchant_category": "GENERAL CONTRACTORS-RESIDENTIAL",
+    "category": "Other",
+    "amount": 2800.0,
+    "holder_category_history": {
+     "transactions": 639,
+     "median": 360.96,
+     "p25": 156.21,
+     "p75": 879.85,
+     "max_other": 24334.68
+    },
+    "holder_transactions_that_month": 61,
+    "same_day_same_category": 3
+   },
+   "item_id": "r065"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.44493,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-04-22",
+    "merchant": "THE STATE CHAMBER OF OKL",
+    "merchant_category": "CIVIC  SOCIAL AND FRATERNAL ASSOCIATIONS",
+    "category": "Other",
+    "amount": 300.0,
+    "holder_category_history": {
+     "transactions": 2,
+     "median": 275.0,
+     "p25": 262.5,
+     "p75": 287.5,
+     "max_other": 250.0
+    },
+    "holder_transactions_that_month": 10,
+    "same_day_same_category": 1
+   },
+   "item_id": "r066"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.663,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-24",
+    "merchant": "MARTIN AUTO SUPPLY INC",
+    "merchant_category": "AUTOMOTIVE PARTS  ACCESSORIES STORES",
+    "category": "Shopping",
+    "amount": 24047.37,
+    "holder_category_history": {
+     "transactions": 64,
+     "median": 595.84,
+     "p25": 47.08,
+     "p75": 7220.65,
+     "max_other": 24664.0
+    },
+    "holder_transactions_that_month": 46,
+    "same_day_same_category": 1
+   },
+   "item_id": "r067"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.68504,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-10-18",
+    "merchant": "TST  Phat Tabbs BBQ",
+    "merchant_category": "EATING PLACES  RESTAURANTS",
+    "category": "Dining",
+    "amount": 2000.0,
+    "holder_category_history": {
+     "transactions": 5,
+     "median": 206.85,
+     "p25": 58.44,
+     "p75": 335.0,
+     "max_other": 335.0
+    },
+    "holder_transactions_that_month": 7,
+    "same_day_same_category": 1
+   },
+   "item_id": "r068"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67227,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-09-14",
+    "merchant": "AMZN Mktp US TX9LK1N72",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 1241.62,
+    "holder_category_history": {
+     "transactions": 147,
+     "median": 74.99,
+     "p25": 23.06,
+     "p75": 183.82,
+     "max_other": 1353.8
+    },
+    "holder_transactions_that_month": 28,
+    "same_day_same_category": 5
+   },
+   "item_id": "r069"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.78352,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-12-30",
+    "merchant": "SAGE SOFTWARE INC",
+    "merchant_category": "COMPUTER SOFTWARE STORES",
+    "category": "Shopping",
+    "amount": 8612.64,
+    "holder_category_history": {
+     "transactions": 100,
+     "median": 129.59,
+     "p25": 42.85,
+     "p75": 333.94,
+     "max_other": 10134.3
+    },
+    "holder_transactions_that_month": 43,
+    "same_day_same_category": 3
+   },
+   "item_id": "r070"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.75801,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-11-09",
+    "merchant": "REJUVENATION E-COMMERC",
+    "merchant_category": "MISCELLANEOUS HOUSE FURNISHING SPECIALIT",
+    "category": "Shopping",
+    "amount": 4889.07,
+    "holder_category_history": {
+     "transactions": 319,
+     "median": 79.05,
+     "p25": 29.99,
+     "p75": 232.16,
+     "max_other": 12617.23
+    },
+    "holder_transactions_that_month": 21,
+    "same_day_same_category": 1
+   },
+   "item_id": "r071"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67824,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-04",
+    "merchant": "LIMBSTHINGS_US",
+    "merchant_category": "MISCELLANEOUS AND RETAIL STORES",
+    "category": "Shopping",
+    "amount": 2287.0,
+    "holder_category_history": {
+     "transactions": 49,
+     "median": 78.6,
+     "p25": 26.7,
+     "p75": 207.7,
+     "max_other": 1057.95
+    },
+    "holder_transactions_that_month": 11,
+    "same_day_same_category": 1
+   },
+   "item_id": "r072"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.46092,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-28",
+    "merchant": "LOWES #01165",
+    "merchant_category": "HOME SUPPLY WAREHOUSE STORES",
+    "category": "Shopping",
+    "amount": 961.42,
+    "holder_category_history": {
+     "transactions": 55,
+     "median": 136.65,
+     "p25": 56.88,
+     "p75": 572.91,
+     "max_other": 2743.31
+    },
+    "holder_transactions_that_month": 15,
+    "same_day_same_category": 1
+   },
+   "item_id": "r073"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.56645,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-11-07",
+    "merchant": "COX TULSA COMM",
+    "merchant_category": "CABLE  SATELLITE & OTHER PAY TV/RADIO SE",
+    "category": "Utilities",
+    "amount": 1665.15,
+    "holder_category_history": {
+     "transactions": 403,
+     "median": 100.0,
+     "p25": 49.6,
+     "p75": 645.0,
+     "max_other": 18453.25
+    },
+    "holder_transactions_that_month": 682,
+    "same_day_same_category": 6
+   },
+   "item_id": "r074"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67564,
+    "model_flag": true,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-12-11",
+    "merchant": "AMERICAN AIR0018073412900",
+    "merchant_category": "AMERICAN AIRLINES",
+    "category": "Travel",
+    "amount": 569.9,
+    "holder_category_history": {
+     "transactions": 3964,
+     "median": 248.2,
+     "p25": 186.93,
+     "p75": 370.75,
+     "max_other": 3241.2
+    },
+    "holder_transactions_that_month": 782,
+    "same_day_same_category": 128
+   },
+   "item_id": "r075"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67155,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-09-28",
+    "merchant": "TEACHABLE.COM",
+    "merchant_category": "COMPUTER AND DATA PROCESSING SERVICES",
+    "category": "Other",
+    "amount": 5988.0,
+    "holder_category_history": {
+     "transactions": 71,
+     "median": 540.0,
+     "p25": 130.33,
+     "p75": 1381.5,
+     "max_other": 7980.47
+    },
+    "holder_transactions_that_month": 23,
+    "same_day_same_category": 2
+   },
+   "item_id": "r076"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.45087,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-02-21",
+    "merchant": "WELSCO TULSA",
+    "merchant_category": "WELDING",
+    "category": "Other",
+    "amount": 411.71,
+    "holder_category_history": {
+     "transactions": 15,
+     "median": 411.71,
+     "p25": 144.0,
+     "p75": 814.09,
+     "max_other": 3567.8
+    },
+    "holder_transactions_that_month": 4,
+    "same_day_same_category": 1
+   },
+   "item_id": "r077"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.70389,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-11",
+    "merchant": "AIRCRAFT ACCESSORIES O",
+    "merchant_category": "MISCELLANEOUS AUTOMOTIVE DEALERS",
+    "category": "Other",
+    "amount": 2350.71,
+    "holder_category_history": {
+     "transactions": 86,
+     "median": 11.78,
+     "p25": 6.59,
+     "p75": 301.46,
+     "max_other": 4136.63
+    },
+    "holder_transactions_that_month": 14,
+    "same_day_same_category": 1
+   },
+   "item_id": "r078"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.7287,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-21",
+    "merchant": "IN  DEARINGER PRINTING &",
+    "merchant_category": "MISCELLANEOUS PUBLISHING & PRINTING",
+    "category": "Other",
+    "amount": 2022.0,
+    "holder_category_history": {
+     "transactions": 55,
+     "median": 56.0,
+     "p25": 25.0,
+     "p75": 253.45,
+     "max_other": 2195.0
+    },
+    "holder_transactions_that_month": 11,
+    "same_day_same_category": 1
+   },
+   "item_id": "r079"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.81061,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-11-03",
+    "merchant": "KIAMICHI OPPORTUNITIES IN",
+    "merchant_category": "EMPLOYMENT AGENCIES  TEMPORARY HELP SUPP",
+    "category": "Other",
+    "amount": 30970.0,
+    "holder_category_history": {
+     "transactions": 571,
+     "median": 310.82,
+     "p25": 118.27,
+     "p75": 857.7,
+     "max_other": 30325.29
+    },
+    "holder_transactions_that_month": 129,
+    "same_day_same_category": 15
+   },
+   "item_id": "r080"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.43912,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-10-19",
+    "merchant": "AMZN Mktp US KT2KB0Q23",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 382.67,
+    "holder_category_history": {
+     "transactions": 378,
+     "median": 71.66,
+     "p25": 29.99,
+     "p75": 224.94,
+     "max_other": 3359.72
+    },
+    "holder_transactions_that_month": 51,
+    "same_day_same_category": 4
+   },
+   "item_id": "r081"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67065,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-08-08",
+    "merchant": "IMLSS UTAH",
+    "merchant_category": "HARDWARE EQUIPMENT AND SUPPLIES",
+    "category": "Other",
+    "amount": 2568.3,
+    "holder_category_history": {
+     "transactions": 348,
+     "median": 143.75,
+     "p25": 43.58,
+     "p75": 379.18,
+     "max_other": 4477.56
+    },
+    "holder_transactions_that_month": 263,
+    "same_day_same_category": 25
+   },
+   "item_id": "r082"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.73559,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-23",
+    "merchant": "B&H PHOTO MOTO",
+    "merchant_category": "OFFICE  PHOTOGRAPHIC  PHOTOCOPY  AND MIC",
+    "category": "Other",
+    "amount": 3643.24,
+    "holder_category_history": {
+     "transactions": 34,
+     "median": 75.19,
+     "p25": 60.0,
+     "p75": 492.09,
+     "max_other": 2317.95
+    },
+    "holder_transactions_that_month": 16,
+    "same_day_same_category": 1
+   },
+   "item_id": "r083"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.70937,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-08-02",
+    "merchant": "IN  STILLWATER STEEL & SU",
+    "merchant_category": "MISCELLANEOUS AND RETAIL STORES",
+    "category": "Shopping",
+    "amount": 1969.2,
+    "holder_category_history": {
+     "transactions": 17,
+     "median": 47.44,
+     "p25": 25.44,
+     "p75": 163.8,
+     "max_other": 551.98
+    },
+    "holder_transactions_that_month": 15,
+    "same_day_same_category": 1
+   },
+   "item_id": "r084"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.76,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-08-22",
+    "merchant": "ULINE   SHIP SUPPLIES",
+    "merchant_category": "CATALOG MERCHANTS",
+    "category": "Other",
+    "amount": 783.37,
+    "holder_category_history": {
+     "transactions": 45,
+     "median": 19.02,
+     "p25": 15.76,
+     "p75": 29.15,
+     "max_other": 849.37
+    },
+    "holder_transactions_that_month": 37,
+    "same_day_same_category": 1
+   },
+   "item_id": "r085"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.46529,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-11-24",
+    "merchant": "ATT  BILL PAYMENT",
+    "merchant_category": "TELECOMMUNICATION SERV.INCLUD. LOCAL/L.D",
+    "category": "Utilities",
+    "amount": 414.96,
+    "holder_category_history": {
+     "transactions": 12,
+     "median": 386.33,
+     "p25": 386.26,
+     "p75": 442.09,
+     "max_other": 443.18
+    },
+    "holder_transactions_that_month": 1,
+    "same_day_same_category": 1
+   },
+   "item_id": "r086"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.34439,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-02-05",
+    "merchant": "Amazon.com RB8AK5CX2",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 16.99,
+    "holder_category_history": {
+     "transactions": 147,
+     "median": 42.8,
+     "p25": 19.97,
+     "p75": 114.91,
+     "max_other": 629.23
+    },
+    "holder_transactions_that_month": 23,
+    "same_day_same_category": 1
+   },
+   "item_id": "r087"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.75636,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-12-18",
+    "merchant": "TED JENKS WATERWELL SERVS",
+    "merchant_category": "SPECIAL TRADE CONTRACTORS",
+    "category": "Other",
+    "amount": 3645.0,
+    "holder_category_history": {
+     "transactions": 49,
+     "median": 129.74,
+     "p25": 32.0,
+     "p75": 152.51,
+     "max_other": 2017.11
+    },
+    "holder_transactions_that_month": 9,
+    "same_day_same_category": 1
+   },
+   "item_id": "r088"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.61124,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-09",
+    "merchant": "BTS HOMEDEPOTPRO",
+    "merchant_category": "PLUMBING & HEATING EQUIPMENT AND SUPPLIE",
+    "category": "Other",
+    "amount": 557.75,
+    "holder_category_history": {
+     "transactions": 1762,
+     "median": 99.9,
+     "p25": 27.6,
+     "p75": 359.76,
+     "max_other": 4801.47
+    },
+    "holder_transactions_that_month": 362,
+    "same_day_same_category": 54
+   },
+   "item_id": "r089"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.58041,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-07-07",
+    "merchant": "DELTA AIR   0067980527390",
+    "merchant_category": "DELTA",
+    "category": "Travel",
+    "amount": 268.2,
+    "holder_category_history": {
+     "transactions": 3964,
+     "median": 248.2,
+     "p25": 186.93,
+     "p75": 370.75,
+     "max_other": 3241.2
+    },
+    "holder_transactions_that_month": 225,
+    "same_day_same_category": 64
+   },
+   "item_id": "r090"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.43884,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-02-13",
+    "merchant": "AGENT FEE   8900868625471",
+    "merchant_category": "AIRLINES  AIR CARRIERS",
+    "category": "Travel",
+    "amount": 5.0,
+    "holder_category_history": {
+     "transactions": 5238,
+     "median": 342.5,
+     "p25": 5.0,
+     "p75": 553.96,
+     "max_other": 10490.5
+    },
+    "holder_transactions_that_month": 708,
+    "same_day_same_category": 16
+   },
+   "item_id": "r091"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.70369,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-06-25",
+    "merchant": "MEDTRONIC",
+    "merchant_category": "LAB/MEDICAL/DENTAL/OPHTHALMIC HOSPITAL E",
+    "category": "Other",
+    "amount": 2200.0,
+    "holder_category_history": {
+     "transactions": 31,
+     "median": 125.9,
+     "p25": 29.48,
+     "p75": 1574.5,
+     "max_other": 2200.0
+    },
+    "holder_transactions_that_month": 51,
+    "same_day_same_category": 2
+   },
+   "item_id": "r092"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.4054,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-21",
+    "merchant": "LAB ANIMAL SUPPLIES  INC",
+    "merchant_category": "PET SHOPS-PET FOOD AND SUPPLY STORES",
+    "category": "Shopping",
+    "amount": 198.25,
+    "holder_category_history": {
+     "transactions": 496,
+     "median": 61.08,
+     "p25": 27.75,
+     "p75": 434.3,
+     "max_other": 4430.67
+    },
+    "holder_transactions_that_month": 54,
+    "same_day_same_category": 6
+   },
+   "item_id": "r093"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.50138,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-11-22",
+    "merchant": "ALL COMMERCIAL OPENINGS I",
+    "merchant_category": "SPECIAL TRADE CONTRACTORS",
+    "category": "Other",
+    "amount": 1355.0,
+    "holder_category_history": {
+     "transactions": 66,
+     "median": 213.95,
+     "p25": 114.96,
+     "p75": 501.07,
+     "max_other": 3440.08
+    },
+    "holder_transactions_that_month": 10,
+    "same_day_same_category": 2
+   },
+   "item_id": "r094"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.46478,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-01-05",
+    "merchant": "STAPLES       00119388",
+    "merchant_category": "STATIONARY  OFFICE AND SCHOOL SUPPLY STO",
+    "category": "Shopping",
+    "amount": 49.99,
+    "holder_category_history": {
+     "transactions": 15,
+     "median": 14.0,
+     "p25": 14.0,
+     "p75": 77.72,
+     "max_other": 1183.82
+    },
+    "holder_transactions_that_month": 6,
+    "same_day_same_category": 1
+   },
+   "item_id": "r095"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.69675,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-06-20",
+    "merchant": "YELLOW HOUSE MACHINERY CO",
+    "merchant_category": "MISCELLANEOUS AUTOMOTIVE DEALERS",
+    "category": "Other",
+    "amount": 4000.0,
+    "holder_category_history": {
+     "transactions": 11,
+     "median": 220.44,
+     "p25": 75.97,
+     "p75": 540.66,
+     "max_other": 1299.99
+    },
+    "holder_transactions_that_month": 5,
+    "same_day_same_category": 1
+   },
+   "item_id": "r096"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.70596,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-04",
+    "merchant": "SOUTH CENTRAL INDUSTRIE",
+    "merchant_category": "MISCELLANEOUS GENERAL MERCHANDISE STORES",
+    "category": "Shopping",
+    "amount": 11037.6,
+    "holder_category_history": {
+     "transactions": 259,
+     "median": 336.0,
+     "p25": 95.37,
+     "p75": 1183.19,
+     "max_other": 16475.95
+    },
+    "holder_transactions_that_month": 40,
+    "same_day_same_category": 5
+   },
+   "item_id": "r097"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.71029,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-06-09",
+    "merchant": "WAL-MART #4241",
+    "merchant_category": "GROCERY STORES  SUPERMARKETS",
+    "category": "Groceries",
+    "amount": 556.64,
+    "holder_category_history": {
+     "transactions": 7,
+     "median": 14.8,
+     "p25": 13.45,
+     "p75": 52.18,
+     "max_other": 82.29
+    },
+    "holder_transactions_that_month": 27,
+    "same_day_same_category": 1
+   },
+   "item_id": "r098"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.68891,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-06",
+    "merchant": "AMZN MKTP US R24OG1D11",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 1524.48,
+    "holder_category_history": {
+     "transactions": 65,
+     "median": 59.99,
+     "p25": 19.99,
+     "p75": 190.86,
+     "max_other": 1199.92
+    },
+    "holder_transactions_that_month": 23,
+    "same_day_same_category": 2
+   },
+   "item_id": "r099"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.66648,
+    "model_flag": true,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-12-11",
+    "merchant": "SOUTHWES    5268073167245",
+    "merchant_category": "SOUTHWEST AIRLINES",
+    "category": "Travel",
+    "amount": 501.48,
+    "holder_category_history": {
+     "transactions": 3964,
+     "median": 248.2,
+     "p25": 186.93,
+     "p75": 370.75,
+     "max_other": 3241.2
+    },
+    "holder_transactions_that_month": 782,
+    "same_day_same_category": 128
+   },
+   "item_id": "r100"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.37449,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-02-07",
+    "merchant": "HOLIDAY INN EXP & SUITES",
+    "merchant_category": "HOLIDAY INNS",
+    "category": "Travel",
+    "amount": 214.0,
+    "holder_category_history": {
+     "transactions": 560,
+     "median": 214.0,
+     "p25": 109.41,
+     "p75": 321.0,
+     "max_other": 1403.1
+    },
+    "holder_transactions_that_month": 66,
+    "same_day_same_category": 4
+   },
+   "item_id": "r101"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.45527,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-05",
+    "merchant": "SQ  AKIN ENTERPRISES",
+    "merchant_category": "GENERAL CONTRACTORS-RESIDENTIAL",
+    "category": "Other",
+    "amount": 2064.0,
+    "holder_category_history": {
+     "transactions": 63,
+     "median": 420.0,
+     "p25": 119.98,
+     "p75": 1129.65,
+     "max_other": 3423.52
+    },
+    "holder_transactions_that_month": 16,
+    "same_day_same_category": 1
+   },
+   "item_id": "r102"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.54539,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-25",
+    "merchant": "INSCO DISTRIBUTING CENTER",
+    "merchant_category": "PLUMBING & HEATING EQUIPMENT AND SUPPLIE",
+    "category": "Other",
+    "amount": 1158.52,
+    "holder_category_history": {
+     "transactions": 97,
+     "median": 113.48,
+     "p25": 45.0,
+     "p75": 227.09,
+     "max_other": 4118.0
+    },
+    "holder_transactions_that_month": 9,
+    "same_day_same_category": 1
+   },
+   "item_id": "r103"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.6695,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-10-02",
+    "merchant": "LUFTHANSA   2208059132616",
+    "merchant_category": "LUFTHANSA",
+    "category": "Travel",
+    "amount": 1404.1,
+    "holder_category_history": {
+     "transactions": 5539,
+     "median": 161.13,
+     "p25": 25.0,
+     "p75": 393.1,
+     "max_other": 3742.7
+    },
+    "holder_transactions_that_month": 666,
+    "same_day_same_category": 40
+   },
+   "item_id": "r104"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.45886,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-06-17",
+    "merchant": "JOURNYHSE   GINTHER",
+    "merchant_category": "TRAVEL AGENCIES",
+    "category": "Travel",
+    "amount": 9.0,
+    "holder_category_history": {
+     "transactions": 5539,
+     "median": 161.13,
+     "p25": 25.0,
+     "p75": 393.1,
+     "max_other": 3742.7
+    },
+    "holder_transactions_that_month": 478,
+    "same_day_same_category": 26
+   },
+   "item_id": "r105"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.56866,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-05",
+    "merchant": "OK FILTER COMPANY INC",
+    "merchant_category": "PLUMBING & HEATING EQUIPMENT AND SUPPLIE",
+    "category": "Other",
+    "amount": 2066.81,
+    "holder_category_history": {
+     "transactions": 200,
+     "median": 175.28,
+     "p25": 41.98,
+     "p75": 480.0,
+     "max_other": 4610.02
+    },
+    "holder_transactions_that_month": 14,
+    "same_day_same_category": 3
+   },
+   "item_id": "r106"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.55353,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-07-07",
+    "merchant": "MOUSER ELECTRONICS INC",
+    "merchant_category": "ELECTRICAL PARTS AND EQUIPMENT",
+    "category": "Other",
+    "amount": 1053.79,
+    "holder_category_history": {
+     "transactions": 112,
+     "median": 221.71,
+     "p25": 88.79,
+     "p75": 414.43,
+     "max_other": 1433.48
+    },
+    "holder_transactions_that_month": 1,
+    "same_day_same_category": 1
+   },
+   "item_id": "r107"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.72711,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-25",
+    "merchant": "KARBONOUS INC",
+    "merchant_category": "INDUSTRIAL SUPPLIES NOT ESLEWHERE CLASSI",
+    "category": "Other",
+    "amount": 16500.0,
+    "holder_category_history": {
+     "transactions": 2381,
+     "median": 535.25,
+     "p25": 167.01,
+     "p75": 1810.7,
+     "max_other": 179346.78
+    },
+    "holder_transactions_that_month": 399,
+    "same_day_same_category": 18
+   },
+   "item_id": "r108"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67599,
+    "model_flag": true,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-12-11",
+    "merchant": "ALASKA AIR  0278073412904",
+    "merchant_category": "ALASKA AIRLINES INC.",
+    "category": "Travel",
+    "amount": 573.9,
+    "holder_category_history": {
+     "transactions": 3964,
+     "median": 248.2,
+     "p25": 186.93,
+     "p75": 370.75,
+     "max_other": 3241.2
+    },
+    "holder_transactions_that_month": 782,
+    "same_day_same_category": 128
+   },
+   "item_id": "r109"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.6749,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-09-14",
+    "merchant": "COMFORT INNS",
+    "merchant_category": "COMFORT INNS",
+    "category": "Travel",
+    "amount": 2625.65,
+    "holder_category_history": {
+     "transactions": 20,
+     "median": 337.05,
+     "p25": 157.77,
+     "p75": 401.21,
+     "max_other": 1598.0
+    },
+    "holder_transactions_that_month": 10,
+    "same_day_same_category": 1
+   },
+   "item_id": "r110"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.56837,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-28",
+    "merchant": "PAYPAL  BUGDORM",
+    "merchant_category": "VARIETY STORES",
+    "category": "Shopping",
+    "amount": 1954.88,
+    "holder_category_history": {
+     "transactions": 10,
+     "median": 336.25,
+     "p25": 115.11,
+     "p75": 949.04,
+     "max_other": 1659.21
+    },
+    "holder_transactions_that_month": 2,
+    "same_day_same_category": 2
+   },
+   "item_id": "r111"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.78308,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-07-13",
+    "merchant": "LOWES #01134",
+    "merchant_category": "HOME SUPPLY WAREHOUSE STORES",
+    "category": "Shopping",
+    "amount": 2649.86,
+    "holder_category_history": {
+     "transactions": 42,
+     "median": 55.84,
+     "p25": 22.36,
+     "p75": 125.22,
+     "max_other": 284.5
+    },
+    "holder_transactions_that_month": 23,
+    "same_day_same_category": 1
+   },
+   "item_id": "r112"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.46847,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-10",
+    "merchant": "MARRIOTT S ANTONIO RVR",
+    "merchant_category": "MARRIOTT",
+    "category": "Travel",
+    "amount": 1358.4,
+    "holder_category_history": {
+     "transactions": 598,
+     "median": 376.31,
+     "p25": 188.58,
+     "p75": 521.22,
+     "max_other": 6276.6
+    },
+    "holder_transactions_that_month": 131,
+    "same_day_same_category": 4
+   },
+   "item_id": "r113"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.69427,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-07-31",
+    "merchant": "LINDENMEYER MUNROE",
+    "merchant_category": "MISCELLANEOUS PUBLISHING & PRINTING",
+    "category": "Other",
+    "amount": 6026.8,
+    "holder_category_history": {
+     "transactions": 74,
+     "median": 278.4,
+     "p25": 80.6,
+     "p75": 625.2,
+     "max_other": 4607.33
+    },
+    "holder_transactions_that_month": 3,
+    "same_day_same_category": 1
+   },
+   "item_id": "r114"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.43377,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-09-27",
+    "merchant": "CENTRAL RURAL ELECTRIC C",
+    "merchant_category": "UTILITIES-ELEC/GAS/HEAT OIL/SANITARY/WTR",
+    "category": "Utilities",
+    "amount": 100.0,
+    "holder_category_history": {
+     "transactions": 3,
+     "median": 100.0,
+     "p25": 67.74,
+     "p75": 259.19,
+     "max_other": 418.38
+    },
+    "holder_transactions_that_month": 12,
+    "same_day_same_category": 1
+   },
+   "item_id": "r115"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.65334,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-09-06",
+    "merchant": "KLM AIRLINE 0747993829041",
+    "merchant_category": "KLM",
+    "category": "Other",
+    "amount": 1442.25,
+    "holder_category_history": {
+     "transactions": 5,
+     "median": 104.9,
+     "p25": 93.2,
+     "p75": 189.79,
+     "max_other": 189.79
+    },
+    "holder_transactions_that_month": 445,
+    "same_day_same_category": 1
+   },
+   "item_id": "r116"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.66211,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-08-25",
+    "merchant": "Amazon.com T36BJ1TE2",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 493.74,
+    "holder_category_history": {
+     "transactions": 250,
+     "median": 26.41,
+     "p25": 14.98,
+     "p75": 49.39,
+     "max_other": 1567.8
+    },
+    "holder_transactions_that_month": 57,
+    "same_day_same_category": 5
+   },
+   "item_id": "r117"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.70722,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-12-06",
+    "merchant": "GRAINGER",
+    "merchant_category": "INDUSTRIAL SUPPLIES NOT ESLEWHERE CLASSI",
+    "category": "Other",
+    "amount": 1837.06,
+    "holder_category_history": {
+     "transactions": 45,
+     "median": 92.0,
+     "p25": 6.97,
+     "p75": 218.0,
+     "max_other": 2655.18
+    },
+    "holder_transactions_that_month": 21,
+    "same_day_same_category": 6
+   },
+   "item_id": "r118"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.76573,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-01-24",
+    "merchant": "Action Safety Supply Co.",
+    "merchant_category": "EQUIP RENTALS & LEASING SERVICES  TOOL R",
+    "category": "Other",
+    "amount": 19004.95,
+    "holder_category_history": {
+     "transactions": 123,
+     "median": 195.27,
+     "p25": 53.0,
+     "p75": 877.37,
+     "max_other": 22000.0
+    },
+    "holder_transactions_that_month": 37,
+    "same_day_same_category": 1
+   },
+   "item_id": "r119"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.37728,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-03-15",
+    "merchant": "KIKKERLAND DESIGN",
+    "merchant_category": "GIFT  CARD  NOVELTY  AND SOUVENIR SHOPS",
+    "category": "Shopping",
+    "amount": 23.88,
+    "holder_category_history": {
+     "transactions": 49,
+     "median": 359.72,
+     "p25": 211.62,
+     "p75": 660.0,
+     "max_other": 2268.7
+    },
+    "holder_transactions_that_month": 21,
+    "same_day_same_category": 2
+   },
+   "item_id": "r120"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67401,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-08-10",
+    "merchant": "EVENT  KORN FERRY 360",
+    "merchant_category": "MEMBERSHIP ORGANIZATIONS NOT ELSEWHERE C",
+    "category": "Other",
+    "amount": 4295.0,
+    "holder_category_history": {
+     "transactions": 27,
+     "median": 225.19,
+     "p25": 139.95,
+     "p75": 500.0,
+     "max_other": 2204.83
+    },
+    "holder_transactions_that_month": 65,
+    "same_day_same_category": 1
+   },
+   "item_id": "r121"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.66191,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-26",
+    "merchant": "LEADSONLINE LLC",
+    "merchant_category": "INFORMATION RETRIEVAL SERVICES",
+    "category": "Other",
+    "amount": 2563.0,
+    "holder_category_history": {
+     "transactions": 21,
+     "median": 147.5,
+     "p25": 72.8,
+     "p75": 300.0,
+     "max_other": 8133.06
+    },
+    "holder_transactions_that_month": 9,
+    "same_day_same_category": 2
+   },
+   "item_id": "r122"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.39104,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-03-11",
+    "merchant": "GRAINGER",
+    "merchant_category": "INDUSTRIAL SUPPLIES NOT ESLEWHERE CLASSI",
+    "category": "Other",
+    "amount": 58.42,
+    "holder_category_history": {
+     "transactions": 1762,
+     "median": 99.9,
+     "p25": 27.6,
+     "p75": 359.76,
+     "max_other": 4801.47
+    },
+    "holder_transactions_that_month": 239,
+    "same_day_same_category": 12
+   },
+   "item_id": "r123"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.35372,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-11-23",
+    "merchant": "BARN OWL TECH",
+    "merchant_category": "ELECTRICAL PARTS AND EQUIPMENT",
+    "category": "Other",
+    "amount": 10.0,
+    "holder_category_history": {
+     "transactions": 18,
+     "median": 22.93,
+     "p25": 10.03,
+     "p75": 174.0,
+     "max_other": 4995.0
+    },
+    "holder_transactions_that_month": 3,
+    "same_day_same_category": 1
+   },
+   "item_id": "r124"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.72743,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-10",
+    "merchant": "AMERICAN AIR0017070401012",
+    "merchant_category": "AMERICAN AIRLINES",
+    "category": "Travel",
+    "amount": 4986.3,
+    "holder_category_history": {
+     "transactions": 5238,
+     "median": 342.5,
+     "p25": 5.0,
+     "p75": 553.96,
+     "max_other": 10490.5
+    },
+    "holder_transactions_that_month": 546,
+    "same_day_same_category": 27
+   },
+   "item_id": "r125"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.75242,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-07-06",
+    "merchant": "SOUTHERN LOCK AND SUPPLY",
+    "merchant_category": "HARDWARE EQUIPMENT AND SUPPLIES",
+    "category": "Other",
+    "amount": 4467.36,
+    "holder_category_history": {
+     "transactions": 1762,
+     "median": 99.9,
+     "p25": 27.6,
+     "p75": 359.76,
+     "max_other": 4801.47
+    },
+    "holder_transactions_that_month": 154,
+    "same_day_same_category": 11
+   },
+   "item_id": "r126"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.63185,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-10-23",
+    "merchant": "TOPGOLF THE COLONY 010-3",
+    "merchant_category": "AMUSEMENT RECREATION SERVICES (SWIMMING",
+    "category": "Entertainment",
+    "amount": 3082.4,
+    "holder_category_history": {
+     "transactions": 2,
+     "median": 1591.2,
+     "p25": 845.6,
+     "p75": 2336.8,
+     "max_other": 100.0
+    },
+    "holder_transactions_that_month": 14,
+    "same_day_same_category": 1
+   },
+   "item_id": "r127"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.68697,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-23",
+    "merchant": "THINK ABILITY INC",
+    "merchant_category": "CHARITABLE AND SOCIAL SERVICE ORGANIZATI",
+    "category": "Other",
+    "amount": 2024.3,
+    "holder_category_history": {
+     "transactions": 14,
+     "median": 157.5,
+     "p25": 146.25,
+     "p75": 354.01,
+     "max_other": 500.0
+    },
+    "holder_transactions_that_month": 9,
+    "same_day_same_category": 1
+   },
+   "item_id": "r128"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.69872,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-31",
+    "merchant": "DOD FED MALL",
+    "merchant_category": "GOVERNMENT SERVICES NOT ELSEWHERE CLASSI",
+    "category": "Other",
+    "amount": 3243.42,
+    "holder_category_history": {
+     "transactions": 195,
+     "median": 147.03,
+     "p25": 114.64,
+     "p75": 421.68,
+     "max_other": 3763.06
+    },
+    "holder_transactions_that_month": 24,
+    "same_day_same_category": 11
+   },
+   "item_id": "r129"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.56219,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-11",
+    "merchant": "BEST WESTERN HOTELS",
+    "merchant_category": "BEST WESTERN HOTELS",
+    "category": "Travel",
+    "amount": 868.62,
+    "holder_category_history": {
+     "transactions": 5,
+     "median": 107.0,
+     "p25": 107.0,
+     "p75": 830.72,
+     "max_other": 830.72
+    },
+    "holder_transactions_that_month": 3,
+    "same_day_same_category": 1
+   },
+   "item_id": "r130"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.66291,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-08-11",
+    "merchant": "AT&T PAYMENT",
+    "merchant_category": "TELECOMMUNICATION SERV.INCLUD. LOCAL/L.D",
+    "category": "Utilities",
+    "amount": 1502.6,
+    "holder_category_history": {
+     "transactions": 47,
+     "median": 201.56,
+     "p25": 198.23,
+     "p75": 239.99,
+     "max_other": 3590.13
+    },
+    "holder_transactions_that_month": 9,
+    "same_day_same_category": 1
+   },
+   "item_id": "r131"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.49784,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-10-06",
+    "merchant": "RESOUND",
+    "merchant_category": "LAB/MEDICAL/DENTAL/OPHTHALMIC HOSPITAL E",
+    "category": "Other",
+    "amount": 3102.95,
+    "holder_category_history": {
+     "transactions": 35,
+     "median": 323.95,
+     "p25": 112.37,
+     "p75": 1819.62,
+     "max_other": 4360.95
+    },
+    "holder_transactions_that_month": 12,
+    "same_day_same_category": 1
+   },
+   "item_id": "r132"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.72246,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-11-20",
+    "merchant": "PY  Axle Surgeon of Oklah",
+    "merchant_category": "AUTOMOTIVE BODY REPAIR SHOPS",
+    "category": "Other",
+    "amount": 3381.8,
+    "holder_category_history": {
+     "transactions": 24,
+     "median": 204.19,
+     "p25": 88.7,
+     "p75": 460.18,
+     "max_other": 1854.0
+    },
+    "holder_transactions_that_month": 3,
+    "same_day_same_category": 1
+   },
+   "item_id": "r133"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.69108,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-10-11",
+    "merchant": "SOUTH CENTRAL INDUSTRIES",
+    "merchant_category": "MISCELLANEOUS GENERAL MERCHANDISE STORES",
+    "category": "Shopping",
+    "amount": 5268.5,
+    "holder_category_history": {
+     "transactions": 459,
+     "median": 209.95,
+     "p25": 69.59,
+     "p75": 633.1,
+     "max_other": 11100.98
+    },
+    "holder_transactions_that_month": 167,
+    "same_day_same_category": 7
+   },
+   "item_id": "r134"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.45679,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-23",
+    "merchant": "MIZUNO USA",
+    "merchant_category": "DURABLE GOODS NOT ELSEWHERE CLASSIFIED",
+    "category": "Other",
+    "amount": 994.47,
+    "holder_category_history": {
+     "transactions": 1330,
+     "median": 315.62,
+     "p25": 142.92,
+     "p75": 749.9,
+     "max_other": 5434.24
+    },
+    "holder_transactions_that_month": 161,
+    "same_day_same_category": 13
+   },
+   "item_id": "r135"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.69992,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-01-08",
+    "merchant": "GRAINGER",
+    "merchant_category": "INDUSTRIAL SUPPLIES NOT ESLEWHERE CLASSI",
+    "category": "Other",
+    "amount": 4110.7,
+    "holder_category_history": {
+     "transactions": 24,
+     "median": 185.46,
+     "p25": 31.57,
+     "p75": 802.78,
+     "max_other": 1688.8
+    },
+    "holder_transactions_that_month": 6,
+    "same_day_same_category": 4
+   },
+   "item_id": "r136"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.48783,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-08",
+    "merchant": "VISUAL FORCE INC",
+    "merchant_category": "AUTOMOTIVE PARTS  ACCESSORIES STORES",
+    "category": "Shopping",
+    "amount": 477.26,
+    "holder_category_history": {
+     "transactions": 1331,
+     "median": 150.47,
+     "p25": 43.25,
+     "p75": 983.54,
+     "max_other": 99999.99
+    },
+    "holder_transactions_that_month": 297,
+    "same_day_same_category": 24
+   },
+   "item_id": "r137"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.66867,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-10-10",
+    "merchant": "AMERICAN AIR0018060737121",
+    "merchant_category": "AMERICAN AIRLINES",
+    "category": "Travel",
+    "amount": 672.05,
+    "holder_category_history": {
+     "transactions": 5539,
+     "median": 161.13,
+     "p25": 25.0,
+     "p75": 393.1,
+     "max_other": 3742.7
+    },
+    "holder_transactions_that_month": 666,
+    "same_day_same_category": 99
+   },
+   "item_id": "r138"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.7359,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-08-21",
+    "merchant": "FURNITURE MARKETING GROUP",
+    "merchant_category": "SPECIAL TRADE CONTRACTORS",
+    "category": "Other",
+    "amount": 2320.5,
+    "holder_category_history": {
+     "transactions": 35,
+     "median": 128.39,
+     "p25": 51.83,
+     "p75": 237.75,
+     "max_other": 2320.5
+    },
+    "holder_transactions_that_month": 2,
+    "same_day_same_category": 1
+   },
+   "item_id": "r139"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.79972,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-08-08",
+    "merchant": "DRI Gallup",
+    "merchant_category": "COMPUTER SOFTWARE STORES",
+    "category": "Shopping",
+    "amount": 639.68,
+    "holder_category_history": {
+     "transactions": 20,
+     "median": 6.06,
+     "p25": 5.97,
+     "p75": 20.47,
+     "max_other": 159.92
+    },
+    "holder_transactions_that_month": 15,
+    "same_day_same_category": 2
+   },
+   "item_id": "r140"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.73182,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-25",
+    "merchant": "AMZN Mktp US RW9ZG9782",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 2821.59,
+    "holder_category_history": {
+     "transactions": 112,
+     "median": 76.04,
+     "p25": 35.91,
+     "p75": 188.63,
+     "max_other": 2276.8
+    },
+    "holder_transactions_that_month": 18,
+    "same_day_same_category": 3
+   },
+   "item_id": "r141"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.603,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-06-27",
+    "merchant": "FAITHS MOTIVATION",
+    "merchant_category": "MISC FOOD STORES-SPECIALITY CONVENIENCE",
+    "category": "Groceries",
+    "amount": 300.0,
+    "holder_category_history": {
+     "transactions": 31,
+     "median": 42.56,
+     "p25": 20.55,
+     "p75": 51.4,
+     "max_other": 172.12
+    },
+    "holder_transactions_that_month": 3,
+    "same_day_same_category": 1
+   },
+   "item_id": "r142"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.66608,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-01-17",
+    "merchant": "AMZN Mktp US R86Q57O82",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 2147.84,
+    "holder_category_history": {
+     "transactions": 397,
+     "median": 108.35,
+     "p25": 47.94,
+     "p75": 219.0,
+     "max_other": 2999.99
+    },
+    "holder_transactions_that_month": 40,
+    "same_day_same_category": 1
+   },
+   "item_id": "r143"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.4026,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-07-26",
+    "merchant": "OK STATE BUREAU OF INV",
+    "merchant_category": "GOVERNMENT SERVICES NOT ELSEWHERE CLASSI",
+    "category": "Other",
+    "amount": 20.0,
+    "holder_category_history": {
+     "transactions": 7,
+     "median": 39.0,
+     "p25": 20.0,
+     "p75": 237.5,
+     "max_other": 725.0
+    },
+    "holder_transactions_that_month": 2,
+    "same_day_same_category": 1
+   },
+   "item_id": "r144"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.68231,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-01-09",
+    "merchant": "CMAO",
+    "merchant_category": "CIVIC  SOCIAL AND FRATERNAL ASSOCIATIONS",
+    "category": "Other",
+    "amount": 3000.0,
+    "holder_category_history": {
+     "transactions": 340,
+     "median": 129.0,
+     "p25": 62.02,
+     "p75": 357.43,
+     "max_other": 4080.88
+    },
+    "holder_transactions_that_month": 57,
+    "same_day_same_category": 2
+   },
+   "item_id": "r145"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.34509,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-02-08",
+    "merchant": "AMAZON.COM RB3YV3ML2",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 16.45,
+    "holder_category_history": {
+     "transactions": 36,
+     "median": 26.48,
+     "p25": 16.77,
+     "p75": 49.92,
+     "max_other": 159.0
+    },
+    "holder_transactions_that_month": 10,
+    "same_day_same_category": 1
+   },
+   "item_id": "r146"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.66712,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-20",
+    "merchant": "PREFERRED AIRPARTS LLC",
+    "merchant_category": "MISCELLANEOUS AUTOMOTIVE DEALERS",
+    "category": "Other",
+    "amount": 1258.11,
+    "holder_category_history": {
+     "transactions": 86,
+     "median": 11.78,
+     "p25": 6.59,
+     "p75": 301.46,
+     "max_other": 4136.63
+    },
+    "holder_transactions_that_month": 16,
+    "same_day_same_category": 1
+   },
+   "item_id": "r147"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.36677,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-06-22",
+    "merchant": "MSC",
+    "merchant_category": "INDUSTRIAL SUPPLIES NOT ESLEWHERE CLASSI",
+    "category": "Other",
+    "amount": 25.8,
+    "holder_category_history": {
+     "transactions": 85,
+     "median": 215.13,
+     "p25": 100.0,
+     "p75": 367.85,
+     "max_other": 4244.71
+    },
+    "holder_transactions_that_month": 12,
+    "same_day_same_category": 1
+   },
+   "item_id": "r148"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.75513,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-06-27",
+    "merchant": "LEGISOK",
+    "merchant_category": "BOOKS PERIODICALS AND NEWSPAPERS",
+    "category": "Shopping",
+    "amount": 2500.0,
+    "holder_category_history": {
+     "transactions": 10,
+     "median": 96.72,
+     "p25": 75.63,
+     "p75": 143.2,
+     "max_other": 203.55
+    },
+    "holder_transactions_that_month": 10,
+    "same_day_same_category": 1
+   },
+   "item_id": "r149"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.68501,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-06-22",
+    "merchant": "MEXICO JOE S",
+    "merchant_category": "EATING PLACES  RESTAURANTS",
+    "category": "Dining",
+    "amount": 2908.3,
+    "holder_category_history": {
+     "transactions": 6,
+     "median": 310.39,
+     "p25": 208.3,
+     "p75": 420.01,
+     "max_other": 453.01
+    },
+    "holder_transactions_that_month": 8,
+    "same_day_same_category": 1
+   },
+   "item_id": "r150"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.74664,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-20",
+    "merchant": "NAPA STORE 4288133",
+    "merchant_category": "AUTOMOTIVE PARTS  ACCESSORIES STORES",
+    "category": "Shopping",
+    "amount": 12838.38,
+    "holder_category_history": {
+     "transactions": 125,
+     "median": 141.75,
+     "p25": 51.57,
+     "p75": 621.04,
+     "max_other": 24943.57
+    },
+    "holder_transactions_that_month": 21,
+    "same_day_same_category": 3
+   },
+   "item_id": "r151"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.78378,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-11-13",
+    "merchant": "LEGISOK",
+    "merchant_category": "BOOKS PERIODICALS AND NEWSPAPERS",
+    "category": "Shopping",
+    "amount": 4550.0,
+    "holder_category_history": {
+     "transactions": 31,
+     "median": 93.0,
+     "p25": 17.34,
+     "p75": 203.56,
+     "max_other": 3281.73
+    },
+    "holder_transactions_that_month": 9,
+    "same_day_same_category": 1
+   },
+   "item_id": "r152"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.48586,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-07-10",
+    "merchant": "SOUTH CENTRAL INDUSTRIE",
+    "merchant_category": "MISCELLANEOUS GENERAL MERCHANDISE STORES",
+    "category": "Shopping",
+    "amount": 181.8,
+    "holder_category_history": {
+     "transactions": 18,
+     "median": 52.66,
+     "p25": 24.14,
+     "p75": 130.35,
+     "max_other": 307.29
+    },
+    "holder_transactions_that_month": 7,
+    "same_day_same_category": 1
+   },
+   "item_id": "r153"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67114,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-12-21",
+    "merchant": "Frontiers Media SA",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 819.87,
+    "holder_category_history": {
+     "transactions": 141,
+     "median": 45.0,
+     "p25": 24.75,
+     "p75": 117.59,
+     "max_other": 1479.98
+    },
+    "holder_transactions_that_month": 8,
+    "same_day_same_category": 2
+   },
+   "item_id": "r154"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.34474,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-02-01",
+    "merchant": "CAPRICE ELECTRONICS",
+    "merchant_category": "ELECTRICAL PARTS AND EQUIPMENT",
+    "category": "Other",
+    "amount": 376.3,
+    "holder_category_history": {
+     "transactions": 131,
+     "median": 428.59,
+     "p25": 144.45,
+     "p75": 1086.76,
+     "max_other": 15928.28
+    },
+    "holder_transactions_that_month": 14,
+    "same_day_same_category": 1
+   },
+   "item_id": "r155"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.78649,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-17",
+    "merchant": "WWW.WHOVA.COM",
+    "merchant_category": "BUSINESS SERVICES NOT ELSEWHERE CLASSIFI",
+    "category": "Other",
+    "amount": 2299.0,
+    "holder_category_history": {
+     "transactions": 36,
+     "median": 6.14,
+     "p25": 4.1,
+     "p75": 14.55,
+     "max_other": 1180.0
+    },
+    "holder_transactions_that_month": 62,
+    "same_day_same_category": 1
+   },
+   "item_id": "r156"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.44106,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-03-25",
+    "merchant": "SPROUTS FARMERS MAR",
+    "merchant_category": "GROCERY STORES  SUPERMARKETS",
+    "category": "Groceries",
+    "amount": 26.98,
+    "holder_category_history": {
+     "transactions": 33,
+     "median": 37.61,
+     "p25": 19.88,
+     "p75": 122.02,
+     "max_other": 988.03
+    },
+    "holder_transactions_that_month": 8,
+    "same_day_same_category": 1
+   },
+   "item_id": "r157"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.74984,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-06-11",
+    "merchant": "WENGER CORPORATION",
+    "merchant_category": "COMMERCIAL EQUIPMENT  NOT ELSEWHERE CLAS",
+    "category": "Other",
+    "amount": 571.2,
+    "holder_category_history": {
+     "transactions": 28,
+     "median": 12.95,
+     "p25": 12.95,
+     "p75": 27.89,
+     "max_other": 2500.0
+    },
+    "holder_transactions_that_month": 16,
+    "same_day_same_category": 1
+   },
+   "item_id": "r158"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.44099,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-03-01",
+    "merchant": "GREENHILL MATERIALS CO",
+    "merchant_category": "CONSTRUCTION MATERIALS",
+    "category": "Other",
+    "amount": 427.94,
+    "holder_category_history": {
+     "transactions": 36,
+     "median": 512.66,
+     "p25": 66.47,
+     "p75": 1177.51,
+     "max_other": 4868.85
+    },
+    "holder_transactions_that_month": 2,
+    "same_day_same_category": 1
+   },
+   "item_id": "r159"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.37529,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-11-07",
+    "merchant": "AMZN Mktp US MA9PW8LW3",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 39.78,
+    "holder_category_history": {
+     "transactions": 39,
+     "median": 48.95,
+     "p25": 18.49,
+     "p75": 106.47,
+     "max_other": 1187.25
+    },
+    "holder_transactions_that_month": 2,
+    "same_day_same_category": 1
+   },
+   "item_id": "r160"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.50833,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-07-06",
+    "merchant": "OK STATE BUREAU OF INV",
+    "merchant_category": "GOVERNMENT SERVICES NOT ELSEWHERE CLASSI",
+    "category": "Other",
+    "amount": 115.0,
+    "holder_category_history": {
+     "transactions": 59,
+     "median": 20.0,
+     "p25": 20.0,
+     "p75": 39.0,
+     "max_other": 1095.0
+    },
+    "holder_transactions_that_month": 11,
+    "same_day_same_category": 4
+   },
+   "item_id": "r161"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.78405,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-25",
+    "merchant": "IN  STILLWATER STEEL & SU",
+    "merchant_category": "MISCELLANEOUS AND RETAIL STORES",
+    "category": "Shopping",
+    "amount": 2746.48,
+    "holder_category_history": {
+     "transactions": 219,
+     "median": 49.61,
+     "p25": 24.82,
+     "p75": 104.7,
+     "max_other": 1635.53
+    },
+    "holder_transactions_that_month": 118,
+    "same_day_same_category": 2
+   },
+   "item_id": "r162"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.55758,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-01",
+    "merchant": "SIMPSONSCARBOROUGH",
+    "merchant_category": "BUSINESS SERVICES NOT ELSEWHERE CLASSIFI",
+    "category": "Other",
+    "amount": 999.0,
+    "holder_category_history": {
+     "transactions": 92,
+     "median": 60.0,
+     "p25": 14.0,
+     "p75": 293.0,
+     "max_other": 4416.6
+    },
+    "holder_transactions_that_month": 23,
+    "same_day_same_category": 2
+   },
+   "item_id": "r163"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.43397,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-06-19",
+    "merchant": "SQ  FIRST CHOICE PEST CON",
+    "merchant_category": "PROFESSIONAL SERVICES NOT ELSEWHERE CLAS",
+    "category": "Other",
+    "amount": 60.0,
+    "holder_category_history": {
+     "transactions": 30,
+     "median": 60.0,
+     "p25": 14.44,
+     "p75": 60.0,
+     "max_other": 1740.0
+    },
+    "holder_transactions_that_month": 5,
+    "same_day_same_category": 1
+   },
+   "item_id": "r164"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67966,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-07-22",
+    "merchant": "COURTYARD LOUISVILLE",
+    "merchant_category": "COURTYARD INNS",
+    "category": "Travel",
+    "amount": 3246.54,
+    "holder_category_history": {
+     "transactions": 18,
+     "median": 187.78,
+     "p25": 112.46,
+     "p75": 226.12,
+     "max_other": 376.61
+    },
+    "holder_transactions_that_month": 12,
+    "same_day_same_category": 1
+   },
+   "item_id": "r165"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67496,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-01-30",
+    "merchant": "AMERICAN AIR0018083224074",
+    "merchant_category": "AMERICAN AIRLINES",
+    "category": "Travel",
+    "amount": 1811.5,
+    "holder_category_history": {
+     "transactions": 5238,
+     "median": 342.5,
+     "p25": 5.0,
+     "p75": 553.96,
+     "max_other": 10490.5
+    },
+    "holder_transactions_that_month": 667,
+    "same_day_same_category": 67
+   },
+   "item_id": "r166"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.68618,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-21",
+    "merchant": "AMZN Mktp US RA45W9OT0",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 3689.0,
+    "holder_category_history": {
+     "transactions": 20,
+     "median": 153.84,
+     "p25": 72.0,
+     "p75": 402.64,
+     "max_other": 2244.25
+    },
+    "holder_transactions_that_month": 4,
+    "same_day_same_category": 1
+   },
+   "item_id": "r167"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.73454,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-26",
+    "merchant": "VALLEY LASER",
+    "merchant_category": "CHARITABLE AND SOCIAL SERVICE ORGANIZATI",
+    "category": "Other",
+    "amount": 10188.53,
+    "holder_category_history": {
+     "transactions": 168,
+     "median": 200.41,
+     "p25": 84.03,
+     "p75": 705.85,
+     "max_other": 8249.9
+    },
+    "holder_transactions_that_month": 46,
+    "same_day_same_category": 3
+   },
+   "item_id": "r168"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.50791,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-12-19",
+    "merchant": "AMZN Mktp US CD1JA9KS3",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 265.0,
+    "holder_category_history": {
+     "transactions": 37,
+     "median": 52.42,
+     "p25": 28.8,
+     "p75": 79.8,
+     "max_other": 329.0
+    },
+    "holder_transactions_that_month": 5,
+    "same_day_same_category": 1
+   },
+   "item_id": "r169"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.7274,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-07-19",
+    "merchant": "OG&E/USPAYMENTSBILLPAY",
+    "merchant_category": "UTILITIES-ELEC/GAS/HEAT OIL/SANITARY/WTR",
+    "category": "Utilities",
+    "amount": 2552.97,
+    "holder_category_history": {
+     "transactions": 105,
+     "median": 125.0,
+     "p25": 100.46,
+     "p75": 220.98,
+     "max_other": 2501.46
+    },
+    "holder_transactions_that_month": 77,
+    "same_day_same_category": 31
+   },
+   "item_id": "r170"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.66543,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-11-27",
+    "merchant": "FSP RIXSTINE RECOGNITION",
+    "merchant_category": "MISCELLANEOUS PUBLISHING & PRINTING",
+    "category": "Other",
+    "amount": 4275.35,
+    "holder_category_history": {
+     "transactions": 29,
+     "median": 501.54,
+     "p25": 136.47,
+     "p75": 991.93,
+     "max_other": 2994.27
+    },
+    "holder_transactions_that_month": 23,
+    "same_day_same_category": 1
+   },
+   "item_id": "r171"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.54956,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-17",
+    "merchant": "DALE ROGERS TRAINING CENT",
+    "merchant_category": "MISCELLANEOUS GENERAL MERCHANDISE STORES",
+    "category": "Shopping",
+    "amount": 1749.05,
+    "holder_category_history": {
+     "transactions": 12,
+     "median": 324.28,
+     "p25": 74.85,
+     "p75": 706.12,
+     "max_other": 3098.5
+    },
+    "holder_transactions_that_month": 33,
+    "same_day_same_category": 1
+   },
+   "item_id": "r172"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.54274,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-06-06",
+    "merchant": "GRAINGER",
+    "merchant_category": "INDUSTRIAL SUPPLIES NOT ESLEWHERE CLASSI",
+    "category": "Other",
+    "amount": 3786.8,
+    "holder_category_history": {
+     "transactions": 218,
+     "median": 363.92,
+     "p25": 142.55,
+     "p75": 954.06,
+     "max_other": 8696.01
+    },
+    "holder_transactions_that_month": 43,
+    "same_day_same_category": 2
+   },
+   "item_id": "r173"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.35113,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-04-19",
+    "merchant": "HIWAY INN EXPRESS HOTEL",
+    "merchant_category": "LODGING  HOTELS  MOTELS  RESORTS",
+    "category": "Travel",
+    "amount": 180.0,
+    "holder_category_history": {
+     "transactions": 314,
+     "median": 214.0,
+     "p25": 107.0,
+     "p75": 534.16,
+     "max_other": 2134.06
+    },
+    "holder_transactions_that_month": 39,
+    "same_day_same_category": 1
+   },
+   "item_id": "r174"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.71633,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-08",
+    "merchant": "SOUTH CENTRAL INDUSTRIE",
+    "merchant_category": "MISCELLANEOUS GENERAL MERCHANDISE STORES",
+    "category": "Shopping",
+    "amount": 13953.2,
+    "holder_category_history": {
+     "transactions": 311,
+     "median": 435.38,
+     "p25": 127.13,
+     "p75": 1532.7,
+     "max_other": 13411.16
+    },
+    "holder_transactions_that_month": 64,
+    "same_day_same_category": 7
+   },
+   "item_id": "r175"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.69663,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-12-04",
+    "merchant": "AC-12898451",
+    "merchant_category": "MEN S WOMENS AND CHILDREN S UNIFORMS AND",
+    "category": "Shopping",
+    "amount": 1495.76,
+    "holder_category_history": {
+     "transactions": 12,
+     "median": 105.91,
+     "p25": 62.0,
+     "p75": 268.12,
+     "max_other": 495.25
+    },
+    "holder_transactions_that_month": 6,
+    "same_day_same_category": 1
+   },
+   "item_id": "r176"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.59436,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-12-15",
+    "merchant": "ROSEMOUNT INC",
+    "merchant_category": "ELECTRICAL PARTS AND EQUIPMENT",
+    "category": "Other",
+    "amount": 8204.15,
+    "holder_category_history": {
+     "transactions": 2381,
+     "median": 535.25,
+     "p25": 167.01,
+     "p75": 1810.7,
+     "max_other": 179346.78
+    },
+    "holder_transactions_that_month": 334,
+    "same_day_same_category": 6
+   },
+   "item_id": "r177"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.7033,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-18",
+    "merchant": "ECONO LODGE IA046",
+    "merchant_category": "ECONOLODGES",
+    "category": "Travel",
+    "amount": 3635.28,
+    "holder_category_history": {
+     "transactions": 38,
+     "median": 280.98,
+     "p25": 121.61,
+     "p75": 280.98,
+     "max_other": 4434.12
+    },
+    "holder_transactions_that_month": 3,
+    "same_day_same_category": 1
+   },
+   "item_id": "r178"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.38684,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-09-26",
+    "merchant": "SQ  GOOD LITTLE EATER",
+    "merchant_category": "EATING PLACES  RESTAURANTS",
+    "category": "Dining",
+    "amount": 3.0,
+    "holder_category_history": {
+     "transactions": 27,
+     "median": 51.54,
+     "p25": 31.3,
+     "p75": 99.5,
+     "max_other": 436.6
+    },
+    "holder_transactions_that_month": 35,
+    "same_day_same_category": 4
+   },
+   "item_id": "r179"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.43315,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-05",
+    "merchant": "HOLIDAY INN EXPRESS",
+    "merchant_category": "HOLIDAY INNS",
+    "category": "Travel",
+    "amount": 428.0,
+    "holder_category_history": {
+     "transactions": 427,
+     "median": 125.0,
+     "p25": 107.0,
+     "p75": 315.0,
+     "max_other": 1826.43
+    },
+    "holder_transactions_that_month": 113,
+    "same_day_same_category": 2
+   },
+   "item_id": "r180"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.68889,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-12-05",
+    "merchant": "GALLS",
+    "merchant_category": "MEN S WOMENS AND CHILDREN S UNIFORMS AND",
+    "category": "Shopping",
+    "amount": 1887.94,
+    "holder_category_history": {
+     "transactions": 9,
+     "median": 54.86,
+     "p25": 26.99,
+     "p75": 216.84,
+     "max_other": 314.83
+    },
+    "holder_transactions_that_month": 3,
+    "same_day_same_category": 2
+   },
+   "item_id": "r181"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.65659,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-04",
+    "merchant": "PAYPAL  COMPOSITEEN",
+    "merchant_category": "GENERAL CONTRACTORS-RESIDENTIAL",
+    "category": "Other",
+    "amount": 1748.25,
+    "holder_category_history": {
+     "transactions": 65,
+     "median": 71.99,
+     "p25": 36.0,
+     "p75": 387.31,
+     "max_other": 1665.17
+    },
+    "holder_transactions_that_month": 74,
+    "same_day_same_category": 3
+   },
+   "item_id": "r182"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.39003,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-03-26",
+    "merchant": "Oklahoma Association o",
+    "merchant_category": "CHARITABLE AND SOCIAL SERVICE ORGANIZATI",
+    "category": "Other",
+    "amount": 200.0,
+    "holder_category_history": {
+     "transactions": 77,
+     "median": 190.0,
+     "p25": 69.95,
+     "p75": 250.0,
+     "max_other": 4309.0
+    },
+    "holder_transactions_that_month": 14,
+    "same_day_same_category": 9
+   },
+   "item_id": "r183"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.47458,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-10-31",
+    "merchant": "IMLSS UTAH",
+    "merchant_category": "HARDWARE EQUIPMENT AND SUPPLIES",
+    "category": "Other",
+    "amount": 309.0,
+    "holder_category_history": {
+     "transactions": 1762,
+     "median": 99.9,
+     "p25": 27.6,
+     "p75": 359.76,
+     "max_other": 4801.47
+    },
+    "holder_transactions_that_month": 251,
+    "same_day_same_category": 21
+   },
+   "item_id": "r184"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.70852,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-21",
+    "merchant": "MARRIOTT SN ANTONIO RW",
+    "merchant_category": "MARRIOTT",
+    "category": "Travel",
+    "amount": 588.54,
+    "holder_category_history": {
+     "transactions": 31,
+     "median": 36.0,
+     "p25": 28.18,
+     "p75": 52.5,
+     "max_other": 1226.16
+    },
+    "holder_transactions_that_month": 7,
+    "same_day_same_category": 5
+   },
+   "item_id": "r185"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.8198,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-11-17",
+    "merchant": "SCHWEITZER ENGINEERING LA",
+    "merchant_category": "ELECTRICAL PARTS AND EQUIPMENT",
+    "category": "Other",
+    "amount": 107430.0,
+    "holder_category_history": {
+     "transactions": 2381,
+     "median": 535.25,
+     "p25": 167.01,
+     "p75": 1810.7,
+     "max_other": 179346.78
+    },
+    "holder_transactions_that_month": 682,
+    "same_day_same_category": 19
+   },
+   "item_id": "r186"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.70567,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-01-21",
+    "merchant": "AMZN Mktp US R81XD9XW1",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 2294.67,
+    "holder_category_history": {
+     "transactions": 19,
+     "median": 64.52,
+     "p25": 22.97,
+     "p75": 207.5,
+     "max_other": 728.74
+    },
+    "holder_transactions_that_month": 1,
+    "same_day_same_category": 1
+   },
+   "item_id": "r187"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.68258,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-07-06",
+    "merchant": "TFS FISHERSCI ECOM HUS",
+    "merchant_category": "LAB/MEDICAL/DENTAL/OPHTHALMIC HOSPITAL E",
+    "category": "Other",
+    "amount": 4094.31,
+    "holder_category_history": {
+     "transactions": 62,
+     "median": 237.0,
+     "p25": 147.16,
+     "p75": 437.29,
+     "max_other": 3399.98
+    },
+    "holder_transactions_that_month": 20,
+    "same_day_same_category": 1
+   },
+   "item_id": "r188"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67408,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-01",
+    "merchant": "THE HOME DEPOT #3906",
+    "merchant_category": "HOME SUPPLY WAREHOUSE STORES",
+    "category": "Shopping",
+    "amount": 3504.88,
+    "holder_category_history": {
+     "transactions": 100,
+     "median": 163.44,
+     "p25": 65.52,
+     "p75": 318.32,
+     "max_other": 4200.84
+    },
+    "holder_transactions_that_month": 7,
+    "same_day_same_category": 1
+   },
+   "item_id": "r189"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.40613,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-05-03",
+    "merchant": "AMZN Mktp US RR87R1QH1",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 179.28,
+    "holder_category_history": {
+     "transactions": 36,
+     "median": 90.47,
+     "p25": 49.49,
+     "p75": 142.62,
+     "max_other": 980.99
+    },
+    "holder_transactions_that_month": 11,
+    "same_day_same_category": 1
+   },
+   "item_id": "r190"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.55696,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-08",
+    "merchant": "COX OKLAHOMA COMM SV",
+    "merchant_category": "CABLE  SATELLITE & OTHER PAY TV/RADIO SE",
+    "category": "Utilities",
+    "amount": 2823.31,
+    "holder_category_history": {
+     "transactions": 824,
+     "median": 582.82,
+     "p25": 102.17,
+     "p75": 1267.89,
+     "max_other": 26013.96
+    },
+    "holder_transactions_that_month": 152,
+    "same_day_same_category": 25
+   },
+   "item_id": "r191"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67542,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-11-06",
+    "merchant": "ACCURATE - USD",
+    "merchant_category": "BUSINESS SERVICES NOT ELSEWHERE CLASSIFI",
+    "category": "Other",
+    "amount": 6845.82,
+    "holder_category_history": {
+     "transactions": 2381,
+     "median": 535.25,
+     "p25": 167.01,
+     "p75": 1810.7,
+     "max_other": 179346.78
+    },
+    "holder_transactions_that_month": 682,
+    "same_day_same_category": 64
+   },
+   "item_id": "r192"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.51101,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-19",
+    "merchant": "ARES HOTELS AND TICKETS",
+    "merchant_category": "TRAVEL AGENCIES",
+    "category": "Travel",
+    "amount": 1077.72,
+    "holder_category_history": {
+     "transactions": 23,
+     "median": 146.0,
+     "p25": 5.0,
+     "p75": 685.97,
+     "max_other": 4403.92
+    },
+    "holder_transactions_that_month": 21,
+    "same_day_same_category": 2
+   },
+   "item_id": "r193"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.77253,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-06-04",
+    "merchant": "SP PRINTED SOLID  IN",
+    "merchant_category": "MEN S AND WOMEN S CLOTHING STORES",
+    "category": "Shopping",
+    "amount": 3538.7,
+    "holder_category_history": {
+     "transactions": 431,
+     "median": 82.48,
+     "p25": 33.28,
+     "p75": 180.3,
+     "max_other": 4369.62
+    },
+    "holder_transactions_that_month": 198,
+    "same_day_same_category": 14
+   },
+   "item_id": "r194"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.38329,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-05-29",
+    "merchant": "AMZN Mktp US 5W1UR6ZO3",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 29.88,
+    "holder_category_history": {
+     "transactions": 25,
+     "median": 55.97,
+     "p25": 29.99,
+     "p75": 115.97,
+     "max_other": 3885.0
+    },
+    "holder_transactions_that_month": 9,
+    "same_day_same_category": 1
+   },
+   "item_id": "r195"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.49229,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-08-25",
+    "merchant": "AMZN MKTP US T338G43A2 AM",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 1078.54,
+    "holder_category_history": {
+     "transactions": 15,
+     "median": 89.78,
+     "p25": 20.0,
+     "p75": 740.58,
+     "max_other": 26180.0
+    },
+    "holder_transactions_that_month": 29,
+    "same_day_same_category": 2
+   },
+   "item_id": "r196"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.43754,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-12-01",
+    "merchant": "VISIBLE",
+    "merchant_category": "TELECOMMUNICATION SERV.INCLUD. LOCAL/L.D",
+    "category": "Utilities",
+    "amount": 35.0,
+    "holder_category_history": {
+     "transactions": 12,
+     "median": 35.0,
+     "p25": 32.5,
+     "p75": 35.0,
+     "max_other": 45.0
+    },
+    "holder_transactions_that_month": 7,
+    "same_day_same_category": 1
+   },
+   "item_id": "r197"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.36123,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-09-13",
+    "merchant": "MCMASTER-CARR",
+    "merchant_category": "INDUSTRIAL SUPPLIES NOT ESLEWHERE CLASSI",
+    "category": "Other",
+    "amount": 26.05,
+    "holder_category_history": {
+     "transactions": 125,
+     "median": 271.44,
+     "p25": 73.41,
+     "p75": 671.75,
+     "max_other": 5600.0
+    },
+    "holder_transactions_that_month": 140,
+    "same_day_same_category": 4
+   },
+   "item_id": "r198"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.36007,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-11-22",
+    "merchant": "TFS FISHERSCI ECOM HUS",
+    "merchant_category": "LAB/MEDICAL/DENTAL/OPHTHALMIC HOSPITAL E",
+    "category": "Other",
+    "amount": 104.66,
+    "holder_category_history": {
+     "transactions": 32,
+     "median": 414.68,
+     "p25": 95.31,
+     "p75": 904.86,
+     "max_other": 2033.0
+    },
+    "holder_transactions_that_month": 9,
+    "same_day_same_category": 1
+   },
+   "item_id": "r199"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67341,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-10-23",
+    "merchant": "CALEA INC.",
+    "merchant_category": "MEMBERSHIP ORGANIZATIONS NOT ELSEWHERE C",
+    "category": "Other",
+    "amount": 4645.0,
+    "holder_category_history": {
+     "transactions": 329,
+     "median": 173.0,
+     "p25": 80.0,
+     "p75": 625.0,
+     "max_other": 24800.0
+    },
+    "holder_transactions_that_month": 63,
+    "same_day_same_category": 3
+   },
+   "item_id": "r200"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.7394,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-09-07",
+    "merchant": "JAMISON 4 FEED LLC",
+    "merchant_category": "PET SHOPS-PET FOOD AND SUPPLY STORES",
+    "category": "Shopping",
+    "amount": 2096.76,
+    "holder_category_history": {
+     "transactions": 81,
+     "median": 37.83,
+     "p25": 21.82,
+     "p75": 96.07,
+     "max_other": 1410.0
+    },
+    "holder_transactions_that_month": 9,
+    "same_day_same_category": 1
+   },
+   "item_id": "r201"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.52257,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-10-24",
+    "merchant": "ATT  BILL PAYMENT",
+    "merchant_category": "TELECOMMUNICATION SERV.INCLUD. LOCAL/L.D",
+    "category": "Utilities",
+    "amount": 789.06,
+    "holder_category_history": {
+     "transactions": 45,
+     "median": 249.85,
+     "p25": 249.84,
+     "p75": 352.18,
+     "max_other": 1188.05
+    },
+    "holder_transactions_that_month": 6,
+    "same_day_same_category": 3
+   },
+   "item_id": "r202"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.70992,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-03",
+    "merchant": "SP NASCOHEALTHCARE",
+    "merchant_category": "MISCELLANEOUS GENERAL MERCHANDISE STORES",
+    "category": "Shopping",
+    "amount": 2882.8,
+    "holder_category_history": {
+     "transactions": 161,
+     "median": 65.41,
+     "p25": 29.98,
+     "p75": 175.96,
+     "max_other": 4825.98
+    },
+    "holder_transactions_that_month": 18,
+    "same_day_same_category": 1
+   },
+   "item_id": "r203"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.51558,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-07",
+    "merchant": "STILLWATER WINNELSON C",
+    "merchant_category": "PLUMBING & HEATING EQUIPMENT AND SUPPLIE",
+    "category": "Other",
+    "amount": 333.0,
+    "holder_category_history": {
+     "transactions": 1762,
+     "median": 99.9,
+     "p25": 27.6,
+     "p75": 359.76,
+     "max_other": 4801.47
+    },
+    "holder_transactions_that_month": 362,
+    "same_day_same_category": 33
+   },
+   "item_id": "r204"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.46109,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-29",
+    "merchant": "SQ  MAG TRUCKING",
+    "merchant_category": "MOTOR FREIGHT CARRIERS  TRUCK-LOCAL/LONG",
+    "category": "Other",
+    "amount": 1350.0,
+    "holder_category_history": {
+     "transactions": 75,
+     "median": 197.77,
+     "p25": 61.36,
+     "p75": 558.37,
+     "max_other": 4895.0
+    },
+    "holder_transactions_that_month": 28,
+    "same_day_same_category": 3
+   },
+   "item_id": "r205"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.71681,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-07-11",
+    "merchant": "WM SUPERCENTER #4241",
+    "merchant_category": "GROCERY STORES  SUPERMARKETS",
+    "category": "Groceries",
+    "amount": 621.58,
+    "holder_category_history": {
+     "transactions": 14,
+     "median": 22.75,
+     "p25": 16.82,
+     "p75": 36.8,
+     "max_other": 53.34
+    },
+    "holder_transactions_that_month": 34,
+    "same_day_same_category": 1
+   },
+   "item_id": "r206"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.51634,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-01-12",
+    "merchant": "INTEGRATED DNA TECH",
+    "merchant_category": "NON-DURABLE GOODS NOT ELSEWHERE CLASSIFI",
+    "category": "Other",
+    "amount": 1583.89,
+    "holder_category_history": {
+     "transactions": 45,
+     "median": 357.26,
+     "p25": 147.5,
+     "p75": 793.0,
+     "max_other": 4231.37
+    },
+    "holder_transactions_that_month": 6,
+    "same_day_same_category": 1
+   },
+   "item_id": "r207"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67981,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-06-01",
+    "merchant": "KINGSTON HARDWARE",
+    "merchant_category": "HARDWARE STORES",
+    "category": "Shopping",
+    "amount": 2736.77,
+    "holder_category_history": {
+     "transactions": 68,
+     "median": 100.03,
+     "p25": 46.16,
+     "p75": 407.95,
+     "max_other": 1651.72
+    },
+    "holder_transactions_that_month": 7,
+    "same_day_same_category": 1
+   },
+   "item_id": "r208"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.44238,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-05",
+    "merchant": "SYSCO CORP",
+    "merchant_category": "NON-DURABLE GOODS NOT ELSEWHERE CLASSIFI",
+    "category": "Other",
+    "amount": 2075.61,
+    "holder_category_history": {
+     "transactions": 141,
+     "median": 375.0,
+     "p25": 59.25,
+     "p75": 2923.54,
+     "max_other": 7587.41
+    },
+    "holder_transactions_that_month": 26,
+    "same_day_same_category": 4
+   },
+   "item_id": "r209"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.42919,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-10-24",
+    "merchant": "STERIS CORPORATION",
+    "merchant_category": "LAB/MEDICAL/DENTAL/OPHTHALMIC HOSPITAL E",
+    "category": "Other",
+    "amount": 998.69,
+    "holder_category_history": {
+     "transactions": 33,
+     "median": 415.0,
+     "p25": 158.59,
+     "p75": 998.69,
+     "max_other": 2942.78
+    },
+    "holder_transactions_that_month": 16,
+    "same_day_same_category": 1
+   },
+   "item_id": "r210"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.74842,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-08-08",
+    "merchant": "MOD ARMORY LLC",
+    "merchant_category": "SPORTING GOODS STORES",
+    "category": "Shopping",
+    "amount": 11655.0,
+    "holder_category_history": {
+     "transactions": 337,
+     "median": 238.69,
+     "p25": 85.96,
+     "p75": 757.05,
+     "max_other": 19393.8
+    },
+    "holder_transactions_that_month": 104,
+    "same_day_same_category": 2
+   },
+   "item_id": "r211"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.36312,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-01-30",
+    "merchant": "OUHSC FACULTY HOUSE",
+    "merchant_category": "COLLEGES  UNIVERSITIES  PROFESSIONAL SCH",
+    "category": "Education",
+    "amount": 454.3,
+    "holder_category_history": {
+     "transactions": 6,
+     "median": 452.79,
+     "p25": 370.43,
+     "p75": 788.58,
+     "max_other": 1041.75
+    },
+    "holder_transactions_that_month": 17,
+    "same_day_same_category": 2
+   },
+   "item_id": "r212"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.70037,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-11-01",
+    "merchant": "GRAINGER",
+    "merchant_category": "INDUSTRIAL SUPPLIES NOT ESLEWHERE CLASSI",
+    "category": "Other",
+    "amount": 17497.8,
+    "holder_category_history": {
+     "transactions": 161,
+     "median": 649.52,
+     "p25": 188.04,
+     "p75": 2098.8,
+     "max_other": 13999.0
+    },
+    "holder_transactions_that_month": 14,
+    "same_day_same_category": 1
+   },
+   "item_id": "r213"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.5835,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-11-28",
+    "merchant": "AMERICAN AIR0018071029807",
+    "merchant_category": "AMERICAN AIRLINES",
+    "category": "Travel",
+    "amount": 441.8,
+    "holder_category_history": {
+     "transactions": 3964,
+     "median": 248.2,
+     "p25": 186.93,
+     "p75": 370.75,
+     "max_other": 3241.2
+    },
+    "holder_transactions_that_month": 207,
+    "same_day_same_category": 48
+   },
+   "item_id": "r214"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.78959,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-16",
+    "merchant": "SP JETCAT-TURBINES-AME",
+    "merchant_category": "HOBBY TOY  AND GAME SHOPS",
+    "category": "Shopping",
+    "amount": 2627.65,
+    "holder_category_history": {
+     "transactions": 144,
+     "median": 40.59,
+     "p25": 18.99,
+     "p75": 98.56,
+     "max_other": 1128.96
+    },
+    "holder_transactions_that_month": 29,
+    "same_day_same_category": 1
+   },
+   "item_id": "r215"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.45801,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-08-07",
+    "merchant": "COX TULSA COMM",
+    "merchant_category": "CABLE  SATELLITE & OTHER PAY TV/RADIO SE",
+    "category": "Utilities",
+    "amount": 1085.28,
+    "holder_category_history": {
+     "transactions": 94,
+     "median": 155.13,
+     "p25": 79.99,
+     "p75": 565.22,
+     "max_other": 4698.12
+    },
+    "holder_transactions_that_month": 13,
+    "same_day_same_category": 3
+   },
+   "item_id": "r216"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.76838,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-22",
+    "merchant": "eBay O 12-11599-18480",
+    "merchant_category": "DEPARTMENT STORES",
+    "category": "Shopping",
+    "amount": 3499.9,
+    "holder_category_history": {
+     "transactions": 431,
+     "median": 82.48,
+     "p25": 33.28,
+     "p75": 180.3,
+     "max_other": 4369.62
+    },
+    "holder_transactions_that_month": 234,
+    "same_day_same_category": 9
+   },
+   "item_id": "r217"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.42513,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-13",
+    "merchant": "Lenovo United States",
+    "merchant_category": "ALL OTHER DIRECT MARKETERS",
+    "category": "Other",
+    "amount": 1618.99,
+    "holder_category_history": {
+     "transactions": 113,
+     "median": 384.46,
+     "p25": 96.23,
+     "p75": 1182.0,
+     "max_other": 4622.84
+    },
+    "holder_transactions_that_month": 43,
+    "same_day_same_category": 1
+   },
+   "item_id": "r218"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.39238,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-22",
+    "merchant": "GRAINGER",
+    "merchant_category": "INDUSTRIAL SUPPLIES NOT ESLEWHERE CLASSI",
+    "category": "Other",
+    "amount": 411.46,
+    "holder_category_history": {
+     "transactions": 95,
+     "median": 128.5,
+     "p25": 54.47,
+     "p75": 348.97,
+     "max_other": 4543.6
+    },
+    "holder_transactions_that_month": 43,
+    "same_day_same_category": 3
+   },
+   "item_id": "r219"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.70024,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-10-04",
+    "merchant": "SOUTH CENTRAL INDUSTRIE",
+    "merchant_category": "MISCELLANEOUS GENERAL MERCHANDISE STORES",
+    "category": "Shopping",
+    "amount": 12495.0,
+    "holder_category_history": {
+     "transactions": 311,
+     "median": 435.38,
+     "p25": 127.13,
+     "p75": 1532.7,
+     "max_other": 13953.2
+    },
+    "holder_transactions_that_month": 45,
+    "same_day_same_category": 6
+   },
+   "item_id": "r220"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.66909,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-30",
+    "merchant": "THE WEBSTAURANT STORE INC",
+    "merchant_category": "DURABLE GOODS NOT ELSEWHERE CLASSIFIED",
+    "category": "Other",
+    "amount": 687.72,
+    "holder_category_history": {
+     "transactions": 15,
+     "median": 14.99,
+     "p25": 14.99,
+     "p75": 14.99,
+     "max_other": 116.07
+    },
+    "holder_transactions_that_month": 10,
+    "same_day_same_category": 1
+   },
+   "item_id": "r221"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.77503,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-09-26",
+    "merchant": "B&H PHOTO 800-606-6969",
+    "merchant_category": "OFFICE  PHOTOGRAPHIC  PHOTOCOPY  AND MIC",
+    "category": "Other",
+    "amount": 910.0,
+    "holder_category_history": {
+     "transactions": 13,
+     "median": 15.0,
+     "p25": 7.0,
+     "p75": 25.0,
+     "max_other": 99.0
+    },
+    "holder_transactions_that_month": 12,
+    "same_day_same_category": 2
+   },
+   "item_id": "r222"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.37793,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-03-25",
+    "merchant": "AMAZON.COM RH9C40BT1",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 60.56,
+    "holder_category_history": {
+     "transactions": 20,
+     "median": 30.09,
+     "p25": 11.64,
+     "p75": 46.26,
+     "max_other": 495.9
+    },
+    "holder_transactions_that_month": 10,
+    "same_day_same_category": 1
+   },
+   "item_id": "r223"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.36527,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-10-16",
+    "merchant": "SIGMA ALDRICH US",
+    "merchant_category": "ALL OTHER DIRECT MARKETERS",
+    "category": "Other",
+    "amount": 20.8,
+    "holder_category_history": {
+     "transactions": 1371,
+     "median": 237.35,
+     "p25": 110.09,
+     "p75": 483.19,
+     "max_other": 4762.0
+    },
+    "holder_transactions_that_month": 147,
+    "same_day_same_category": 2
+   },
+   "item_id": "r224"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.70832,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-24",
+    "merchant": "VECTOR BIOSYSTEMS  INC",
+    "merchant_category": "BUSINESS SERVICES NOT ELSEWHERE CLASSIFI",
+    "category": "Other",
+    "amount": 4780.0,
+    "holder_category_history": {
+     "transactions": 1306,
+     "median": 278.29,
+     "p25": 127.7,
+     "p75": 517.85,
+     "max_other": 5300.0
+    },
+    "holder_transactions_that_month": 126,
+    "same_day_same_category": 4
+   },
+   "item_id": "r225"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.72849,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-06",
+    "merchant": "EVIDENT SCIENTIFIC  INC.",
+    "merchant_category": "DURABLE GOODS NOT ELSEWHERE CLASSIFIED",
+    "category": "Other",
+    "amount": 4782.36,
+    "holder_category_history": {
+     "transactions": 626,
+     "median": 199.76,
+     "p25": 82.37,
+     "p75": 412.58,
+     "max_other": 4611.53
+    },
+    "holder_transactions_that_month": 79,
+    "same_day_same_category": 4
+   },
+   "item_id": "r226"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.76626,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-25",
+    "merchant": "LITHIUMHUB",
+    "merchant_category": "AUTOMOTIVE PARTS  ACCESSORIES STORES",
+    "category": "Shopping",
+    "amount": 4646.7,
+    "holder_category_history": {
+     "transactions": 84,
+     "median": 82.52,
+     "p25": 27.02,
+     "p75": 167.97,
+     "max_other": 817.56
+    },
+    "holder_transactions_that_month": 15,
+    "same_day_same_category": 2
+   },
+   "item_id": "r227"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.5168,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-16",
+    "merchant": "NAGOYA JAPANESE CUISINE",
+    "merchant_category": "EATING PLACES  RESTAURANTS",
+    "category": "Dining",
+    "amount": 1238.06,
+    "holder_category_history": {
+     "transactions": 49,
+     "median": 307.4,
+     "p25": 56.52,
+     "p75": 551.58,
+     "max_other": 1373.46
+    },
+    "holder_transactions_that_month": 16,
+    "same_day_same_category": 1
+   },
+   "item_id": "r228"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.68097,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-13",
+    "merchant": "QUADIENT LEASING USA P",
+    "merchant_category": "BUSINESS SERVICES NOT ELSEWHERE CLASSIFI",
+    "category": "Other",
+    "amount": 4954.24,
+    "holder_category_history": {
+     "transactions": 135,
+     "median": 179.44,
+     "p25": 108.09,
+     "p75": 350.2,
+     "max_other": 4954.24
+    },
+    "holder_transactions_that_month": 27,
+    "same_day_same_category": 1
+   },
+   "item_id": "r229"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.66478,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-01-21",
+    "merchant": "VIRGINIA CROSSING HILTON",
+    "merchant_category": "HILTON",
+    "category": "Travel",
+    "amount": 480.12,
+    "holder_category_history": {
+     "transactions": 229,
+     "median": 35.0,
+     "p25": 30.0,
+     "p75": 45.0,
+     "max_other": 11590.56
+    },
+    "holder_transactions_that_month": 20,
+    "same_day_same_category": 5
+   },
+   "item_id": "r230"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.77766,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-23",
+    "merchant": "HOLIDAY INN EXPRESS & SU",
+    "merchant_category": "HOLIDAY INNS",
+    "category": "Travel",
+    "amount": 2154.72,
+    "holder_category_history": {
+     "transactions": 49,
+     "median": 31.99,
+     "p25": 16.52,
+     "p75": 188.1,
+     "max_other": 694.45
+    },
+    "holder_transactions_that_month": 17,
+    "same_day_same_category": 2
+   },
+   "item_id": "r231"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.35204,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-01-24",
+    "merchant": "COVETRUS NORTH AMERICA",
+    "merchant_category": "LAB/MEDICAL/DENTAL/OPHTHALMIC HOSPITAL E",
+    "category": "Other",
+    "amount": 41.83,
+    "holder_category_history": {
+     "transactions": 22,
+     "median": 188.0,
+     "p25": 97.78,
+     "p75": 380.79,
+     "max_other": 890.71
+    },
+    "holder_transactions_that_month": 7,
+    "same_day_same_category": 2
+   },
+   "item_id": "r232"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.66982,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-10-11",
+    "merchant": "SARTORIUS CORPORATION",
+    "merchant_category": "MISCELLANEOUS AND RETAIL STORES",
+    "category": "Shopping",
+    "amount": 784.0,
+    "holder_category_history": {
+     "transactions": 149,
+     "median": 39.56,
+     "p25": 23.45,
+     "p75": 77.17,
+     "max_other": 1760.0
+    },
+    "holder_transactions_that_month": 15,
+    "same_day_same_category": 2
+   },
+   "item_id": "r233"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67008,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-31",
+    "merchant": "AMZN Mktp US AT7855UA3",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 415.38,
+    "holder_category_history": {
+     "transactions": 18,
+     "median": 41.96,
+     "p25": 36.95,
+     "p75": 60.77,
+     "max_other": 273.27
+    },
+    "holder_transactions_that_month": 5,
+    "same_day_same_category": 1
+   },
+   "item_id": "r234"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.46262,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-07-27",
+    "merchant": "MOLECULAR INSTRUMENTS",
+    "merchant_category": "LAB/MEDICAL/DENTAL/OPHTHALMIC HOSPITAL E",
+    "category": "Other",
+    "amount": 1580.0,
+    "holder_category_history": {
+     "transactions": 144,
+     "median": 387.06,
+     "p25": 182.43,
+     "p75": 809.92,
+     "max_other": 4999.0
+    },
+    "holder_transactions_that_month": 46,
+    "same_day_same_category": 3
+   },
+   "item_id": "r235"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.68037,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-08",
+    "merchant": "GCFA",
+    "merchant_category": "COLLEGES  UNIVERSITIES  PROFESSIONAL SCH",
+    "category": "Education",
+    "amount": 45670.27,
+    "holder_category_history": {
+     "transactions": 11,
+     "median": 7333.39,
+     "p25": 3132.93,
+     "p75": 13840.15,
+     "max_other": 19982.34
+    },
+    "holder_transactions_that_month": 18,
+    "same_day_same_category": 4
+   },
+   "item_id": "r236"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.73544,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-10-06",
+    "merchant": "WWW.UAVMODEL.COM",
+    "merchant_category": "HOBBY TOY  AND GAME SHOPS",
+    "category": "Shopping",
+    "amount": 4309.32,
+    "holder_category_history": {
+     "transactions": 32,
+     "median": 116.92,
+     "p25": 57.06,
+     "p75": 318.83,
+     "max_other": 4560.0
+    },
+    "holder_transactions_that_month": 1,
+    "same_day_same_category": 1
+   },
+   "item_id": "r237"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.35891,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-10-05",
+    "merchant": "COX OKLAHOMA COMM SV",
+    "merchant_category": "CABLE  SATELLITE & OTHER PAY TV/RADIO SE",
+    "category": "Utilities",
+    "amount": 44.08,
+    "holder_category_history": {
+     "transactions": 297,
+     "median": 688.64,
+     "p25": 205.6,
+     "p75": 1673.14,
+     "max_other": 17306.82
+    },
+    "holder_transactions_that_month": 75,
+    "same_day_same_category": 2
+   },
+   "item_id": "r238"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.66909,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-28",
+    "merchant": "RELIABLE TENT & TIPI",
+    "merchant_category": "TENT AND AWNING SHOPS",
+    "category": "Shopping",
+    "amount": 1377.45,
+    "holder_category_history": {
+     "transactions": 155,
+     "median": 50.95,
+     "p25": 25.99,
+     "p75": 127.39,
+     "max_other": 4144.1
+    },
+    "holder_transactions_that_month": 21,
+    "same_day_same_category": 1
+   },
+   "item_id": "r239"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.41927,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-02-21",
+    "merchant": "TRI COUNTY ELECTRIC COOP",
+    "merchant_category": "UTILITIES-ELEC/GAS/HEAT OIL/SANITARY/WTR",
+    "category": "Utilities",
+    "amount": 29.34,
+    "holder_category_history": {
+     "transactions": 394,
+     "median": 101.67,
+     "p25": 34.34,
+     "p75": 219.95,
+     "max_other": 4776.0
+    },
+    "holder_transactions_that_month": 68,
+    "same_day_same_category": 19
+   },
+   "item_id": "r240"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.6782,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-08-24",
+    "merchant": "AMZN Mktp US TQ6Z89R70",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 758.34,
+    "holder_category_history": {
+     "transactions": 92,
+     "median": 23.87,
+     "p25": 9.99,
+     "p75": 87.77,
+     "max_other": 861.0
+    },
+    "holder_transactions_that_month": 8,
+    "same_day_same_category": 1
+   },
+   "item_id": "r241"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.34605,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-04-18",
+    "merchant": "DOLLARTREE",
+    "merchant_category": "VARIETY STORES",
+    "category": "Shopping",
+    "amount": 75.0,
+    "holder_category_history": {
+     "transactions": 60,
+     "median": 76.47,
+     "p25": 32.73,
+     "p75": 190.63,
+     "max_other": 1330.27
+    },
+    "holder_transactions_that_month": 23,
+    "same_day_same_category": 1
+   },
+   "item_id": "r242"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.3589,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-11-03",
+    "merchant": "OKC/PHONEPMT",
+    "merchant_category": "UTILITIES-ELEC/GAS/HEAT OIL/SANITARY/WTR",
+    "category": "Utilities",
+    "amount": 42.46,
+    "holder_category_history": {
+     "transactions": 66,
+     "median": 109.84,
+     "p25": 51.73,
+     "p75": 569.89,
+     "max_other": 1861.99
+    },
+    "holder_transactions_that_month": 19,
+    "same_day_same_category": 3
+   },
+   "item_id": "r243"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.70759,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-05",
+    "merchant": "AT&T PAYMENT",
+    "merchant_category": "TELECOMMUNICATION SERV.INCLUD. LOCAL/L.D",
+    "category": "Utilities",
+    "amount": 5224.66,
+    "holder_category_history": {
+     "transactions": 60,
+     "median": 273.16,
+     "p25": 151.12,
+     "p75": 289.83,
+     "max_other": 5635.44
+    },
+    "holder_transactions_that_month": 20,
+    "same_day_same_category": 2
+   },
+   "item_id": "r244"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.35731,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-06-27",
+    "merchant": "FEDEX78996320",
+    "merchant_category": "COURIER SERVICES-AIR OR GROUND FREIGHT F",
+    "category": "Other",
+    "amount": 65.53,
+    "holder_category_history": {
+     "transactions": 299,
+     "median": 216.83,
+     "p25": 89.0,
+     "p75": 446.55,
+     "max_other": 27086.0
+    },
+    "holder_transactions_that_month": 59,
+    "same_day_same_category": 3
+   },
+   "item_id": "r245"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.69874,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-08-27",
+    "merchant": "TRU BY HILTON",
+    "merchant_category": "HILTON",
+    "category": "Travel",
+    "amount": 18654.3,
+    "holder_category_history": {
+     "transactions": 33,
+     "median": 1459.69,
+     "p25": 443.0,
+     "p75": 1976.0,
+     "max_other": 65290.05
+    },
+    "holder_transactions_that_month": 47,
+    "same_day_same_category": 1
+   },
+   "item_id": "r246"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.43849,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-08-15",
+    "merchant": "Dropbox 3PQJMT6J7M65",
+    "merchant_category": "COMPUTER NETWORK/INFORMATION SERVICES",
+    "category": "Other",
+    "amount": 720.0,
+    "holder_category_history": {
+     "transactions": 11,
+     "median": 466.01,
+     "p25": 130.81,
+     "p75": 938.0,
+     "max_other": 2471.8
+    },
+    "holder_transactions_that_month": 15,
+    "same_day_same_category": 2
+   },
+   "item_id": "r247"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.35659,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-02-21",
+    "merchant": "GRAINGER",
+    "merchant_category": "INDUSTRIAL SUPPLIES NOT ESLEWHERE CLASSI",
+    "category": "Other",
+    "amount": 73.57,
+    "holder_category_history": {
+     "transactions": 639,
+     "median": 360.96,
+     "p25": 156.21,
+     "p75": 879.85,
+     "max_other": 24334.68
+    },
+    "holder_transactions_that_month": 55,
+    "same_day_same_category": 4
+   },
+   "item_id": "r248"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.66208,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-21",
+    "merchant": "FASTENAL COMPANY 01OKO11",
+    "merchant_category": "INDUSTRIAL SUPPLIES NOT ESLEWHERE CLASSI",
+    "category": "Other",
+    "amount": 6042.0,
+    "holder_category_history": {
+     "transactions": 1055,
+     "median": 280.35,
+     "p25": 94.26,
+     "p75": 725.35,
+     "max_other": 27026.55
+    },
+    "holder_transactions_that_month": 95,
+    "same_day_same_category": 4
+   },
+   "item_id": "r249"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.72167,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-13",
+    "merchant": "GRANITE TELECOMMUNICATIO",
+    "merchant_category": "TELECOMMUNICATION EQUIPMENT INCLUDING TE",
+    "category": "Other",
+    "amount": 2632.76,
+    "holder_category_history": {
+     "transactions": 40,
+     "median": 69.95,
+     "p25": 51.5,
+     "p75": 1965.3,
+     "max_other": 4576.06
+    },
+    "holder_transactions_that_month": 30,
+    "same_day_same_category": 1
+   },
+   "item_id": "r250"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67086,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-07-30",
+    "merchant": "APPLE.COM/US",
+    "merchant_category": "ELECTRONIC SALES",
+    "category": "Shopping",
+    "amount": 3577.88,
+    "holder_category_history": {
+     "transactions": 347,
+     "median": 117.49,
+     "p25": 49.83,
+     "p75": 281.03,
+     "max_other": 23289.0
+    },
+    "holder_transactions_that_month": 48,
+    "same_day_same_category": 1
+   },
+   "item_id": "r251"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.43975,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-09-14",
+    "merchant": "STAPLS7903376267000001",
+    "merchant_category": "STATIONERY OFFICE SUPPLIES PRINTING AND",
+    "category": "Shopping",
+    "amount": 420.52,
+    "holder_category_history": {
+     "transactions": 186,
+     "median": 97.91,
+     "p25": 48.54,
+     "p75": 211.81,
+     "max_other": 1499.0
+    },
+    "holder_transactions_that_month": 35,
+    "same_day_same_category": 5
+   },
+   "item_id": "r252"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.77632,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-10-18",
+    "merchant": "WA DEPT. OF REVENUE",
+    "merchant_category": "GOVERNMENT SERVICES NOT ELSEWHERE CLASSI",
+    "category": "Other",
+    "amount": 7250.0,
+    "holder_category_history": {
+     "transactions": 241,
+     "median": 95.13,
+     "p25": 10.16,
+     "p75": 342.66,
+     "max_other": 5433.0
+    },
+    "holder_transactions_that_month": 36,
+    "same_day_same_category": 2
+   },
+   "item_id": "r253"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.79576,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-21",
+    "merchant": "TARGET  CORP GIFTCARDS",
+    "merchant_category": "MISCELLANEOUS AND RETAIL STORES",
+    "category": "Shopping",
+    "amount": 8230.0,
+    "holder_category_history": {
+     "transactions": 157,
+     "median": 85.7,
+     "p25": 33.67,
+     "p75": 159.99,
+     "max_other": 8800.0
+    },
+    "holder_transactions_that_month": 6,
+    "same_day_same_category": 3
+   },
+   "item_id": "r254"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.46218,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-09-26",
+    "merchant": "FUTEK ADVANCED SENSOR TEC",
+    "merchant_category": "ELECTRICAL PARTS AND EQUIPMENT",
+    "category": "Other",
+    "amount": 1134.19,
+    "holder_category_history": {
+     "transactions": 158,
+     "median": 235.57,
+     "p25": 71.28,
+     "p75": 520.86,
+     "max_other": 4553.44
+    },
+    "holder_transactions_that_month": 61,
+    "same_day_same_category": 2
+   },
+   "item_id": "r255"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.48567,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-25",
+    "merchant": "LUCIDCHART.COM/CHARGE",
+    "merchant_category": "COMPUTER SOFTWARE STORES",
+    "category": "Shopping",
+    "amount": 785.0,
+    "holder_category_history": {
+     "transactions": 67,
+     "median": 110.85,
+     "p25": 39.97,
+     "p75": 257.44,
+     "max_other": 4150.18
+    },
+    "holder_transactions_that_month": 10,
+    "same_day_same_category": 2
+   },
+   "item_id": "r256"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.45116,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-18",
+    "merchant": "STAPLS7630837259000001",
+    "merchant_category": "STATIONERY OFFICE SUPPLIES PRINTING AND",
+    "category": "Shopping",
+    "amount": 244.34,
+    "holder_category_history": {
+     "transactions": 266,
+     "median": 49.28,
+     "p25": 25.52,
+     "p75": 112.15,
+     "max_other": 820.88
+    },
+    "holder_transactions_that_month": 32,
+    "same_day_same_category": 4
+   },
+   "item_id": "r257"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.38929,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-04-21",
+    "merchant": "WESTIN KANSAS CITY",
+    "merchant_category": "WESTIN",
+    "category": "Travel",
+    "amount": 75.0,
+    "holder_category_history": {
+     "transactions": 83,
+     "median": 630.96,
+     "p25": 140.41,
+     "p75": 957.66,
+     "max_other": 5000.0
+    },
+    "holder_transactions_that_month": 27,
+    "same_day_same_category": 7
+   },
+   "item_id": "r258"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67987,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-19",
+    "merchant": "eBay O 11-11464-34621",
+    "merchant_category": "DEPARTMENT STORES",
+    "category": "Shopping",
+    "amount": 2494.79,
+    "holder_category_history": {
+     "transactions": 89,
+     "median": 78.99,
+     "p25": 29.69,
+     "p75": 295.0,
+     "max_other": 1424.41
+    },
+    "holder_transactions_that_month": 49,
+    "same_day_same_category": 1
+   },
+   "item_id": "r259"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.34408,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-09-09",
+    "merchant": "AMZN Mktp US TL4PR2RI1",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 112.59,
+    "holder_category_history": {
+     "transactions": 159,
+     "median": 147.96,
+     "p25": 59.99,
+     "p75": 412.5,
+     "max_other": 3599.97
+    },
+    "holder_transactions_that_month": 11,
+    "same_day_same_category": 1
+   },
+   "item_id": "r260"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67585,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-01-10",
+    "merchant": "ATT BILL PAYMENT",
+    "merchant_category": "TELECOMMUNICATION SERV.INCLUD. LOCAL/L.D",
+    "category": "Utilities",
+    "amount": 7725.42,
+    "holder_category_history": {
+     "transactions": 824,
+     "median": 582.82,
+     "p25": 102.17,
+     "p75": 1267.89,
+     "max_other": 26013.96
+    },
+    "holder_transactions_that_month": 94,
+    "same_day_same_category": 18
+   },
+   "item_id": "r261"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.45232,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-03-26",
+    "merchant": "WM SUPERCENTER #4241",
+    "merchant_category": "GROCERY STORES  SUPERMARKETS",
+    "category": "Groceries",
+    "amount": 8.18,
+    "holder_category_history": {
+     "transactions": 13,
+     "median": 26.22,
+     "p25": 10.23,
+     "p75": 59.36,
+     "max_other": 106.26
+    },
+    "holder_transactions_that_month": 31,
+    "same_day_same_category": 1
+   },
+   "item_id": "r262"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.34566,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-08-22",
+    "merchant": "SP BLUE RIDGE SIGN S",
+    "merchant_category": "MISCELLANEOUS PUBLISHING & PRINTING",
+    "category": "Other",
+    "amount": 131.4,
+    "holder_category_history": {
+     "transactions": 104,
+     "median": 173.43,
+     "p25": 92.0,
+     "p75": 482.45,
+     "max_other": 2280.99
+    },
+    "holder_transactions_that_month": 64,
+    "same_day_same_category": 2
+   },
+   "item_id": "r263"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.65774,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-24",
+    "merchant": "DKC DIGI KEY CORP",
+    "merchant_category": "ELECTRICAL PARTS AND EQUIPMENT",
+    "category": "Other",
+    "amount": 1459.68,
+    "holder_category_history": {
+     "transactions": 30,
+     "median": 119.66,
+     "p25": 57.03,
+     "p75": 209.94,
+     "max_other": 1088.86
+    },
+    "holder_transactions_that_month": 17,
+    "same_day_same_category": 1
+   },
+   "item_id": "r264"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.40795,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-12-05",
+    "merchant": "AMZN Mktp US NJ0CM4UQ3",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 80.69,
+    "holder_category_history": {
+     "transactions": 118,
+     "median": 65.31,
+     "p25": 37.69,
+     "p75": 176.18,
+     "max_other": 2476.65
+    },
+    "holder_transactions_that_month": 7,
+    "same_day_same_category": 3
+   },
+   "item_id": "r265"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.70079,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-04",
+    "merchant": "STICKER MULE",
+    "merchant_category": "STATIONERY OFFICE SUPPLIES PRINTING AND",
+    "category": "Shopping",
+    "amount": 2223.0,
+    "holder_category_history": {
+     "transactions": 51,
+     "median": 63.5,
+     "p25": 25.63,
+     "p75": 283.31,
+     "max_other": 1472.4
+    },
+    "holder_transactions_that_month": 8,
+    "same_day_same_category": 1
+   },
+   "item_id": "r266"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.72352,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-11-09",
+    "merchant": "AMERICAN PRINTING HOUSE",
+    "merchant_category": "BUSINESS SERVICES NOT ELSEWHERE CLASSIFI",
+    "category": "Other",
+    "amount": 12289.66,
+    "holder_category_history": {
+     "transactions": 195,
+     "median": 257.55,
+     "p25": 62.5,
+     "p75": 1102.7,
+     "max_other": 19977.95
+    },
+    "holder_transactions_that_month": 38,
+    "same_day_same_category": 3
+   },
+   "item_id": "r267"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.70132,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-12",
+    "merchant": "SWEETWATER SOUND",
+    "merchant_category": "MUSIC STORES-MUSICAL INSTRUMENTS  PIANOS",
+    "category": "Shopping",
+    "amount": 1589.99,
+    "holder_category_history": {
+     "transactions": 88,
+     "median": 69.08,
+     "p25": 41.57,
+     "p75": 186.01,
+     "max_other": 1700.0
+    },
+    "holder_transactions_that_month": 8,
+    "same_day_same_category": 1
+   },
+   "item_id": "r268"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.66632,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-07-14",
+    "merchant": "THE HOME DEPOT #3908",
+    "merchant_category": "HOME SUPPLY WAREHOUSE STORES",
+    "category": "Shopping",
+    "amount": 714.62,
+    "holder_category_history": {
+     "transactions": 17,
+     "median": 32.94,
+     "p25": 14.24,
+     "p75": 89.3,
+     "max_other": 183.76
+    },
+    "holder_transactions_that_month": 17,
+    "same_day_same_category": 1
+   },
+   "item_id": "r269"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.46734,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-06-25",
+    "merchant": "GRAPHPAD.COM",
+    "merchant_category": "COMPUTER AND DATA PROCESSING SERVICES",
+    "category": "Other",
+    "amount": 960.0,
+    "holder_category_history": {
+     "transactions": 216,
+     "median": 203.75,
+     "p25": 102.02,
+     "p75": 466.08,
+     "max_other": 3520.36
+    },
+    "holder_transactions_that_month": 198,
+    "same_day_same_category": 5
+   },
+   "item_id": "r270"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67527,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-02",
+    "merchant": "DJI Drones",
+    "merchant_category": "ELECTRONIC SALES",
+    "category": "Shopping",
+    "amount": 2403.79,
+    "holder_category_history": {
+     "transactions": 41,
+     "median": 120.99,
+     "p25": 53.91,
+     "p75": 299.99,
+     "max_other": 1415.31
+    },
+    "holder_transactions_that_month": 14,
+    "same_day_same_category": 1
+   },
+   "item_id": "r271"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.41116,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-10-03",
+    "merchant": "AMZN Mktp US T92SE6421",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 142.97,
+    "holder_category_history": {
+     "transactions": 32,
+     "median": 40.78,
+     "p25": 22.93,
+     "p75": 126.53,
+     "max_other": 588.0
+    },
+    "holder_transactions_that_month": 4,
+    "same_day_same_category": 1
+   },
+   "item_id": "r272"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.39853,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-10-25",
+    "merchant": "THE TRANE COMPANY",
+    "merchant_category": "COMMERCIAL EQUIPMENT  NOT ELSEWHERE CLAS",
+    "category": "Other",
+    "amount": 550.0,
+    "holder_category_history": {
+     "transactions": 125,
+     "median": 197.26,
+     "p25": 93.24,
+     "p75": 434.98,
+     "max_other": 1861.39
+    },
+    "holder_transactions_that_month": 14,
+    "same_day_same_category": 2
+   },
+   "item_id": "r273"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.35166,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-08-14",
+    "merchant": "GRAINGER",
+    "merchant_category": "INDUSTRIAL SUPPLIES NOT ESLEWHERE CLASSI",
+    "category": "Other",
+    "amount": 47.16,
+    "holder_category_history": {
+     "transactions": 120,
+     "median": 237.16,
+     "p25": 111.26,
+     "p75": 540.5,
+     "max_other": 2326.5
+    },
+    "holder_transactions_that_month": 27,
+    "same_day_same_category": 2
+   },
+   "item_id": "r274"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.45557,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-10-11",
+    "merchant": "UNITED      0168061648516",
+    "merchant_category": "UNITED AIRLINES",
+    "category": "Travel",
+    "amount": 199.43,
+    "holder_category_history": {
+     "transactions": 3964,
+     "median": 248.2,
+     "p25": 186.93,
+     "p75": 370.75,
+     "max_other": 3241.2
+    },
+    "holder_transactions_that_month": 147,
+    "same_day_same_category": 23
+   },
+   "item_id": "r275"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.48917,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-15",
+    "merchant": "PIONEER TELEPHONE COMPAN",
+    "merchant_category": "TELECOMMUNICATION SERV.INCLUD. LOCAL/L.D",
+    "category": "Utilities",
+    "amount": 291.48,
+    "holder_category_history": {
+     "transactions": 84,
+     "median": 51.64,
+     "p25": 41.31,
+     "p75": 308.69,
+     "max_other": 337.89
+    },
+    "holder_transactions_that_month": 8,
+    "same_day_same_category": 4
+   },
+   "item_id": "r276"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.46868,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-12-01",
+    "merchant": "RESOUND",
+    "merchant_category": "LAB/MEDICAL/DENTAL/OPHTHALMIC HOSPITAL E",
+    "category": "Other",
+    "amount": 1559.35,
+    "holder_category_history": {
+     "transactions": 35,
+     "median": 323.95,
+     "p25": 112.37,
+     "p75": 1819.62,
+     "max_other": 4360.95
+    },
+    "holder_transactions_that_month": 9,
+    "same_day_same_category": 1
+   },
+   "item_id": "r277"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.6626,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-11-27",
+    "merchant": "SP SMUDGE POT DIRECT",
+    "merchant_category": "MISCELLANEOUS AND RETAIL STORES",
+    "category": "Shopping",
+    "amount": 3839.89,
+    "holder_category_history": {
+     "transactions": 51,
+     "median": 263.68,
+     "p25": 103.38,
+     "p75": 543.49,
+     "max_other": 3428.24
+    },
+    "holder_transactions_that_month": 11,
+    "same_day_same_category": 2
+   },
+   "item_id": "r278"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.69512,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-01-28",
+    "merchant": "Genetec",
+    "merchant_category": "COMPUTER SOFTWARE STORES",
+    "category": "Shopping",
+    "amount": 980.0,
+    "holder_category_history": {
+     "transactions": 25,
+     "median": 77.3,
+     "p25": 51.98,
+     "p75": 128.76,
+     "max_other": 199.0
+    },
+    "holder_transactions_that_month": 7,
+    "same_day_same_category": 1
+   },
+   "item_id": "r279"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.35291,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-09-01",
+    "merchant": "AMZN Mktp US TL73D8NK0",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 72.5,
+    "holder_category_history": {
+     "transactions": 115,
+     "median": 61.02,
+     "p25": 27.7,
+     "p75": 118.43,
+     "max_other": 493.0
+    },
+    "holder_transactions_that_month": 14,
+    "same_day_same_category": 1
+   },
+   "item_id": "r280"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.78414,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-24",
+    "merchant": "8020 LLC",
+    "merchant_category": "INDUSTRIAL SUPPLIES NOT ESLEWHERE CLASSI",
+    "category": "Other",
+    "amount": 3436.12,
+    "holder_category_history": {
+     "transactions": 113,
+     "median": 69.35,
+     "p25": 35.23,
+     "p75": 177.88,
+     "max_other": 2041.23
+    },
+    "holder_transactions_that_month": 64,
+    "same_day_same_category": 2
+   },
+   "item_id": "r281"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.38846,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-06-26",
+    "merchant": "FEDEX78946261",
+    "merchant_category": "COURIER SERVICES-AIR OR GROUND FREIGHT F",
+    "category": "Other",
+    "amount": 18.7,
+    "holder_category_history": {
+     "transactions": 31,
+     "median": 29.74,
+     "p25": 18.13,
+     "p75": 47.3,
+     "max_other": 721.63
+    },
+    "holder_transactions_that_month": 5,
+    "same_day_same_category": 2
+   },
+   "item_id": "r282"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.70986,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-10-01",
+    "merchant": "LOWES #00241",
+    "merchant_category": "HOME SUPPLY WAREHOUSE STORES",
+    "category": "Shopping",
+    "amount": 447.0,
+    "holder_category_history": {
+     "transactions": 36,
+     "median": 20.46,
+     "p25": 12.16,
+     "p75": 39.43,
+     "max_other": 226.67
+    },
+    "holder_transactions_that_month": 5,
+    "same_day_same_category": 1
+   },
+   "item_id": "r283"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.7392,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-12-15",
+    "merchant": "ANESTHESIA SERVICE INC",
+    "merchant_category": "LAB/MEDICAL/DENTAL/OPHTHALMIC HOSPITAL E",
+    "category": "Other",
+    "amount": 3584.66,
+    "holder_category_history": {
+     "transactions": 212,
+     "median": 143.8,
+     "p25": 71.19,
+     "p75": 295.58,
+     "max_other": 2020.62
+    },
+    "holder_transactions_that_month": 30,
+    "same_day_same_category": 3
+   },
+   "item_id": "r284"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.38678,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-11-09",
+    "merchant": "NORTHERN TOOL & EQUIP",
+    "merchant_category": "HARDWARE STORES",
+    "category": "Shopping",
+    "amount": 141.94,
+    "holder_category_history": {
+     "transactions": 30,
+     "median": 134.37,
+     "p25": 88.02,
+     "p75": 194.99,
+     "max_other": 829.27
+    },
+    "holder_transactions_that_month": 6,
+    "same_day_same_category": 1
+   },
+   "item_id": "r285"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67172,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-04-05",
+    "merchant": "BILL WARREN OFFICE PROD",
+    "merchant_category": "COMMERCIAL EQUIPMENT  NOT ELSEWHERE CLAS",
+    "category": "Other",
+    "amount": 997.0,
+    "holder_category_history": {
+     "transactions": 150,
+     "median": 52.91,
+     "p25": 16.75,
+     "p75": 179.0,
+     "max_other": 4000.0
+    },
+    "holder_transactions_that_month": 20,
+    "same_day_same_category": 6
+   },
+   "item_id": "r286"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.51509,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-12-18",
+    "merchant": "GRAINGER",
+    "merchant_category": "INDUSTRIAL SUPPLIES NOT ESLEWHERE CLASSI",
+    "category": "Other",
+    "amount": 1673.46,
+    "holder_category_history": {
+     "transactions": 200,
+     "median": 175.28,
+     "p25": 41.98,
+     "p75": 480.0,
+     "max_other": 4610.02
+    },
+    "holder_transactions_that_month": 91,
+    "same_day_same_category": 3
+   },
+   "item_id": "r287"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67827,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-08-17",
+    "merchant": "AMZN Mktp US TQ7CF1L92",
+    "merchant_category": "BOOK STORES",
+    "category": "Shopping",
+    "amount": 927.14,
+    "holder_category_history": {
+     "transactions": 41,
+     "median": 49.94,
+     "p25": 38.99,
+     "p75": 114.86,
+     "max_other": 799.92
+    },
+    "holder_transactions_that_month": 10,
+    "same_day_same_category": 3
+   },
+   "item_id": "r288"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.34544,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-09-24",
+    "merchant": "SPRINGHILL SUITES",
+    "merchant_category": "SPRINGHILL SUITES",
+    "category": "Travel",
+    "amount": 201.95,
+    "holder_category_history": {
+     "transactions": 18,
+     "median": 283.5,
+     "p25": 197.49,
+     "p75": 747.0,
+     "max_other": 842.73
+    },
+    "holder_transactions_that_month": 13,
+    "same_day_same_category": 1
+   },
+   "item_id": "r289"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.51632,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-02",
+    "merchant": "UNITED      0168084174501",
+    "merchant_category": "UNITED AIRLINES",
+    "category": "Travel",
+    "amount": 359.48,
+    "holder_category_history": {
+     "transactions": 377,
+     "median": 25.0,
+     "p25": 9.0,
+     "p75": 335.69,
+     "max_other": 951.4
+    },
+    "holder_transactions_that_month": 34,
+    "same_day_same_category": 4
+   },
+   "item_id": "r290"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.38588,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2023-08-16",
+    "merchant": "HOLIDAY INN EXPRESS & SU",
+    "merchant_category": "HOLIDAY INNS",
+    "category": "Travel",
+    "amount": 196.0,
+    "holder_category_history": {
+     "transactions": 66,
+     "median": 112.15,
+     "p25": 98.0,
+     "p75": 196.0,
+     "max_other": 520.0
+    },
+    "holder_transactions_that_month": 23,
+    "same_day_same_category": 2
+   },
+   "item_id": "r291"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.71226,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-11-09",
+    "merchant": "LABARCHIVES LLC",
+    "merchant_category": "COMPUTER SOFTWARE STORES",
+    "category": "Shopping",
+    "amount": 2530.0,
+    "holder_category_history": {
+     "transactions": 886,
+     "median": 64.63,
+     "p25": 28.54,
+     "p75": 163.04,
+     "max_other": 4852.31
+    },
+    "holder_transactions_that_month": 68,
+    "same_day_same_category": 3
+   },
+   "item_id": "r292"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.5752,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-08-16",
+    "merchant": "HYATT REGENCY SEATTLE",
+    "merchant_category": "HYATT HOTELS",
+    "category": "Travel",
+    "amount": 2096.8,
+    "holder_category_history": {
+     "transactions": 326,
+     "median": 336.38,
+     "p25": 9.0,
+     "p75": 594.9,
+     "max_other": 2079.99
+    },
+    "holder_transactions_that_month": 64,
+    "same_day_same_category": 11
+   },
+   "item_id": "r293"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.78077,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-03-25",
+    "merchant": "AIRBNB  HMNWWNAJCC",
+    "merchant_category": "TRAVEL AGENCIES",
+    "category": "Travel",
+    "amount": 5922.71,
+    "holder_category_history": {
+     "transactions": 14,
+     "median": 143.08,
+     "p25": 6.25,
+     "p75": 320.86,
+     "max_other": 1197.8
+    },
+    "holder_transactions_that_month": 4,
+    "same_day_same_category": 1
+   },
+   "item_id": "r294"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.44724,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-01",
+    "merchant": "STAPLES",
+    "merchant_category": "STATIONERY OFFICE SUPPLIES PRINTING AND",
+    "category": "Shopping",
+    "amount": 475.19,
+    "holder_category_history": {
+     "transactions": 59,
+     "median": 79.68,
+     "p25": 32.29,
+     "p75": 221.36,
+     "max_other": 1540.5
+    },
+    "holder_transactions_that_month": 26,
+    "same_day_same_category": 1
+   },
+   "item_id": "r295"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.68916,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-01-11",
+    "merchant": "QIAGEN LLC",
+    "merchant_category": "LAB/MEDICAL/DENTAL/OPHTHALMIC HOSPITAL E",
+    "category": "Other",
+    "amount": 4275.6,
+    "holder_category_history": {
+     "transactions": 1306,
+     "median": 278.29,
+     "p25": 127.7,
+     "p75": 517.85,
+     "max_other": 5300.0
+    },
+    "holder_transactions_that_month": 117,
+    "same_day_same_category": 3
+   },
+   "item_id": "r296"
+  },
+  {
+   "stratum": "S3_neither",
+   "selection_probability": 0.0002413189528687997,
+   "hidden": {
+    "score": 0.40785,
+    "model_flag": false,
+    "rule_flag": false
+   },
+   "shown": {
+    "date": "2024-04-23",
+    "merchant": "THINK ABILITY INC",
+    "merchant_category": "CHARITABLE AND SOCIAL SERVICE ORGANIZATI",
+    "category": "Other",
+    "amount": 215.8,
+    "holder_category_history": {
+     "transactions": 22,
+     "median": 335.0,
+     "p25": 250.22,
+     "p75": 525.0,
+     "max_other": 6568.19
+    },
+    "holder_transactions_that_month": 17,
+    "same_day_same_category": 1
+   },
+   "item_id": "r297"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.74855,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-05-16",
+    "merchant": "PRYOR STONE HQ",
+    "merchant_category": "CONSTRUCTION MATERIALS",
+    "category": "Other",
+    "amount": 2610.55,
+    "holder_category_history": {
+     "transactions": 46,
+     "median": 29.0,
+     "p25": 3.5,
+     "p75": 103.57,
+     "max_other": 4751.09
+    },
+    "holder_transactions_that_month": 7,
+    "same_day_same_category": 3
+   },
+   "item_id": "r298"
+  },
+  {
+   "stratum": "S2_rule_flagged_only",
+   "selection_probability": 0.0013032145960034753,
+   "hidden": {
+    "score": 0.52437,
+    "model_flag": false,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2024-02-01",
+    "merchant": "GRAINGER",
+    "merchant_category": "INDUSTRIAL SUPPLIES NOT ESLEWHERE CLASSI",
+    "category": "Other",
+    "amount": 481.99,
+    "holder_category_history": {
+     "transactions": 145,
+     "median": 45.57,
+     "p25": 17.0,
+     "p75": 154.0,
+     "max_other": 1050.33
+    },
+    "holder_transactions_that_month": 15,
+    "same_day_same_category": 1
+   },
+   "item_id": "r299"
+  },
+  {
+   "stratum": "S1_model_flagged",
+   "selection_probability": 0.028517110266159697,
+   "hidden": {
+    "score": 0.67194,
+    "model_flag": true,
+    "rule_flag": true
+   },
+   "shown": {
+    "date": "2023-08-21",
+    "merchant": "SOUTH CENTRAL INDUSTRIE",
+    "merchant_category": "MISCELLANEOUS GENERAL MERCHANDISE STORES",
+    "category": "Shopping",
+    "amount": 8695.9,
+    "holder_category_history": {
+     "transactions": 259,
+     "median": 336.0,
+     "p25": 95.37,
+     "p75": 1183.19,
+     "max_other": 16475.95
+    },
+    "holder_transactions_that_month": 35,
+    "same_day_same_category": 4
+   },
+   "item_id": "r300"
+  }
+ ]
+}

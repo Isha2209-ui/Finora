@@ -8,6 +8,8 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import Response
+from pydantic import BaseModel, ConfigDict, Field
+import pandas as pd
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -117,8 +119,16 @@ def categorise(body: dict):
     texts = [str(t)[:200] for t in (body.get("texts") or [])][:50]
     if not texts:
         raise HTTPException(422, "Send {\"texts\": [\"UPI/DR/.../SWIGGY/...\"]}")
-    preds = categoriser.predict(registry.get("categoriser"), texts)
-    return [{"text": t, **p, "keyword_rule": categoriser.keyword_rule(t)} for t, p in zip(texts, preds)]
+    preds = categoriser.safe_predict(texts)
+    out = []
+    for t, p in zip(texts, preds):
+        why = None
+        if p["source"] == "model":
+            why = categoriser.explain(registry.get("categoriser"), t)
+        elif p["source"] == "rule":
+            why = ["bank-side rule (Rent, EMI, Investment, Transfer, Card Payment or Cash narration)"]
+        out.append({"text": t, **p, "why": why, "keyword_rule": categoriser.keyword_rule(t)})
+    return out
 
 
 # ---------------------------------------------------------------- profile & data management
@@ -175,8 +185,8 @@ def add_transaction(body: S.TransactionIn, ctx: ProfileCtx = Depends(profile_wri
     user = ctx.profile
     cat, src = standardise_category(body.category), "user"
     if not cat:
-        p = categoriser.predict(registry.get("categoriser"), [body.description])[0]
-        cat, src = p["category"], "model"
+        p = categoriser.safe_predict([body.description])[0]
+        cat, src = p["category"], (p["source"] if p["source"] != "none" else "model")
     elif cat not in ALL_CATEGORIES:
         raise HTTPException(422, f"Unknown category. Choose one of: {', '.join(ALL_CATEGORIES)}")
     account_id = body.account_id
@@ -216,23 +226,63 @@ def data_summary(ctx: ProfileCtx = Depends(profile_reader), db: Session = Depend
 
 
 # ---------------------------------------------------------------- model lab
-@router.get("/models/metrics", summary="Training and evaluation metrics for every model")
+@router.get("/models/metrics", summary="Training and evaluation metrics of the active models")
 def model_metrics():
     m = registry.metrics()
     if not m:
-        raise HTTPException(503, "Models are not trained yet. Run: python -m app.ml.train")
+        raise HTTPException(503, "No approved real-data model is active yet. Run: python -m app.ml.train")
     return {"status": registry.status(), **m}
 
 
-@router.post("/models/retrain", summary="Retrain all models on the synthetic population + public datasets (local only, ~40 s)")
+class CreditMonth(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    status: int = Field(ge=-2, le=8, description="-2 no use, -1 paid in full, 0 revolving, 1..8 months late")
+    bill: float = Field(ge=-1_000_000, le=100_000_000)
+    paid: float = Field(ge=0, le=100_000_000)
+
+
+class CreditScoreIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    age: int = Field(ge=18, le=100)
+    credit_limit: float = Field(gt=0, le=100_000_000)
+    months: list[CreditMonth] = Field(min_length=3, max_length=6, description="most recent month first")
+
+
+@router.post("/models/credit-risk/score", summary="Score a card history you enter with the real credit-risk model (XGBoost + SHAP)")
+def credit_risk_score(body: CreditScoreIn, cur: Current = Depends(current_account)):
+    """Runs the ACTIVE credit-risk model on the inputs: the 14 engineered features, the default probability and every
+    feature's SHAP contribution. Nothing is stored."""
+    import shap
+    from ..ml import credit_risk as CR
+    try:
+        art = registry.get("credit_risk")
+    except registry.ModelUnavailable as e:
+        raise HTTPException(503, str(e))
+    feats = CR.features_from_history(body.age, body.credit_limit, [m.status for m in body.months],
+                                     [m.bill for m in body.months], [m.paid for m in body.months])
+    X = pd.DataFrame([feats])[CR.FEATURES]
+    p = float(art["model"].predict_proba(X)[:, 1][0])
+    sv = shap.TreeExplainer(art["model"]).shap_values(X)[0]
+    factors = sorted(({"factor": CR.FEATURE_LABELS[f], "value": round(float(X.iloc[0][f]), 3), "shap": round(float(v), 3),
+                       "effect": "raises risk" if v > 0 else "lowers risk"} for f, v in zip(CR.FEATURES, sv)), key=lambda d: -abs(d["shap"]))
+    m = registry.metrics().get("credit_risk", {})
+    return {"default_probability_pct": round(p * 100, 1), "risk_band": CR._band(p), "population_base_rate_pct": round(art["base_rate"] * 100, 1),
+            "factors": factors, "months_used": len(body.months),
+            "model": {"version": (registry.PV.active().get("credit_risk") or {}).get("version"),
+                      "test_roc_auc": (m.get("test") or {}).get("xgboost", {}).get("roc_auc"),
+                      "logistic_regression_roc_auc": (m.get("test") or {}).get("logistic_regression_baseline", {}).get("roc_auc")},
+            "limitation": "Model-generated estimate from patterns in 30,000 Taiwanese card accounts (2005). It is not a credit-bureau "
+                          "score and is not validated for Indian borrowers."}
+
+
+@router.get("/models/lab", summary="Model Lab: status, provenance and metrics of every model (active, awaiting or benchmark)")
+def model_lab():
+    return registry.lab()
+
+
+@router.post("/models/retrain", summary="Disabled: real-data training is a local, owner-approved step")
 def retrain(request: Request, cur: Current = Depends(current_account), db: Session = Depends(get_db)):
-    if not ENABLE_RETRAIN_ENDPOINT:
-        raise HTTPException(403, "Retraining through the API is disabled on this server. Run: python -m app.ml.train")
-    rate_limit("retrain", 2, 600, "Retraining was started recently.")
-    from ..ml import train
-    audit(db, "models.retrain", request=request, app_user_id=cur.user.id)
-    m = train.run(verbose=False)
-    registry.reload()
-    common.invalidate()
-    return {"retrained": True, "trained_at": m["trained_at"],
-            "training_seconds": {k: v["training_seconds"] for k, v in m.items() if isinstance(v, dict) and "training_seconds" in v}}
+    # Phase 6: models are trained only from approved real datasets on the owner's machine (python -m app.ml.train) and
+    # loaded only after explicit activation. The API never trains, and never on synthetic data.
+    raise HTTPException(410, "Retraining through the API was removed. Train locally with: python -m app.ml.train, "
+                             "then activate an evaluated version: python -m app.ml.train activate <model> <version> --reason ...")

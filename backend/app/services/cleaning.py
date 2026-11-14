@@ -34,6 +34,7 @@ CATEGORY_SYNONYMS = {
     "self transfer": "Transfer", "card payment": "Card Payment", "credit card payment": "Card Payment",
     "cash": "Cash", "atm": "Cash",
 }
+UNCATEGORISED = "Uncategorised"   # derived label only; never stored, never a choice in ALL_CATEGORIES
 ALL_CATEGORIES = sorted(ESSENTIAL | DISCRETIONARY | NON_EXPENSE | {"EMI", "Cash"})
 
 
@@ -66,12 +67,19 @@ def clean_transactions(tx: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
     t = t[~dup]
     if "category" in t:
         t["category"] = t["category"].map(standardise_category)
-    report["uncategorised"] = int(t["category"].isna().sum()) if "category" in t else int(len(t))
+    if "category" not in t:
+        t["category"] = None
+    # No category (e.g. no approved categoriser, or a low-confidence row awaiting review): an explicit "Uncategorised" bucket in
+    # this DERIVED frame (stored rows are untouched). An uncategorised debit is still money spent; an uncategorised credit is
+    # NOT assumed to be a refund (it could be income or a transfer), so it neither reduces nor adds to spending.
+    uncat = t["category"].isna()
+    report["uncategorised"] = int(uncat.sum())
+    t["category"] = t["category"].where(~uncat, UNCATEGORISED)
     t["month"] = t["date"].dt.to_period("M").astype(str)
     # signed spend contribution
-    t["spend"] = np.where(t["category"].isin(NON_EXPENSE), 0.0,
+    t["spend"] = np.where(t["category"].isin(NON_EXPENSE) | (uncat & (t["type"] == "credit")), 0.0,
                           np.where(t["type"] == "credit", -t["amount"], t["amount"]))
-    t["is_refund"] = (t["type"] == "credit") & (~t["category"].isin(NON_EXPENSE))
+    t["is_refund"] = (t["type"] == "credit") & (~t["category"].isin(NON_EXPENSE)) & ~uncat
     report["refunds"] = int(t["is_refund"].sum())
     report["non_expense_rows"] = int(t["category"].isin(NON_EXPENSE).sum())
     # one-time large spends

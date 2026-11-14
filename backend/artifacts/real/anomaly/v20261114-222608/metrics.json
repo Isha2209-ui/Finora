@@ -1,0 +1,125 @@
+{
+  "model": "IsolationForest",
+  "n_estimators": 300,
+  "contamination": 0.015,
+  "features": [
+    "ratio_to_cat_median",
+    "robust_z",
+    "share_of_month_cat",
+    "ratio_to_user_p95",
+    "same_day_same_cat"
+  ],
+  "features_dropped": {
+    "log_amount": "currency-dependent (USD training, INR use)",
+    "source_rarity": "one card per cardholder: constant"
+  },
+  "train_period": "FY2021-FY2023 (Jul 2020 - Jun 2023)",
+  "test_period": "FY2024 (Jul 2023 - Jun 2024), chronological",
+  "training_transactions": 1053741,
+  "training_cardholders": 5348,
+  "test_transactions": 373602,
+  "test_cardholders": 3673,
+  "min_history_per_cardholder": 20,
+  "flag_rate_train": 0.015,
+  "flag_rate_test": 0.0141,
+  "flag_stability_jaccard_vs_seeds": {
+    "11": 0.868,
+    "23": 0.916,
+    "42": 0.823
+  },
+  "rule_3x_category_median_flag_rate_test": 0.168,
+  "overlap_model_and_rule_test": 0.083,
+  "score_distribution": {
+    "bin_edges": [
+      0.3422,
+      0.3584,
+      0.3746,
+      0.3908,
+      0.4071,
+      0.4233,
+      0.4395,
+      0.4557,
+      0.472,
+      0.4882,
+      0.5044,
+      0.5206,
+      0.5369,
+      0.5531,
+      0.5693,
+      0.5855,
+      0.6018,
+      0.618,
+      0.6342,
+      0.6504,
+      0.6667,
+      0.6829,
+      0.6991,
+      0.7153,
+      0.7316,
+      0.7478,
+      0.764,
+      0.7802,
+      0.7965,
+      0.8127,
+      0.8289
+    ],
+    "counts": [
+      99991,
+      61209,
+      38421,
+      27528,
+      21439,
+      21971,
+      21619,
+      16912,
+      12385,
+      9534,
+      7397,
+      6705,
+      4885,
+      3810,
+      3487,
+      2732,
+      2801,
+      2624,
+      1923,
+      1387,
+      1052,
+      825,
+      672,
+      601,
+      483,
+      395,
+      355,
+      221,
+      164,
+      74
+    ],
+    "threshold": 0.6616
+  },
+  "accuracy": "NOT MEASURED. There are no fraud or unusualness labels in this data. A blinded human review of a stratified sample is prepared (see human_review); until people label it, no precision or recall is claimed.",
+  "human_review": {
+    "status": "awaiting reviewers",
+    "sample_file": "real/anomaly/v20261114-222608/review_sample.json",
+    "items": 300,
+    "design": {
+      "S1_model_flagged": {
+        "population": 5260,
+        "sampled": 150,
+        "selection_probability": 0.028517110266159697
+      },
+      "S2_rule_flagged_only": {
+        "population": 57550,
+        "sampled": 75,
+        "selection_probability": 0.0013032145960034753
+      },
+      "S3_neither": {
+        "population": 310792,
+        "sampled": 75,
+        "selection_probability": 0.0002413189528687997
+      }
+    },
+    "what_is_labelled": "perceived unusualness for this cardholder, not confirmed fraud"
+  },
+  "technical_checks_passed": true
+}

@@ -15,3 +15,7 @@ backend/uploads/
 # macOS / iCloud Drive conflict copies ("file 2.py") - never commit
 * 2
 * 2.*
+
+# Phase 6: downloaded real datasets (kept unchanged) and processed versions - reproducible from app/ml/data/
+backend/datasets/raw/
+backend/datasets/processed/

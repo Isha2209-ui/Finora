@@ -276,7 +276,8 @@ def _w_goals(f):
 def _w_peers(f):
     if not f.get("available", True):
         return f.get("note") or "Peer comparison needs a few months of income and spending history."
-    return (f"You are closest to the '{f['peer_group']}' group. Strengths versus others: {', '.join(f['strengths']) or 'none stand out'}. "
+    return (f"Compared with US households (Federal Reserve survey, 2022; not Indian benchmarks), you are closest to the "
+            f"'{f['peer_group']}' group. Stronger than most on: {', '.join(f['strengths']) or 'no single ratio stands out'}. "
             f"Weaker than most on: {', '.join(f['weaknesses']) or 'nothing notable'}.")
 
 

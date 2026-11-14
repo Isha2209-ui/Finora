@@ -1,0 +1,430 @@
+{
+  "model": "categoriser",
+  "version": "v20261114-222418",
+  "command": "python -m app.ml.train categoriser",
+  "training_started": "2026-11-14T22:24:18+00:00",
+  "training_finished": "2026-11-14T22:25:13+00:00",
+  "training_seconds": 55.3,
+  "peak_memory_mb": 852.4,
+  "environment": {
+    "machine": "Mac14,2",
+    "chip": "Apple M2",
+    "cpu_cores": "8",
+    "memory_gb": 8.0,
+    "os": "Darwin 27.2.1",
+    "python": "3.14.0",
+    "libraries": {
+      "scikit-learn": "1.9.1",
+      "xgboost": "3.4.1",
+      "pandas": "3.1.1",
+      "numpy": "2.5.4",
+      "shap": "0.54.1",
+      "scipy": "1.18.1",
+      "joblib": "1.6.0"
+    },
+    "accelerator": "CPU (XGBoost and scikit-learn do not use the Apple GPU/MPS here)",
+    "trained_locally": true,
+    "remote_services_used": false
+  },
+  "artifact": {
+    "path": "real/categoriser/v20261114-222418/model.joblib",
+    "sha256": "ff36635ab6a34d280c25452b65af968b7a22c37ac5d71556e69177bf2ffa6d31",
+    "bytes": 9659567
+  },
+  "data_status": "real",
+  "evaluation_passed": true,
+  "approved_by_owner": true,
+  "deployment_label": "Merchant categories learned from real US government purchase-card transactions; not validated on Indian bank statements. Rent, EMI, Investment, Transfer, Card Payment and Cash are rules.",
+  "datasets": [
+    {
+      "key": "oklahoma_pcard",
+      "role": "training + held-out merchant test",
+      "name": "State of Oklahoma Purchase Card (PCard) transactions FY2021-FY2024",
+      "publisher": "Oklahoma Office of Management and Enterprise Services (data.ok.gov)",
+      "source_url": "https://data.ok.gov/dataset/purchase-card-pcard-fiscal-year-2024",
+      "licence": "Creative Commons Attribution (CC BY)",
+      "geography": "Oklahoma, USA",
+      "collection_period": "2020-02-27 to 2024-06-28 (FY2021-FY2024)",
+      "records": 1548316,
+      "files": [
+        {
+          "file": "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_202007.csv",
+          "sha256": "78ad8542f3df2e858735e30c47df2cd2580f5d6372e184570205d13a33bd7ab3",
+          "url": "https://data.ok.gov/dataset/24f6d7cb-33b9-497b-b960-2267f249271d/resource/dcd27cf1-9ba1-449c-86c8-9d42811d30e4/download/pcard_public_202007.csv"
+        },
+        {
+          "file": "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_202008.csv",
+          "sha256": "3ec946c63d97bdf294c39a9be0b58b7050bc4dbc1a1cb7262e712e82d338cd7e",
+          "url": "https://data.ok.gov/dataset/24f6d7cb-33b9-497b-b960-2267f249271d/resource/e125300d-40ae-492c-aa87-da2975da91e0/download/pcard_public_202008.csv"
+        },
+        {
+          "file": "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_202009.csv",
+          "sha256": "18f92e0dcfc69db1826af08cf40f00b864c021fe0984cd4475dc23835b150a49",
+          "url": "https://data.ok.gov/dataset/24f6d7cb-33b9-497b-b960-2267f249271d/resource/1074e521-5d48-4b73-8f79-a6f24794a3b7/download/pcard_public_202009.csv"
+        },
+        {
+          "file": "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_202010.csv",
+          "sha256": "646a4cc2c2e451c5d17af7a4abe71c1a4c17910d48c77e56a2d293926ee5eed9",
+          "url": "https://data.ok.gov/dataset/24f6d7cb-33b9-497b-b960-2267f249271d/resource/8020bfac-9903-49e3-ad85-3b4d2dc8ea47/download/pcard_public_202010.csv"
+        },
+        {
+          "file": "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_202011.csv",
+          "sha256": "7c47b37c14b670c9c6183223925d0aed93d6dbee3ea3c3a1cff5a567da3d3fa3",
+          "url": "https://data.ok.gov/dataset/24f6d7cb-33b9-497b-b960-2267f249271d/resource/48c9300e-49c9-4fbe-9e0e-bf6efd12e141/download/pcard_public_202011.csv"
+        },
+        {
+          "file": "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_202012.csv",
+          "sha256": "50d347c69d57faa46cc21d846ebd384942e44b65cd6e63a9a170918dbfa2970b",
+          "url": "https://data.ok.gov/dataset/24f6d7cb-33b9-497b-b960-2267f249271d/resource/a7ca1ae6-7b67-49fd-ac5a-e66ee71fa362/download/pcard_public_202012.csv"
+        },
+        {
+          "file": "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_202101120000.csv",
+          "sha256": "a2989954ccf3329fa3a67f8ed3a3ebf4f167c587f9b30355dadb7501f5d7ef1f",
+          "url": "https://data.ok.gov/dataset/24f6d7cb-33b9-497b-b960-2267f249271d/resource/520e34b4-8fd9-49ca-9081-25a5a1a0aa43/download/pcard_public_202101120000.csv"
+        },
+        {
+          "file": "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_202102.csv",
+          "sha256": "7343650e41ff82c5903fea54bb748847d35808e783b3a5c09c95b869d9c1ec68",
+          "url": "https://data.ok.gov/dataset/24f6d7cb-33b9-497b-b960-2267f249271d/resource/aa7fe74e-915f-4bec-958e-9b0bdd3beeb0/download/pcard_public_202102.csv"
+        },
+        {
+          "file": "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_20210405170447.csv",
+          "sha256": "bb2ec96d9d0c43abe6074c4ac0a52e064b807b87e245b5dd49279802bb333911",
+          "url": "https://data.ok.gov/dataset/24f6d7cb-33b9-497b-b960-2267f249271d/resource/a5833293-c698-4bea-828b-800a53f317ed/download/pcard_public_20210405170447.csv"
+        },
+        {
+          "file": "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_202104.csv",
+          "sha256": "68944070ca65bcb9be449673ea02607dcad07df39d12c491b23f00efdbc4ab55",
+          "url": "https://data.ok.gov/dataset/24f6d7cb-33b9-497b-b960-2267f249271d/resource/a15d414a-ee78-45c0-910e-a52e44161e2c/download/pcard_public_202104.csv"
+        },
+        {
+          "file": "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_20210601090653.csv",
+          "sha256": "4aa9798f3746831958173cdbc3d0be99b54b4355352e32ffac38f66f489f0594",
+          "url": "https://data.ok.gov/dataset/24f6d7cb-33b9-497b-b960-2267f249271d/resource/09e9f39b-448c-477f-b32d-74ca6a9d83b2/download/pcard_public_20210601090653.csv"
+        },
+        {
+          "file": "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_20210701070717.csv",
+          "sha256": "f912a53107838ac14d81fbf643982ceac3b4620ec6c24b1dd67ba70e52faaecb",
+          "url": "https://data.ok.gov/dataset/24f6d7cb-33b9-497b-b960-2267f249271d/resource/63769a89-e99b-4cf2-b0d0-dcdd08e1b0a2/download/pcard_public_20210701070717.csv"
+        },
+        {
+          "file": "pcard-fy-2022__pcard_public_20210802070831.csv",
+          "sha256": "c6615be4ea4d7f9b4d48c8e0f84c09d5d6c5d7409f6c2aaacdcf269e1ebaa541",
+          "url": "https://data.ok.gov/dataset/d572a66b-65c9-44ad-a503-a1f28ec83a7d/resource/f13c1447-decc-413e-be32-804bb06de633/download/pcard_public_20210802070831.csv"
+        },
+        {
+          "file": "pcard-fy-2022__pcard_public_20210901080953.csv",
+          "sha256": "61041aeda57caaaa951564a77e52190adf21d3072369b24155ce6380d249b467",
+          "url": "https://data.ok.gov/dataset/d572a66b-65c9-44ad-a503-a1f28ec83a7d/resource/9a2b53b9-f5fc-4a15-9365-3c130aa913b4/download/pcard_public_20210901080953.csv"
+        },
+        {
+          "file": "pcard-fy-2022__pcard_public_20211001081026.csv",
+          "sha256": "cd8565d1c3ffc8dfde1c57da47f76b4f3c0454f10bbc26deebf1c1240fad08ac",
+          "url": "https://data.ok.gov/dataset/d572a66b-65c9-44ad-a503-a1f28ec83a7d/resource/257b9f59-a57b-41f2-889c-8624359fcc86/download/pcard_public_20211001081026.csv"
+        },
+        {
+          "file": "pcard-fy-2022__pcard_public_202110.csv",
+          "sha256": "14f0a1b33181089e3841a58e0f937959687689eb5fb824b0c29650d0ec1b33f2",
+          "url": "https://data.ok.gov/dataset/d572a66b-65c9-44ad-a503-a1f28ec83a7d/resource/248a1abd-6b2a-479a-bb05-1061fe2678a5/download/pcard_public_202110.csv"
+        },
+        {
+          "file": "pcard-fy-2022__pcard_public_202111.csv",
+          "sha256": "25efd52a3fc30c9420cbeacf27b2efcf38174ea88160cc8e58244edb2acf09c8",
+          "url": "https://data.ok.gov/dataset/d572a66b-65c9-44ad-a503-a1f28ec83a7d/resource/18bdeef9-5a04-40e6-b86e-a54c1b6142b3/download/pcard_public_202111.csv"
+        },
+        {
+          "file": "pcard-fy-2022__pcard_public_202112.csv",
+          "sha256": "882e82e717c36fc847164e675ad407a6d8bae5452a5a3b173fa185844474d258",
+          "url": "https://data.ok.gov/dataset/d572a66b-65c9-44ad-a503-a1f28ec83a7d/resource/7f5d180c-6ab6-4358-bf6e-38411ed89aa7/download/pcard_public_202112.csv"
+        },
+        {
+          "file": "pcard-fy-2022__pcard_public_20220210100203.csv",
+          "sha256": "0b9dbd5b959c36709115601b585ecec40ef13f9d239a6ad05d97570fec51eb80",
+          "url": "https://data.ok.gov/dataset/d572a66b-65c9-44ad-a503-a1f28ec83a7d/resource/d8bbf175-25a0-4aec-8436-90856a1a5ae1/download/pcard_public_20220210100203.csv"
+        },
+        {
+          "file": "pcard-fy-2022__pcard_public_202203.csv",
+          "sha256": "af5c494fc1047984b8ab463797a3f203740a8e5e042f57b6e517e809a6e1c599",
+          "url": "https://data.ok.gov/dataset/d572a66b-65c9-44ad-a503-a1f28ec83a7d/resource/223b6515-a4e9-43c8-9516-024bd179460f/download/pcard_public_202203.csv"
+        },
+        {
+          "file": "pcard-fy-2022__507c08f1__pcard_public_202203.csv",
+          "sha256": "b1ef0ca991ca963e49b5e30f18596f0d427c0ed7f65bc5c91aecd9a1a35efca4",
+          "url": "https://data.ok.gov/dataset/d572a66b-65c9-44ad-a503-a1f28ec83a7d/resource/507c08f1-6bcd-482a-b3ec-b6cf2a028a46/download/pcard_public_202203.csv"
+        },
+        {
+          "file": "pcard-fy-2022__pcard_public_202204.csv",
+          "sha256": "91c317872673aaa56203004d10e0802adbf07b0141f99a7b84b75e3a5cfb8fc0",
+          "url": "https://data.ok.gov/dataset/d572a66b-65c9-44ad-a503-a1f28ec83a7d/resource/eaf0dd15-44c0-4ce4-828b-33b6c3b8049e/download/pcard_public_202204.csv"
+        },
+        {
+          "file": "pcard-fy-2022__pcard_public_202205.csv",
+          "sha256": "c86b2370014dcf0644d912d86cc6a1724d25f7c72b8f0c980d5ce43b3748b259",
+          "url": "https://data.ok.gov/dataset/d572a66b-65c9-44ad-a503-a1f28ec83a7d/resource/57a67f52-e6c0-415e-97ce-9cce4d21e37b/download/pcard_public_202205.csv"
+        },
+        {
+          "file": "pcard-fy-2022__pcard_public_202206.csv",
+          "sha256": "6b2189c23a4e0d32eaa21fcff6781cf39f4657c190a29a77573324b97a5e7fbb",
+          "url": "https://data.ok.gov/dataset/d572a66b-65c9-44ad-a503-a1f28ec83a7d/resource/b879732c-3e6a-4580-b744-cdcbe50b175a/download/pcard_public_202206.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2023__pcard_public_202207.csv",
+          "sha256": "3f8cab7407276caf21336397ebbcdc4cbac047da83ecb68bb70fba207316dede",
+          "url": "https://data.ok.gov/dataset/4801bd3b-3a88-4640-abb3-468a7186edeb/resource/c9cf0dc1-d27c-4929-b224-03dec875b0c0/download/pcard_public_202207.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2023__pcard_public_202208.csv",
+          "sha256": "972f341e3bca710acf2cfa0e95827ca44c30734cee43ee84683efcd052981449",
+          "url": "https://data.ok.gov/dataset/4801bd3b-3a88-4640-abb3-468a7186edeb/resource/646a6652-819b-405e-a605-24738cea69ff/download/pcard_public_202208.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2023__pcard_public_202210.csv",
+          "sha256": "1689effd4dacff6336adbd835e992e162c2a2626c1c665e123244c084bcea128",
+          "url": "https://data.ok.gov/dataset/4801bd3b-3a88-4640-abb3-468a7186edeb/resource/a60b81c1-e7ae-4c35-93ee-110e7634ee95/download/pcard_public_202210.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2023__pcard_public_202211.csv",
+          "sha256": "a5961eb07af5e4d40de43726b8ded47d9188a76e2f78d216c20ad967be7fa0cc",
+          "url": "https://data.ok.gov/dataset/4801bd3b-3a88-4640-abb3-468a7186edeb/resource/fe93bec3-9e49-43d0-97c9-ca14d1a7b1aa/download/pcard_public_202211.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2023__pcard_public_202212.csv",
+          "sha256": "2f87e94302c4640775efc5bda102c75841b3faa3b5cdd575a858c9b6f89ad5fd",
+          "url": "https://data.ok.gov/dataset/4801bd3b-3a88-4640-abb3-468a7186edeb/resource/114c2804-3d64-4246-9657-2946ca8844f1/download/pcard_public_202212.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2023__pcard_public_202301.csv",
+          "sha256": "896471cc8e9836dae933347c90c5b259f54b8553a4875657ceb5dc933105827e",
+          "url": "https://data.ok.gov/dataset/4801bd3b-3a88-4640-abb3-468a7186edeb/resource/6950933a-2cb5-4823-bff0-d81a634a2c9f/download/pcard_public_202301.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2023__pcard_public_202302.csv",
+          "sha256": "64d5098c495abe83ff3188da8e3aedb0539ebfcc86744ca29275097220b024ac",
+          "url": "https://data.ok.gov/dataset/4801bd3b-3a88-4640-abb3-468a7186edeb/resource/3a1c6ab6-36f7-4f95-a081-695730e84538/download/pcard_public_202302.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2023__pcard_public_202303.csv",
+          "sha256": "f0a5bdf31a6b0fb0a94cc42552733f406727e206e2e08f4a5bdc31f2229a11d7",
+          "url": "https://data.ok.gov/dataset/4801bd3b-3a88-4640-abb3-468a7186edeb/resource/f90d9267-e6f3-4bff-b512-f916d2629851/download/pcard_public_202303.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2023__pcard_public_20230413050436.csv",
+          "sha256": "129e84e0cc758ae3477b1a6fd83bbabb7cb30096caa8088dfc44292622366d95",
+          "url": "https://data.ok.gov/dataset/4801bd3b-3a88-4640-abb3-468a7186edeb/resource/fb202f8a-49aa-4b3f-8821-c980d3ed48ad/download/pcard_public_20230413050436.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2023__pcard_public_202305.csv",
+          "sha256": "490a705da0166dc779307419f90344191e1c849ac89e210306260877cb4018ef",
+          "url": "https://data.ok.gov/dataset/4801bd3b-3a88-4640-abb3-468a7186edeb/resource/4d4f89f7-d685-431d-8e1a-241993e57d0c/download/pcard_public_202305.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2023__pcard_public_202306.csv",
+          "sha256": "0c96e380bd0f62b8f2ae00fdab9214fb35aad71654d232d84db5e5d092102f32",
+          "url": "https://data.ok.gov/dataset/4801bd3b-3a88-4640-abb3-468a7186edeb/resource/3364837b-3848-40a1-b1d7-52641d9eca86/download/pcard_public_202306.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2023__pcard_public_202307.csv",
+          "sha256": "bd53676d1ca214071b39451850720fa4f54cf164513dbf0c2fc96fa75e86ffa0",
+          "url": "https://data.ok.gov/dataset/4801bd3b-3a88-4640-abb3-468a7186edeb/resource/eb7bcda2-22b8-491a-b99d-fde3218386f7/download/pcard_public_202307.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2024__pcard_public_202308.csv",
+          "sha256": "4549aa5b59840c8422e9045c40e9bfb2f2f8ef542ebb2577a9c4d9590016f9b1",
+          "url": "https://data.ok.gov/dataset/e34cfa3f-48b2-4360-8ff2-842542050e54/resource/17ce2047-85e6-4727-91f4-ec61266925f4/download/pcard_public_202308.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2024__pcard_public_202309.csv",
+          "sha256": "6a13fcf4647d6c4140978c71a49686f6a822326c541912bbd5fd1034def78993",
+          "url": "https://data.ok.gov/dataset/e34cfa3f-48b2-4360-8ff2-842542050e54/resource/6b2a18c0-05ea-4914-a215-a469b314448f/download/pcard_public_202309.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2024__pcard_public_202310.csv",
+          "sha256": "293461bdaf466346caf350d24ea083b3ec0469472ed91be95757770aa91c400c",
+          "url": "https://data.ok.gov/dataset/e34cfa3f-48b2-4360-8ff2-842542050e54/resource/f1fbd11d-0989-4fd7-8c8a-58f10e03e6dd/download/pcard_public_202310.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2024__pcard_public_202311.csv",
+          "sha256": "af6673d516b542e4dcad392d90635fe75be03b0df04b2552a8d66039f5a9cb1b",
+          "url": "https://data.ok.gov/dataset/e34cfa3f-48b2-4360-8ff2-842542050e54/resource/33670816-b1ac-4c3a-9708-18e5248a1f9b/download/pcard_public_202311.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2024__pcard_public_20231216120157.csv",
+          "sha256": "d0e5bdb44a116af23f38e4a164abcb16683950b3dad781f7bc61f2772f9df940",
+          "url": "https://data.ok.gov/dataset/e34cfa3f-48b2-4360-8ff2-842542050e54/resource/c5c5b030-34a8-4e99-aeeb-de135e2b121f/download/pcard_public_20231216120157.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2024__pcard_public_20240110070114.csv",
+          "sha256": "ff5703cf8a58e6e60dde537ae8f1e93f7104f56fd1f20bde32537997a1c7dcec",
+          "url": "https://data.ok.gov/dataset/e34cfa3f-48b2-4360-8ff2-842542050e54/resource/c3311675-4bd9-4892-867e-1d341d7bdf3d/download/pcard_public_20240110070114.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2024__pcard_public_202402.csv",
+          "sha256": "2b8d1bb8bb175a41eac483d6bf08d38bb737e5cd4d35e8c26dc906c894e24ae1",
+          "url": "https://data.ok.gov/dataset/e34cfa3f-48b2-4360-8ff2-842542050e54/resource/5977358d-d6bb-46dd-a7d3-8bfee3247a8b/download/pcard_public_202402.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2024__pcard_public_202403.csv",
+          "sha256": "a65c88cf93118d60907feab4205421d6adc7b4e33ebda5fd15559795692ea0f2",
+          "url": "https://data.ok.gov/dataset/e34cfa3f-48b2-4360-8ff2-842542050e54/resource/4072a38b-8054-4112-bb23-a86084b40152/download/pcard_public_202403.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2024__pcard_public_20240430060408.csv",
+          "sha256": "17d053f761db478c0c3fb0d88d0356c18083aac9748e6bde30e04143fdd4c2a8",
+          "url": "https://data.ok.gov/dataset/e34cfa3f-48b2-4360-8ff2-842542050e54/resource/130a495c-29a5-42f5-8342-d1d5676a39a6/download/pcard_public_20240430060408.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2024__pcard_public_20240506120520.csv",
+          "sha256": "bdd40cdb3c58d0d78d710b130e1695a34de3be462f760ea226fd08f299fdfba4",
+          "url": "https://data.ok.gov/dataset/e34cfa3f-48b2-4360-8ff2-842542050e54/resource/5d21c848-c5ad-47d9-ac5b-c78669fb4075/download/pcard_public_20240506120520.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2024__pcard_public_20240603110640.csv",
+          "sha256": "57b3cc07b099690729e56b57fa07770e8a20daf9bd747c88bdab794e39840daa",
+          "url": "https://data.ok.gov/dataset/e34cfa3f-48b2-4360-8ff2-842542050e54/resource/070f6d41-5b19-4b10-9556-826678e86468/download/pcard_public_20240603110640.csv"
+        },
+        {
+          "file": "purchase-card-pcard-fiscal-year-2024__pcard_public_202406.csv",
+          "sha256": "e9fb5855db0dd77cd8354dbe1e1dab825212d97b85aba25837aaba400295368e",
+          "url": "https://data.ok.gov/dataset/e34cfa3f-48b2-4360-8ff2-842542050e54/resource/af911249-9f20-4534-b197-29abde795a64/download/pcard_public_202406.csv"
+        }
+      ],
+      "observations": "real",
+      "synthetic_observations": "none",
+      "downloaded": "2026-11-14T22:22:39+00:00",
+      "cleaning": {
+        "files": 48,
+        "rows_per_file": {
+          "pcard-fy-2022__507c08f1__pcard_public_202203.csv": 35632,
+          "pcard-fy-2022__pcard_public_20210802070831.csv": 29830,
+          "pcard-fy-2022__pcard_public_20210901080953.csv": 33966,
+          "pcard-fy-2022__pcard_public_202110.csv": 33616,
+          "pcard-fy-2022__pcard_public_20211001081026.csv": 33182,
+          "pcard-fy-2022__pcard_public_202111.csv": 30501,
+          "pcard-fy-2022__pcard_public_202112.csv": 27530,
+          "pcard-fy-2022__pcard_public_20220210100203.csv": 29068,
+          "pcard-fy-2022__pcard_public_202203.csv": 27519,
+          "pcard-fy-2022__pcard_public_202204.csv": 35681,
+          "pcard-fy-2022__pcard_public_202205.csv": 33568,
+          "pcard-fy-2022__pcard_public_202206.csv": 32631,
+          "purchase-card-pcard-fiscal-year-2023__pcard_public_202207.csv": 29138,
+          "purchase-card-pcard-fiscal-year-2023__pcard_public_202208.csv": 36173,
+          "purchase-card-pcard-fiscal-year-2023__pcard_public_202210.csv": 35118,
+          "purchase-card-pcard-fiscal-year-2023__pcard_public_202211.csv": 36828,
+          "purchase-card-pcard-fiscal-year-2023__pcard_public_202212.csv": 30641,
+          "purchase-card-pcard-fiscal-year-2023__pcard_public_202301.csv": 28728,
+          "purchase-card-pcard-fiscal-year-2023__pcard_public_202302.csv": 32750,
+          "purchase-card-pcard-fiscal-year-2023__pcard_public_202303.csv": 32898,
+          "purchase-card-pcard-fiscal-year-2023__pcard_public_20230413050436.csv": 38844,
+          "purchase-card-pcard-fiscal-year-2023__pcard_public_202305.csv": 36223,
+          "purchase-card-pcard-fiscal-year-2023__pcard_public_202306.csv": 36443,
+          "purchase-card-pcard-fiscal-year-2023__pcard_public_202307.csv": 34279,
+          "purchase-card-pcard-fiscal-year-2024__pcard_public_202308.csv": 31997,
+          "purchase-card-pcard-fiscal-year-2024__pcard_public_202309.csv": 37393,
+          "purchase-card-pcard-fiscal-year-2024__pcard_public_202310.csv": 35310,
+          "purchase-card-pcard-fiscal-year-2024__pcard_public_202311.csv": 38516,
+          "purchase-card-pcard-fiscal-year-2024__pcard_public_20231216120157.csv": 31252,
+          "purchase-card-pcard-fiscal-year-2024__pcard_public_20240110070114.csv": 27539,
+          "purchase-card-pcard-fiscal-year-2024__pcard_public_202402.csv": 33719,
+          "purchase-card-pcard-fiscal-year-2024__pcard_public_202403.csv": 36582,
+          "purchase-card-pcard-fiscal-year-2024__pcard_public_20240430060408.csv": 37593,
+          "purchase-card-pcard-fiscal-year-2024__pcard_public_20240506120520.csv": 40771,
+          "purchase-card-pcard-fiscal-year-2024__pcard_public_202406.csv": 33328,
+          "purchase-card-pcard-fiscal-year-2024__pcard_public_20240603110640.csv": 37889,
+          "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_202007.csv": 27333,
+          "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_202008.csv": 30849,
+          "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_202009.csv": 27848,
+          "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_202010.csv": 27894,
+          "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_202011.csv": 23686,
+          "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_202012.csv": 23010,
+          "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_202101120000.csv": 25352,
+          "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_202102.csv": 24101,
+          "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_202104.csv": 31250,
+          "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_20210405170447.csv": 32622,
+          "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_20210601090653.csv": 30629,
+          "state-of-oklahoma-purchase-card-pcard-fy-2021__pcard_public_20210701070717.csv": 31066
+        },
+        "rows": 1548316,
+        "calendar_months": 48,
+        "months_in_more_than_one_file": 0,
+        "files_with_more_than_one_month": 0,
+        "rows_repeated_across_files_dropped": 0,
+        "rows_invalid_dropped": 0,
+        "negative_amounts": 52062,
+        "rows_by_fiscal_year": {
+          "2021": 335640,
+          "2022": 382724,
+          "2023": 408063,
+          "2024": 421889
+        },
+        "date_from": "2020-02-27",
+        "date_to": "2024-06-28"
+      },
+      "labels": "card network MCC description, mapped by app/ml/data/pcard.MCC_RULES",
+      "mcc_descriptions_total": 548,
+      "mcc_descriptions_excluded": 209,
+      "rows_excluded_by_mapping": 559432,
+      "mapping_file_sha256": "e557532a8214dd2ff1478ca8552738d41292384cd1357148986efefebacfcb0b",
+      "duplicates": "one row per distinct descriptor + label; at most 40 descriptors per merchant group",
+      "known_biases": "Institutional (government/university) spending, US merchants, US descriptor formats."
+    },
+    {
+      "key": "dc_pcard",
+      "role": "independent test",
+      "name": "District of Columbia Purchase Card Transactions",
+      "publisher": "Government of the District of Columbia (Open Data DC)",
+      "source_url": "https://opendata.dc.gov/datasets/purchase-card-transactions",
+      "licence": "CC BY 4.0",
+      "geography": "Washington DC, USA",
+      "collection_period": "2000-08-06 to 2026-09-30",
+      "records": 647494,
+      "files": [
+        {
+          "file": "dc_purchase_card_transactions.csv",
+          "sha256": "925e9cb1efad15b23f64889e85b5de4cf81f39296d2b491a3f883d78c73aa6a7",
+          "url": "https://opendata.dc.gov/api/download/v1/items/92842dceac234b9ca1a8266fcfd57de7/csv?layers=50"
+        }
+      ],
+      "observations": "real",
+      "synthetic_observations": "none",
+      "downloaded": "2026-11-14T21:30:47+00:00",
+      "cleaning": {
+        "rows": 647494,
+        "rows_without_vendor_dropped": 39,
+        "date_from": "2000-08-06",
+        "date_to": "2026-09-30"
+      }
+    },
+    {
+      "key": "moneyvis",
+      "role": "independent test (UK personal account, people-assigned categories)",
+      "name": "MoneyVis Bank Transactions Dataset",
+      "source_url": "https://data.mendeley.com/datasets/dnxtg6n4rv/1",
+      "licence": "CC BY 4.0",
+      "files": [
+        {
+          "file": "laramee26openBankTransactionData.xlsx",
+          "sha256": "716eaf9ad4a3cf60dc9c9c8a20ed9a917c545a1b5f139f40ed91d2104faa3ff7"
+        }
+      ],
+      "observations": "real",
+      "category_mapping": {
+        "Groceries": "Groceries",
+        "Dine Out": "Dining",
+        "Travel": "Travel",
+        "Hotels": "Travel",
+        "Entertainment": "Entertainment",
+        "Clothes": "Shopping",
+        "Other Shopping": "Shopping",
+        "Amazon": "Shopping",
+        "Insurance": "Insurance",
+        "Health": "Health"
+      }
+    }
+  ],
+  "methodology": "TF-IDF (character 2-5-grams + words, digits collapsed) + logistic regression C=8 (unchanged); deployed model refit on all Oklahoma groups after evaluation.",
+  "limitations": "US institutional card descriptors. Accuracy on Indian UPI/NEFT narrations is NOT measured (no real labelled Indian data is publicly available). Personal categories such as Subscriptions may be under-represented.",
+  "processed_files": {
+    "categoriser_oklahoma.csv.gz": "1750e2f94652a18f2fc4dc488dca7121c227dc90ccb58c23dc409450546876f3"
+  },
+  "reproducible": "python -m app.ml.train categoriser (seed 7) with the raw files above"
+}

@@ -113,7 +113,10 @@ def classify(rows: pd.DataFrame, *, kind: str, art: dict, rules: dict[str, str] 
     rules = rules or {}
     t["merchant"] = t["raw_description"].map(merchant_name)
     t["mkey"] = t["merchant"].str.upper()
-    model_cat, model_conf, n_unique = predict_categories(art, t["raw_description"], progress)
+    if art is None:            # no approved real-data categoriser: leave merchant categories for the person to set
+        model_cat, model_conf, n_unique = np.array([None] * n, dtype=object), np.zeros(n), 0
+    else:
+        model_cat, model_conf, n_unique = predict_categories(art, t["raw_description"], progress)
     t["model_category"], t["model_confidence"] = model_cat, model_conf
     t["category"] = None
     t["category_source"] = None
@@ -199,13 +202,24 @@ def classify(rows: pd.DataFrame, *, kind: str, art: dict, rules: dict[str, str] 
     # 3d. regular credits: the largest steady monthly credit is salary; other steady credits are proposed income
     if kind != "card":
         _regular_credits(t, setv, salary_months)
-    # 4. the categoriser for every remaining debit
+    # 4a. bank-side categories (Rent, EMI, Investment, Transfer, Card Payment, Cash) are RULES, not ML (Phase 6, Option A)
+    bank_side = t["raw_description"].map(categoriser.bank_side_rule)
+    setv((~is_cr) & bank_side.notna().values, category=bank_side, category_source="rule:bank_side", confidence=1.0)
+    # 4b. the approved real-data categoriser (merchant categories) for every remaining debit
     deb = ~is_cr
-    mm = setv(deb, category=t["model_category"], category_source="model", confidence=t["model_confidence"])
-    low = mm & (t["model_confidence"] < REVIEW_THRESHOLD).values
-    t.loc[low, "needs_review"] = True
-    t.loc[low, "review_reason"] = [f"Model is only {c:.0%} sure this is {k}." for c, k in
-                                   zip(t.loc[low, "model_confidence"], t.loc[low, "model_category"])]
+    has = t["model_category"].notna().values
+    none = setv(deb & ~has, category=None, category_source="none", confidence=None)        # no approved categoriser
+    t.loc[none, "needs_review"] = True
+    t.loc[none, "review_reason"] = "No approved real-data categoriser yet: please choose the category."
+    mm = setv(deb & has, category=t["model_category"], category_source="model", confidence=t["model_confidence"])
+    # Suggestion-only (categoriser.SUGGESTION_ONLY): the categoriser is trained on US card descriptors and is not validated on
+    # Indian bank narrations, so EVERY model category is a suggestion the person confirms; low confidence is said explicitly.
+    review = mm if categoriser.SUGGESTION_ONLY else mm & (t["model_confidence"] < REVIEW_THRESHOLD).values
+    t.loc[review, "needs_review"] = True
+    t.loc[review, "review_reason"] = [
+        (f"Model is only {c:.0%} sure this is {k}." if c < REVIEW_THRESHOLD else f"Suggested: {k} ({c:.0%} sure).")
+        + (" The categoriser is trained on US card data and not validated on Indian statements: please confirm." if categoriser.SUGGESTION_ONLY else "")
+        for c, k in zip(t.loc[review, "model_confidence"], t.loc[review, "model_category"])]
     # 5. unrecognised credits: kept out of income until confirmed
     rest = setv(is_cr, category="Transfer", category_source="rule:unrecognised_credit", confidence=0.3)
     t.loc[rest, "needs_review"] = True

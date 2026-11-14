@@ -1,0 +1,31 @@
+{
+  "verified_at": "2026-11-15",
+  "purpose": "Post-training verification requested by the owner. The model, metrics and provenance are unchanged; nothing was retrained.",
+  "duplicates": {
+    "exact_duplicate_rows_excluding_id": 35,
+    "structure": "35 pairs (70 rows); 60 of the 70 rows have all six bills and all six payments equal to zero (dormant accounts)",
+    "pairs_with_conflicting_labels": 0,
+    "pairs_by_split": {"train-train": 11, "test-train": 9, "train-val": 8, "test-val": 3, "val-val": 2, "test-test": 2},
+    "treatment": "Kept and disclosed (different customer IDs; identical dormant profiles are plausible). Nothing removed.",
+    "sensitivity": {
+      "test_roc_auc_reported": 0.7831,
+      "excluding_12_test_rows_with_a_raw_duplicate_outside_test": 0.7836,
+      "excluding_142_test_rows_whose_engineered_features_also_occur_in_train": 0.7824,
+      "conclusion": "Duplicates do not inflate the reported result."
+    }
+  },
+  "negative_bill_amounts": {
+    "BILL_AMT1_latest_month": 590,
+    "per_column": {"BILL_AMT1": 590, "BILL_AMT2": 669, "BILL_AMT3": 655, "BILL_AMT4": 675, "BILL_AMT5": 655, "BILL_AMT6": 688},
+    "negative_cells": 3932,
+    "rows_with_any_negative_bill": 1930,
+    "treatment": "Kept. A negative bill is a credit balance (the customer overpaid). Utilisation = max(0, bill) / limit, so a credit balance counts as 0% utilisation; a repayment ratio whose previous bill is <= 0 is set to 1.0 (nothing was owed); repayment ratios are capped at 2.0."
+  },
+  "other_preprocessing": {
+    "missing_values": 0, "negative_payment_amounts": 0, "non_positive_credit_limits": 0,
+    "excluded_inputs": "ID (identifier), SEX, EDUCATION, MARRIAGE (fairness and portability); their undocumented codes therefore have no effect",
+    "pay_status": "used as observed, including codes -2 and 0 that the original paper does not describe",
+    "features": "14 engineered from age, credit limit, 6 payment statuses, 6 bills and 6 payments (app/ml/credit_risk.features_from_history)",
+    "rows_removed": 0
+  }
+}

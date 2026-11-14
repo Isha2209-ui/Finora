@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { TrendingDown, TrendingUp } from 'lucide-react'
 import { Badge, Card, Empty, KV, Note, PageHeader, Stat, Table, chartTooltip } from '../components/ui.jsx'
@@ -8,13 +9,15 @@ export default function Forecast() {
   const { analysis: a } = useFinora()
   const fc = a.ml.forecast
   const cf = a.cash_flow
-  if (!fc?.available) return (<><PageHeader title="Cash-Flow Forecast" /><Card><Empty title="Not enough history">{fc?.note || a.ml_errors?.forecast || 'At least 6 months of transactions are needed.'}</Empty></Card></>)
+  if (!fc?.available) return (<><PageHeader title="Cash-Flow Forecast" /><Card><Empty title={fc?.model_status === 'awaiting_approved_model' ? 'No approved forecasting model yet' : 'Not enough history'}>{fc?.model_status === 'awaiting_approved_model'
+    ? (fc.note || 'No forecasting model is switched on.') + ' Model Lab shows its status. Your past spending is on the Transaction Intelligence page.'
+    : fc?.note || a.ml_errors?.forecast || 'At least 6 months of transactions are needed.'}</Empty></Card></>)
   const series = [...cf.monthly_series.map((m) => ({ month: m.month, actual: m.expenses, income: m.income })),
     { month: fc.prediction_month, predicted: fc.predicted_total_expense, low: fc.range.low, high: fc.range.high, income: fc.expected_income }]
   fc.actual_vs_predicted.forEach((p) => { const r = series.find((s) => s.month === p.month); if (r) r.backtest = p.predicted })
   return (
     <>
-      <PageHeader title="Cash-Flow Forecast" subtitle="An XGBoost model predicts next month's spending from your recent pattern. It is trained only on earlier months and tested on later ones, and has never seen this profile's data." />
+      <PageHeader title="Cash-Flow Forecast" subtitle="An XGBoost model predicts next month's spending from your recent pattern. It is shown next to a simple 3-month average; it was trained on one real person's history and has never seen this profile's data." />
       <div className="grid gap-4 md:grid-cols-4">
         <Stat label={`Predicted spend · ${monthLabel(fc.prediction_month)}`} value={inr(fc.predicted_total_expense)} tone="accent"
           sub={`likely ${inr(fc.range.low)} – ${inr(fc.range.high)}`} hint={fc.range.confidence} />
@@ -24,7 +27,19 @@ export default function Forecast() {
         <Stat label="Bank balance at month end" value={inr(fc.projected_bank_balance_end_of_month)} tone={fc.cash_crunch_warning ? 'bad' : 'ink'}
           sub={`now ${inr(fc.current_bank_balance)} · after ${inr(fc.planned_investments)} of SIPs`} />
       </div>
-      {fc.festive_month && <div className="mt-3"><Note tone="info">{monthLabel(fc.prediction_month)} is flagged as a festive-season month in the model's calendar, which usually lifts shopping.</Note></div>}
+      {fc.model_info?.evaluation && (() => { const ev = fc.model_info.evaluation; return (
+        <Card title="How much to trust this forecast" className="mt-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            <Stat label="XGBoost forecast (this model)" value={inr(fc.predicted_total_expense)} tone="accent" sub={`for ${monthLabel(fc.prediction_month)}`} />
+            <Stat label="Simple 3-month average (baseline)" value={inr(fc.three_month_avg)} sub="not a model: your last three months averaged" />
+            <Stat label="Measured error on test data" value={`£${ev.xgboost_mae.toLocaleString()} vs £${ev.baseline_3m_average_mae.toLocaleString()}`} tone={ev.beats_baseline ? 'good' : 'bad'}
+              sub={`XGBoost vs 3-month average, mean absolute error over ${ev.test_months} months`} />
+          </div>
+          <div className="mt-3"><Note tone="warn"><b>Experimental.</b> {ev.beats_baseline ? '' : 'On its test, this model was less accurate than simply averaging the last three months, so treat its number as one estimate next to the baseline, not as the better one. '}
+            {ev.note} {fc.model_note} <Link to="/models" className="underline">Model Lab</Link> has the full comparison.</Note></div>
+        </Card>) })()}
+      {!fc.model_info?.evaluation && fc.model_note && <div className="mt-3"><Note tone="warn">{fc.model_note}</Note></div>}
+      {fc.festive_month && fc.model_scope !== 'single-person' && <div className="mt-3"><Note tone="info">{monthLabel(fc.prediction_month)} is flagged as a festive-season month in the model's calendar, which usually lifts shopping.</Note></div>}
 
       <Card title="Spending: actual, back-tested predictions and next month" subtitle="Dashed line = what the model would have predicted for past months (out-of-sample)" className="mt-4">
         <div className="h-72"><ResponsiveContainer>
@@ -39,6 +54,7 @@ export default function Forecast() {
       </Card>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-3">
+        {fc.category_forecast_available === false ? <Card title="Category forecast" className="xl:col-span-2"><Empty title="Not available">Per-category forecasts need a model trained on real category spending, and none is approved yet. Your actual category spending is on the Transaction Intelligence page.</Empty></Card> :
         <Card title="Category forecast and suggested budgets" className="xl:col-span-2" pad={false}>
           <Table dense rows={fc.category_predictions} columns={[
             { key: 'category', label: 'Category', render: (c) => <span className="font-medium">{c.category}</span> },
@@ -48,7 +64,7 @@ export default function Forecast() {
             { key: 'trend', label: 'Trend', render: (c) => <Badge tone={c.trend === 'rising' ? 'warn' : c.trend === 'falling' ? 'good' : 'neutral'}>{c.trend} {c.change_vs_3m_avg_pct != null && `${c.change_vs_3m_avg_pct > 0 ? '+' : ''}${c.change_vs_3m_avg_pct}%`}</Badge> },
             { key: 'suggested_budget', label: 'Suggested budget', right: true, render: (c) => inr(c.suggested_budget) },
           ]} />
-        </Card>
+        </Card>}
         <Card title="How reliable is this?">
           <KV rows={[['Back-test on this profile', `${fc.backtest_on_this_person.months} months`], ['Average error', inr(fc.backtest_on_this_person.mae)],
             ['As share of typical spend', pct((fc.backtest_on_this_person.mae / cf.avg_monthly_expenses) * 100)], ['Range shown', '≈ 80% interval']]} />

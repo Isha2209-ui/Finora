@@ -1,0 +1,142 @@
+{
+  "task": "Group households by financial position; compare a Finora profile with similar US households",
+  "unit": "household (SCF 'family')",
+  "k_scan": [
+    {
+      "k": 3,
+      "silhouette_implicate1": 0.2187,
+      "davies_bouldin_implicate1": 1.575
+    },
+    {
+      "k": 4,
+      "silhouette_implicate1": 0.2161,
+      "davies_bouldin_implicate1": 1.5449
+    },
+    {
+      "k": 5,
+      "silhouette_implicate1": 0.2101,
+      "davies_bouldin_implicate1": 1.493
+    },
+    {
+      "k": 6,
+      "silhouette_implicate1": 0.2059,
+      "davies_bouldin_implicate1": 1.4578
+    },
+    {
+      "k": 7,
+      "silhouette_implicate1": 0.2017,
+      "davies_bouldin_implicate1": 1.3875
+    }
+  ],
+  "chosen_k": 3,
+  "chosen_by": "highest silhouette (implicate 1)",
+  "stability": {
+    "per_implicate": [
+      {
+        "implicate": 1,
+        "families": 4556,
+        "ari_vs_stacked_model": 0.9774,
+        "silhouette": 0.2187,
+        "davies_bouldin": 1.575
+      },
+      {
+        "implicate": 2,
+        "families": 4556,
+        "ari_vs_stacked_model": 0.9931,
+        "silhouette": 0.2172,
+        "davies_bouldin": 1.5759
+      },
+      {
+        "implicate": 3,
+        "families": 4555,
+        "ari_vs_stacked_model": 0.9574,
+        "silhouette": 0.2176,
+        "davies_bouldin": 1.5731
+      },
+      {
+        "implicate": 4,
+        "families": 4555,
+        "ari_vs_stacked_model": 0.9925,
+        "silhouette": 0.217,
+        "davies_bouldin": 1.5733
+      },
+      {
+        "implicate": 5,
+        "families": 4556,
+        "ari_vs_stacked_model": 0.9813,
+        "silhouette": 0.2153,
+        "davies_bouldin": 1.575
+      }
+    ],
+    "cross_implicate_ari_mean": 0.8776,
+    "cross_implicate_ari_min": 0.8669
+  },
+  "groups": [
+    {
+      "id": 0,
+      "name": "Middle of the road",
+      "weighted_share_pct": 37.7,
+      "families": 1644,
+      "median": {
+        "liquid_months": 0.438,
+        "debt_to_income": 0.1,
+        "payment_to_income": 0.019,
+        "card_to_income": 0.0,
+        "networth_to_income": 0.446,
+        "financial_share": 0.189,
+        "equity_share": 0.0,
+        "saved_last_year": 0.0
+      }
+    },
+    {
+      "id": 1,
+      "name": "Heavily indebted",
+      "weighted_share_pct": 27.2,
+      "families": 1098,
+      "median": {
+        "liquid_months": 0.911,
+        "debt_to_income": 2.351,
+        "payment_to_income": 0.268,
+        "card_to_income": 0.023,
+        "networth_to_income": 2.47,
+        "financial_share": 0.077,
+        "equity_share": 0.107,
+        "saved_last_year": 1.0
+      }
+    },
+    {
+      "id": 2,
+      "name": "Wealthy investors",
+      "weighted_share_pct": 35.1,
+      "families": 2210,
+      "median": {
+        "liquid_months": 4.934,
+        "debt_to_income": 0.214,
+        "payment_to_income": 0.049,
+        "card_to_income": 0.0,
+        "networth_to_income": 6.943,
+        "financial_share": 0.461,
+        "equity_share": 0.461,
+        "saved_last_year": 1.0
+      }
+    }
+  ],
+  "features": [
+    "Liquid savings (months of income)",
+    "Debt / yearly income",
+    "Debt payments / income",
+    "Card balance / yearly income",
+    "Net worth / yearly income",
+    "Financial assets / all assets",
+    "Equity / financial assets",
+    "Saved last year"
+  ],
+  "data": {
+    "records": 22975,
+    "families": 4595,
+    "implicates_per_family": 5,
+    "totspendnh_nonzero_records": 0,
+    "records_without_positive_income_excluded": 197,
+    "records_used": 22778
+  }
+}

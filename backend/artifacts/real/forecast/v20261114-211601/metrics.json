@@ -1,0 +1,449 @@
+{
+  "task": "Next month's total spending for one person (single-person experimental model)",
+  "evaluation": {
+    "method": "Rolling-origin, chronological: each of 47 test months (2018-08 to 2022-06) is predicted by a model trained only on earlier months (first test month uses 30 rows).",
+    "test_months": 47,
+    "xgboost": {
+      "mae": 856.93,
+      "rmse": 1213.35
+    },
+    "baseline_moving_average_3m": {
+      "mae": 809.49,
+      "rmse": 1142.74
+    },
+    "baseline_last_month": {
+      "mae": 1135.2,
+      "rmse": 1558.18
+    },
+    "beats_moving_average_on_mae": false,
+    "mae_improvement_vs_moving_average_pct": -5.9
+  },
+  "actual_vs_predicted": [
+    {
+      "month": "2018-08",
+      "actual": 5807.81,
+      "xgboost": 2639.04,
+      "moving_average_3m": 4385.74,
+      "last_month": 3124.39,
+      "train_rows": 30
+    },
+    {
+      "month": "2018-09",
+      "actual": 3840.75,
+      "xgboost": 3010.76,
+      "moving_average_3m": 4017.24,
+      "last_month": 5807.81,
+      "train_rows": 31
+    },
+    {
+      "month": "2018-10",
+      "actual": 3505.06,
+      "xgboost": 3594.92,
+      "moving_average_3m": 4257.65,
+      "last_month": 3840.75,
+      "train_rows": 32
+    },
+    {
+      "month": "2018-11",
+      "actual": 2675.77,
+      "xgboost": 3440.91,
+      "moving_average_3m": 4384.54,
+      "last_month": 3505.06,
+      "train_rows": 33
+    },
+    {
+      "month": "2018-12",
+      "actual": 3651.16,
+      "xgboost": 2705.12,
+      "moving_average_3m": 3340.53,
+      "last_month": 2675.77,
+      "train_rows": 34
+    },
+    {
+      "month": "2019-01",
+      "actual": 2622.14,
+      "xgboost": 3265.91,
+      "moving_average_3m": 3277.33,
+      "last_month": 3651.16,
+      "train_rows": 35
+    },
+    {
+      "month": "2019-02",
+      "actual": 7407.53,
+      "xgboost": 3182.93,
+      "moving_average_3m": 2983.02,
+      "last_month": 2622.14,
+      "train_rows": 36
+    },
+    {
+      "month": "2019-03",
+      "actual": 2865.15,
+      "xgboost": 3699.67,
+      "moving_average_3m": 4560.28,
+      "last_month": 7407.53,
+      "train_rows": 37
+    },
+    {
+      "month": "2019-04",
+      "actual": 3278.85,
+      "xgboost": 3541.68,
+      "moving_average_3m": 4298.27,
+      "last_month": 2865.15,
+      "train_rows": 38
+    },
+    {
+      "month": "2019-05",
+      "actual": 4067.52,
+      "xgboost": 3064.45,
+      "moving_average_3m": 4517.18,
+      "last_month": 3278.85,
+      "train_rows": 39
+    },
+    {
+      "month": "2019-06",
+      "actual": 2732.68,
+      "xgboost": 3196.86,
+      "moving_average_3m": 3403.84,
+      "last_month": 4067.52,
+      "train_rows": 40
+    },
+    {
+      "month": "2019-07",
+      "actual": 3821.4,
+      "xgboost": 3364.69,
+      "moving_average_3m": 3359.68,
+      "last_month": 2732.68,
+      "train_rows": 41
+    },
+    {
+      "month": "2019-08",
+      "actual": 2317.2,
+      "xgboost": 3181.14,
+      "moving_average_3m": 3540.53,
+      "last_month": 3821.4,
+      "train_rows": 42
+    },
+    {
+      "month": "2019-09",
+      "actual": 3020.06,
+      "xgboost": 3240.45,
+      "moving_average_3m": 2957.09,
+      "last_month": 2317.2,
+      "train_rows": 43
+    },
+    {
+      "month": "2019-10",
+      "actual": 5330.92,
+      "xgboost": 3263.03,
+      "moving_average_3m": 3052.89,
+      "last_month": 3020.06,
+      "train_rows": 44
+    },
+    {
+      "month": "2019-11",
+      "actual": 2408.8,
+      "xgboost": 3089.44,
+      "moving_average_3m": 3556.06,
+      "last_month": 5330.92,
+      "train_rows": 45
+    },
+    {
+      "month": "2019-12",
+      "actual": 2386.97,
+      "xgboost": 3172.47,
+      "moving_average_3m": 3586.59,
+      "last_month": 2408.8,
+      "train_rows": 46
+    },
+    {
+      "month": "2020-01",
+      "actual": 5371.4,
+      "xgboost": 2661.29,
+      "moving_average_3m": 3375.56,
+      "last_month": 2386.97,
+      "train_rows": 47
+    },
+    {
+      "month": "2020-02",
+      "actual": 2949.94,
+      "xgboost": 3221.14,
+      "moving_average_3m": 3389.06,
+      "last_month": 5371.4,
+      "train_rows": 48
+    },
+    {
+      "month": "2020-03",
+      "actual": 3033.98,
+      "xgboost": 3325.37,
+      "moving_average_3m": 3569.44,
+      "last_month": 2949.94,
+      "train_rows": 49
+    },
+    {
+      "month": "2020-04",
+      "actual": 2021.4,
+      "xgboost": 3511.22,
+      "moving_average_3m": 3785.11,
+      "last_month": 3033.98,
+      "train_rows": 50
+    },
+    {
+      "month": "2020-05",
+      "actual": 1617.5,
+      "xgboost": 2770.64,
+      "moving_average_3m": 2668.44,
+      "last_month": 2021.4,
+      "train_rows": 51
+    },
+    {
+      "month": "2020-06",
+      "actual": 1991.0,
+      "xgboost": 2243.44,
+      "moving_average_3m": 2224.29,
+      "last_month": 1617.5,
+      "train_rows": 52
+    },
+    {
+      "month": "2020-07",
+      "actual": 2392.51,
+      "xgboost": 2096.14,
+      "moving_average_3m": 1876.63,
+      "last_month": 1991.0,
+      "train_rows": 53
+    },
+    {
+      "month": "2020-08",
+      "actual": 1673.2,
+      "xgboost": 1624.53,
+      "moving_average_3m": 2000.34,
+      "last_month": 2392.51,
+      "train_rows": 54
+    },
+    {
+      "month": "2020-09",
+      "actual": 2534.28,
+      "xgboost": 1799.11,
+      "moving_average_3m": 2018.9,
+      "last_month": 1673.2,
+      "train_rows": 55
+    },
+    {
+      "month": "2020-10",
+      "actual": 1977.41,
+      "xgboost": 2211.57,
+      "moving_average_3m": 2200.0,
+      "last_month": 2534.28,
+      "train_rows": 56
+    },
+    {
+      "month": "2020-11",
+      "actual": 4463.68,
+      "xgboost": 2298.31,
+      "moving_average_3m": 2061.63,
+      "last_month": 1977.41,
+      "train_rows": 57
+    },
+    {
+      "month": "2020-12",
+      "actual": 3551.33,
+      "xgboost": 2110.73,
+      "moving_average_3m": 2991.79,
+      "last_month": 4463.68,
+      "train_rows": 58
+    },
+    {
+      "month": "2021-01",
+      "actual": 2692.08,
+      "xgboost": 2721.41,
+      "moving_average_3m": 3330.81,
+      "last_month": 3551.33,
+      "train_rows": 59
+    },
+    {
+      "month": "2021-02",
+      "actual": 3738.9,
+      "xgboost": 2745.88,
+      "moving_average_3m": 3569.03,
+      "last_month": 2692.08,
+      "train_rows": 60
+    },
+    {
+      "month": "2021-03",
+      "actual": 2633.24,
+      "xgboost": 3419.16,
+      "moving_average_3m": 3327.44,
+      "last_month": 3738.9,
+      "train_rows": 61
+    },
+    {
+      "month": "2021-04",
+      "actual": 3140.19,
+      "xgboost": 3744.9,
+      "moving_average_3m": 3021.41,
+      "last_month": 2633.24,
+      "train_rows": 62
+    },
+    {
+      "month": "2021-05",
+      "actual": 2583.41,
+      "xgboost": 3504.31,
+      "moving_average_3m": 3170.78,
+      "last_month": 3140.19,
+      "train_rows": 63
+    },
+    {
+      "month": "2021-06",
+      "actual": 4002.18,
+      "xgboost": 2874.63,
+      "moving_average_3m": 2785.61,
+      "last_month": 2583.41,
+      "train_rows": 64
+    },
+    {
+      "month": "2021-07",
+      "actual": 3333.76,
+      "xgboost": 2597.48,
+      "moving_average_3m": 3241.93,
+      "last_month": 4002.18,
+      "train_rows": 65
+    },
+    {
+      "month": "2021-08",
+      "actual": 1778.94,
+      "xgboost": 4137.9,
+      "moving_average_3m": 3306.45,
+      "last_month": 3333.76,
+      "train_rows": 66
+    },
+    {
+      "month": "2021-09",
+      "actual": 2897.23,
+      "xgboost": 3195.32,
+      "moving_average_3m": 3038.29,
+      "last_month": 1778.94,
+      "train_rows": 67
+    },
+    {
+      "month": "2021-10",
+      "actual": 2804.27,
+      "xgboost": 2604.51,
+      "moving_average_3m": 2669.98,
+      "last_month": 2897.23,
+      "train_rows": 68
+    },
+    {
+      "month": "2021-11",
+      "actual": 2080.44,
+      "xgboost": 2716.22,
+      "moving_average_3m": 2493.48,
+      "last_month": 2804.27,
+      "train_rows": 69
+    },
+    {
+      "month": "2021-12",
+      "actual": 2966.17,
+      "xgboost": 2814.66,
+      "moving_average_3m": 2593.98,
+      "last_month": 2080.44,
+      "train_rows": 70
+    },
+    {
+      "month": "2022-01",
+      "actual": 3059.08,
+      "xgboost": 2499.84,
+      "moving_average_3m": 2616.96,
+      "last_month": 2966.17,
+      "train_rows": 71
+    },
+    {
+      "month": "2022-02",
+      "actual": 2899.23,
+      "xgboost": 3379.44,
+      "moving_average_3m": 2701.9,
+      "last_month": 3059.08,
+      "train_rows": 72
+    },
+    {
+      "month": "2022-03",
+      "actual": 3216.55,
+      "xgboost": 3137.6,
+      "moving_average_3m": 2974.83,
+      "last_month": 2899.23,
+      "train_rows": 73
+    },
+    {
+      "month": "2022-04",
+      "actual": 2801.34,
+      "xgboost": 2806.34,
+      "moving_average_3m": 3058.29,
+      "last_month": 3216.55,
+      "train_rows": 74
+    },
+    {
+      "month": "2022-05",
+      "actual": 2557.11,
+      "xgboost": 3216.16,
+      "moving_average_3m": 2972.37,
+      "last_month": 2801.34,
+      "train_rows": 75
+    },
+    {
+      "month": "2022-06",
+      "actual": 2690.81,
+      "xgboost": 2945.86,
+      "moving_average_3m": 2858.33,
+      "last_month": 2557.11,
+      "train_rows": 76
+    }
+  ],
+  "features": [
+    "Last month vs 6-month average",
+    "Two months ago vs 6-month average",
+    "Last 3 months vs 6-month average",
+    "12-month average vs 6-month average",
+    "Typical (median) month vs average",
+    "Recent spending trend",
+    "Spending variability",
+    "Income vs spending",
+    "Transaction count trend"
+  ],
+  "currency": "GBP",
+  "feature_importance": [
+    {
+      "feature": "Recent spending trend",
+      "importance": 0.1684
+    },
+    {
+      "feature": "Spending variability",
+      "importance": 0.1644
+    },
+    {
+      "feature": "Typical (median) month vs average",
+      "importance": 0.1218
+    },
+    {
+      "feature": "12-month average vs 6-month average",
+      "importance": 0.1177
+    },
+    {
+      "feature": "Last 3 months vs 6-month average",
+      "importance": 0.1098
+    },
+    {
+      "feature": "Two months ago vs 6-month average",
+      "importance": 0.1
+    },
+    {
+      "feature": "Income vs spending",
+      "importance": 0.0808
+    },
+    {
+      "feature": "Transaction count trend",
+      "importance": 0.0748
+    },
+    {
+      "feature": "Last month vs 6-month average",
+      "importance": 0.0622
+    }
+  ]
+}

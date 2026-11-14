@@ -95,6 +95,8 @@ def train(pop: dict, seed: int = 7) -> tuple[dict, dict]:
 
 
 def analyse(art: dict, ident, monthly: pd.DataFrame) -> dict:
+    if art.get("kind") == "scf_households":
+        return _analyse_scf(art, ident, monthly)
     lim = sum(c["credit_limit"] for c in ident.cards)
     out = sum(c["outstanding"] for c in ident.cards)
     feats = user_features(monthly, lim, out)
@@ -116,3 +118,73 @@ def analyse(art: dict, ident, monthly: pd.DataFrame) -> dict:
             "comparison": comp, "strengths": strengths, "weaknesses": weaknesses,
             "all_groups": [{"name": art["names"][i], "size": int((pop["cluster"] == i).sum())} for i in sorted(art["names"])],
             "note": "Compared with a synthetic population of users; values are percentages of income unless stated."}
+
+
+# ---------------------------------------------------------------- real-data peers (Federal Reserve SCF 2022, Phase 6)
+def scf_profile_features(ident, monthly: pd.DataFrame) -> dict | None:
+    """The same 8 ratios as the SCF model, computed from a Finora profile's own records with the SCF definitions where Finora
+    has the data (verified 2026-11-15). None if income is unknown.
+      liquid       SCF LIQ = transaction accounts only (no CDs/FDs, no cash in hand)   -> bank balances
+      financial    SCF FIN = LIQ + CDs + funds + stocks + bonds + retirement accounts  -> bank + FDs + equity + MFs + retirement + bonds
+                   (cash in hand, gold, property and crypto are not financial assets in FIN)
+      saved        SCF SAVED = spending below income over the PAST YEAR                -> last 12 months' income minus spending > 0
+    Known differences that cannot be removed with Finora's data (documented, shown in the comparison note):
+      income       SCF INCOME is gross pre-tax income; Finora sees take-home credits, so Finora ratios to income run higher.
+      card balance SCF CCBAL is the balance still owed after the last payment; Finora uses the current outstanding balance."""
+    from ..services import calculations as C
+    inc_m = float(monthly["income"].mean()) if len(monthly) else 0.0
+    if inc_m <= 0:
+        return None
+    annual = inc_m * 12
+    nw = C.net_worth(ident)
+    b = nw["breakdown"]
+    liquid = b.get("Bank balances", 0)
+    bonds = sum(o["value"] for o in ident.other_assets if o["kind"] == "bonds")
+    fin = (b.get("Bank balances", 0) + b.get("Fixed deposits", 0) + b.get("Equity", 0) + b.get("Mutual funds", 0)
+           + b.get("Retirement (EPF/PPF/NPS)", 0) + bonds)
+    debt = nw["total_liabilities"] or 0.0
+    payments = sum(l["emi"] for l in ident.loans) + sum(max(c["min_due"], 0) for c in ident.cards)
+    equity = b.get("Equity", 0) + sum(f["units"] * f["current_nav"] for f in ident.mfs if f["fund_type"] != "debt")
+    last12 = monthly.sort_values("month").tail(12)
+    return {"liquid_months": liquid / inc_m, "debt_to_income": debt / annual, "payment_to_income": payments * 12 / annual,
+            "card_to_income": sum(c["outstanding"] for c in ident.cards) / annual,
+            "networth_to_income": (nw["net_worth"] or 0.0) / annual,
+            "financial_share": fin / nw["total_assets"] if nw["total_assets"] else 0.0,
+            "equity_share": min(1.0, equity / fin) if fin else 0.0,
+            "saved_last_year": 1.0 if float(last12["savings"].sum()) > 0 else 0.0}
+
+
+def _analyse_scf(art: dict, ident, monthly: pd.DataFrame) -> dict:
+    from .real.peers import transform, weighted_quantile, CLIP
+    feats = scf_profile_features(ident, monthly)
+    if feats is None:
+        return {"available": False, "note": "Peer comparison needs your income to compute the ratios."}
+    x = transform(pd.DataFrame([feats]))
+    k = int(art["kmeans"].predict(art["scaler"].transform(x))[0])
+    ref = art["reference"]
+    w_all = ref["w"].to_numpy()
+    grp = ref[ref["cluster"] == k]
+    comp, strengths, weaknesses = [], [], []
+    for f in art["features"]:
+        lo, hi = CLIP[f]
+        you = float(np.clip(feats[f], lo, hi))
+        below = float(w_all[(ref[f] < you).to_numpy()].sum() / w_all.sum() * 100)
+        better = below if art["higher_is_better"][f] else 100 - below
+        comp.append({"metric": art["labels"][f], "you": round(you, 3),
+                     "peer_group_median": round(weighted_quantile(grp[f].to_numpy(), grp["w"].to_numpy(), 0.5), 3),
+                     "everyone_median": round(weighted_quantile(ref[f].to_numpy(), w_all, 0.5), 3),
+                     "better_than_pct_of_people": round(better)})
+        if better >= 70:
+            strengths.append(art["labels"][f])
+        elif better <= 30:
+            weaknesses.append(art["labels"][f])
+    # sizes are survey-WEIGHTED households (the 5 implicates of a family share one family's weight), never record counts
+    return {"peer_group": art["names"][k], "peer_group_share_pct": round(float(grp["w"].sum() / w_all.sum() * 100), 1),
+            "peer_group_households_millions": round(float(grp["w"].sum()) / 1e6, 1),
+            "population_households_millions": round(float(w_all.sum()) / 1e6, 1),
+            "comparison": comp, "strengths": strengths, "weaknesses": weaknesses, "units": "ratios (not percentages)",
+            "all_groups": [{"name": g["name"], "share_pct": g["weighted_share_pct"]} for g in art["groups"]],
+            "note": "Compared with US households in the Federal Reserve's Survey of Consumer Finances 2022 (real survey data, "
+                    "weighted). These are US household benchmarks, not Indian individual ones; a Finora profile may be one person. "
+                    "The survey uses gross (pre-tax) income while Finora sees take-home pay, so your ratios to income read "
+                    "somewhat higher than a US household's would; card balance is your current outstanding amount."}

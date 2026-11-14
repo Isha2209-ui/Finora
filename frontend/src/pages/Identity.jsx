@@ -105,7 +105,7 @@ export default function Identity() {
           tone={!credit.has_cards ? 'neutral' : credit.overall_utilisation_pct < 30 ? 'good' : credit.overall_utilisation_pct < 50 ? 'warn' : 'bad'} />
         <MiniLink to="/credit" title="Debt load" value={pct(debt.emi_to_income_pct, 0)} sub={debt.risk_band === 'unknown' ? 'EMI share needs your income' : `of income goes to EMIs · ${debt.risk_band}`} tone={{ none: 'good', low: 'good', moderate: 'warn', high: 'bad', 'very high': 'bad' }[debt.risk_band]} />
         <MiniLink to="/investments" title="Investments" value={inr(inv.current_value)} sub={inv.total_gain_pct == null ? `No holdings recorded · SIPs ${inr(inv.sip_monthly_total)}/mo` : `${inv.total_gain >= 0 ? '+' : ''}${pct(inv.total_gain_pct)} overall · SIPs ${inr(inv.sip_monthly_total)}/mo`} tone={inv.total_gain >= 0 ? 'good' : 'bad'} />
-        <MiniLink to="/transactions" title="Unusual transactions" value={ml.anomaly?.flagged_count ?? 0} sub={`flagged of ${ml.anomaly?.transactions_scored ?? 0} scored`} tone={(ml.anomaly?.flagged?.some((f) => f.severity === 'high')) ? 'warn' : 'good'} />
+        <MiniLink to="/transactions" title="Unusual transactions" value={ml.anomaly?.available === false ? '—' : (ml.anomaly?.flagged_count ?? 0)} sub={ml.anomaly?.available === false ? 'awaiting an approved model' : `flagged of ${ml.anomaly?.transactions_scored ?? 0} scored`} tone={(ml.anomaly?.flagged?.some((f) => f.severity === 'high')) ? 'warn' : 'good'} />
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">

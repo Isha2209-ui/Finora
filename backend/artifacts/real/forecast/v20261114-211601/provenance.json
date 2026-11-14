@@ -1,0 +1,94 @@
+{
+  "model": "forecast",
+  "version": "v20261114-211601",
+  "command": "python -m app.ml.train forecast",
+  "training_started": "2026-11-14T21:16:01+00:00",
+  "training_finished": "2026-11-14T21:16:05+00:00",
+  "training_seconds": 4.4,
+  "peak_memory_mb": 216.9,
+  "environment": {
+    "machine": "Mac14,2",
+    "chip": "Apple M2",
+    "cpu_cores": "8",
+    "memory_gb": 8.0,
+    "os": "Darwin 27.2.1",
+    "python": "3.14.0",
+    "libraries": {
+      "scikit-learn": "1.9.1",
+      "xgboost": "3.4.1",
+      "pandas": "3.1.1",
+      "numpy": "2.5.4",
+      "shap": "0.54.1",
+      "scipy": "1.18.1",
+      "joblib": "1.6.0"
+    },
+    "accelerator": "CPU (XGBoost and scikit-learn do not use the Apple GPU/MPS here)",
+    "trained_locally": true,
+    "remote_services_used": false
+  },
+  "artifact": {
+    "path": "real/forecast/v20261114-211601/model.joblib",
+    "sha256": "e84f1f62b9ff103c892f0665a8d7c589b24c2701a52a012fcbbc4c9035c5d896",
+    "bytes": 284693
+  },
+  "data_status": "real",
+  "evaluation_passed": true,
+  "approved_by_owner": true,
+  "evaluation_note": "Passed means: trained and evaluated without leakage on real data. It does NOT beat the 3-month moving average on MAE; this is reported as is.",
+  "deployment_label": "Experimental: trained on ONE real UK person's account (MoneyVis); accuracy for other people is not established",
+  "scope": "single-person",
+  "datasets": [
+    {
+      "key": "moneyvis",
+      "name": "MoneyVis Bank Transactions Dataset",
+      "publisher": "Robert S. Laramee, University of Nottingham (Mendeley Data)",
+      "source_url": "https://data.mendeley.com/datasets/dnxtg6n4rv/1",
+      "doi": "10.17632/dnxtg6n4rv.1",
+      "download_url": "https://data.mendeley.com/public-files/datasets/dnxtg6n4rv/files/36b3d359-2491-4282-850f-3f03e00fbfe3/file_downloaded",
+      "publication": "Firat et al., MoneyVis: Open Bank Transaction Data for Visualization and Beyond, EuroVis 2023",
+      "collection_period": "2015-07-27 to 2022-07-25",
+      "geography": "United Kingdom",
+      "population": "ONE anonymised retail current account (names, account number and sort code replaced)",
+      "records": 6567,
+      "features": 10,
+      "format": "Excel .xlsx",
+      "target": "monthly spending (derived), next-month value",
+      "observations": "real, anonymised",
+      "synthetic_observations": "none",
+      "licence": "CC BY 4.0",
+      "file_sha256": "716eaf9ad4a3cf60dc9c9c8a20ed9a917c545a1b5f139f40ed91d2104faa3ff7",
+      "publisher_sha256_verified": true,
+      "downloaded": "2026-11-14T21:12:39+00:00",
+      "cleaning": {
+        "raw_rows": 8314,
+        "empty_rows_dropped": 1747,
+        "transactions": 6567,
+        "serial_dates_corrected": 2816,
+        "date_order_violations_after_correction": 0,
+        "date_from": "2015-07-27",
+        "date_to": "2022-07-25",
+        "duplicates": 0,
+        "duplicate_treatment": "kept (separate bank rows)"
+      },
+      "monthly": {
+        "months_used": 83,
+        "partial_months_dropped": [
+          "2015-07",
+          "2022-07"
+        ],
+        "months_without_transactions": [],
+        "missing_month_treatment": "a month with no spending rows counts as 0 spending (genuinely no activity on the account)"
+      },
+      "preprocessing": "See app/ml/data/moneyvis.py: serial-date correction, spending/income definitions, partial months dropped.",
+      "missing_values": "debit/credit blank means 0 for that side; 24 rows without a category are counted as spending",
+      "known_biases": "One person, one UK bank, 2015-2022, GBP; includes mortgage, Amazon-heavy shopping."
+    }
+  ],
+  "methodology": "XGBRegressor (existing hyperparameters), target = next month / trailing 6-month mean, 9 lag features.",
+  "limitations": "A single person's history: about 70 usable months. It cannot show that the model works for other people. Category-level forecasts are not trained on real data and are not shown. Stage 2 (multi-person, Berka) is pending the data owner's permission.",
+  "processed_files": {
+    "transactions_clean.csv": "aa55f3f16b5ef9607bdb085a9047f0a3d9b48f848d336870b5a04a9d372bd138",
+    "monthly.csv": "21856c11786ed1cac14d03574e34fc2bddd727738eeab268e9c37462c76cc4cb"
+  },
+  "reproducible": "python -m app.ml.train forecast (seed 7) with the raw file above"
+}

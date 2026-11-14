@@ -22,6 +22,7 @@ export default function Transactions() {
   useEffect(() => { api.accounts(profileId).then((a) => setSources([...a.accounts.map((x) => [`account:${x.id}`, `${x.bank_name} ${x.account_masked}`]), ...a.card_ids.map((c) => [`card:${c.id}`, c.label])])).catch(() => {}) }, [profileId])
   const set = (k, v) => { setPage(0); setF((s) => ({ ...s, [k]: v })) }
   const recat = async (tx, category) => { await api.recategorise(profileId, tx.id, category); await load(); refresh() }
+  const decide = async (tx, action) => { await api.decideSuggestion(profileId, tx.id, action); await load(); refresh() }
 
   if (err) return <ErrorBox message={err} onRetry={load} />
   if (!data) return <Loading full />
@@ -29,9 +30,11 @@ export default function Transactions() {
   const pages = Math.max(1, Math.ceil(data.total / PAGE))
   return (
     <>
-      <PageHeader title="Transaction Intelligence" subtitle="Every transaction across all accounts and cards, categorised and scored by the Isolation Forest anomaly model.">
+      <PageHeader title="Transaction Intelligence" subtitle="Every transaction across all accounts and cards, categorised, and scored for unusual spending when an approved model is active.">
         <a href={api.url(`/profiles/${profileId}/transactions.csv`)}><Button variant="ghost" icon={Download}>CSV</Button></a>
       </PageHeader>
+      {s.available === false ? <Note tone="warn">Unusual-spending detection is not active: {s.note || 'no approved real-data model yet.'} Your transactions and categories below are unaffected.</Note> : <>
+      {s.model_note && <div className="mb-4"><Note>{s.model_note}</Note></div>}
       <div className="grid gap-4 md:grid-cols-4">
         <Stat label="Transactions scored" value={s.transactions_scored} sub="fixed payments (rent, EMI, SIPs) are not scored" />
         <Stat label="Flagged as unusual" value={s.flagged_count} tone={s.flagged_count ? 'warn' : 'good'} icon={Flag} sub={`total ${inr(s.flagged_amount_total)}`} />
@@ -64,7 +67,7 @@ export default function Transactions() {
             <Tooltip {...chartTooltip} labelFormatter={monthLabel} /><Bar dataKey="flagged" name="Flagged" fill="#fbbf24" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></div>
           <ul className="mt-2 space-y-1 text-[13px]">{(s.by_category || []).map((c) => <li key={c.category} className="flex justify-between"><span className="text-muted">{c.category} · {c.count}</span><span className="num">{inr(c.amount)}</span></li>)}</ul>
         </Card>
-      </div>
+      </div></>}
 
       <Card title="All transactions" subtitle={`${data.total} matching`} className="mt-4" pad={false}
         action={<label className="flex cursor-pointer items-center gap-2 text-xs text-muted"><input type="checkbox" checked={f.flagged_only} onChange={(e) => set('flagged_only', e.target.checked)} className="accent-[#2dd4bf]" /> Flagged only</label>}>
@@ -79,10 +82,15 @@ export default function Transactions() {
           { key: 'description', label: 'Description', render: (r) => (
             <div className="max-w-[420px]"><div className="truncate font-medium">{r.merchant || r.description}</div><div className="truncate font-mono text-[11px] text-faint">{r.description}</div>
               {open === r.id && r.reasons && <ul className="mt-1 list-disc pl-4 text-xs text-warn">{r.reasons.map((x) => <li key={x}>{x}</li>)}</ul>}</div>) },
-          { key: 'category', label: 'Category', render: (r) => (
-            <select value={r.category || ''} onClick={(e) => e.stopPropagation()} onChange={(e) => recat(r, e.target.value)} title={`Category source: ${r.category_source}`}
-              className={cx('rounded-lg border bg-bg px-1.5 py-1 text-xs outline-none', r.category_source === 'model' ? 'border-info/40 text-info' : r.category_source === 'user' ? 'border-accent/40 text-accent' : 'border-line text-ink')}>
-              {data.categories.map((c) => <option key={c}>{c}</option>)}</select>) },
+          { key: 'category', label: 'Category', render: (r) => (<>
+            <select value={r.category || ''} onClick={(e) => e.stopPropagation()} onChange={(e) => recat(r, e.target.value)} title={r.category_source === 'model' ? `Suggested by the categoriser (trained on US card data, not validated on Indian statements), confidence ${Math.round((r.confidence || 0) * 100)}%. Change it if wrong.` : `Category source: ${r.category_source || 'none'}`}
+              className={cx('rounded-lg border bg-bg px-1.5 py-1 text-xs outline-none', !r.category ? 'border-warn/50 text-warn' : r.category_source === 'model' ? 'border-info/40 text-info' : r.category_source === 'user' ? 'border-accent/40 text-accent' : 'border-line text-ink')}>
+              {!r.category && <option value="" disabled>Needs a category</option>}
+              {data.categories.map((c) => <option key={c}>{c}</option>)}</select>
+            {r.category_source === 'model' && r.category && <span className="ml-1 inline-flex items-center gap-1 text-[10px] text-info" onClick={(e) => e.stopPropagation()}>
+              suggested {r.confidence != null && `${Math.round(r.confidence * 100)}%`}
+              <button title="Accept this suggestion" onClick={() => decide(r, 'accept')} className="rounded border border-good/40 px-1 text-good hover:bg-good/10">✓</button>
+              <button title="Reject this suggestion" onClick={() => decide(r, 'reject')} className="rounded border border-bad/40 px-1 text-bad hover:bg-bad/10">✗</button></span>}</>) },
           { key: 'source', label: 'Source', render: (r) => <span className="whitespace-nowrap text-xs text-muted">{r.source}</span> },
           { key: 'flag', label: 'Anomaly', render: (r) => r.flagged ? <Badge tone={r.severity}>{r.severity}</Badge> : r.anomaly_score != null ? <span className="num text-xs text-faint">{r.anomaly_score.toFixed(2)}</span> : <span className="text-xs text-faint">not scored</span> },
           { key: 'amount', label: 'Amount', right: true, render: (r) => <span className={cx('font-medium', r.type === 'credit' && 'text-good')}>{r.type === 'credit' ? '+' : ''}{inr(r.amount, { compact: false })}</span> },

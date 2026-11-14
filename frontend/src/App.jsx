@@ -16,6 +16,9 @@ import Investments from './pages/Investments.jsx'
 import Lookup from './pages/Lookup.jsx'
 import Plan from './pages/Plan.jsx'
 import ModelLab from './pages/ModelLab.jsx'
+import AnomalyReview from './pages/AnomalyReview.jsx'
+import Scanner from './pages/Scanner.jsx'
+import Peers from './pages/Peers.jsx'
 import Recommendations from './pages/Recommendations.jsx'
 import Records from './pages/Records.jsx'
 import Reports from './pages/Reports.jsx'
@@ -58,6 +61,9 @@ export default function App() {
               <Route path="/recommendations" element={<Recommendations />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/models" element={<ModelLab />} />
+              <Route path="/models/review" element={<AnomalyReview />} />
+              <Route path="/scanner" element={<Scanner />} />
+              <Route path="/peers" element={<Peers />} />
               <Route path="/data" element={<DataManagement />} />
               <Route path="*" element={<Navigate to="/plan" replace />} />
             </Routes>

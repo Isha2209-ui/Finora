@@ -1,0 +1,138 @@
+{
+  "task": "Probability that a card holder misses next month's payment (default payment next month)",
+  "split": {
+    "method": "stratified 70/15/15 train/validation/test, random_state=7",
+    "train": 21000,
+    "validation": 4500,
+    "test": 4500
+  },
+  "cross_validation": {
+    "method": "5-fold stratified CV on the training part only",
+    "xgboost_roc_auc_mean": 0.7765,
+    "xgboost_roc_auc_std": 0.0096,
+    "logistic_regression_roc_auc_mean": 0.7548,
+    "logistic_regression_roc_auc_std": 0.0104
+  },
+  "test": {
+    "xgboost": {
+      "roc_auc": 0.7831,
+      "pr_auc": 0.5817,
+      "brier": 0.1311,
+      "threshold": 0.26,
+      "precision": 0.5224,
+      "recall": 0.597,
+      "f1": 0.5572,
+      "confusion_matrix": {
+        "tn": 2962,
+        "fp": 543,
+        "fn": 401,
+        "tp": 594
+      }
+    },
+    "logistic_regression_baseline": {
+      "roc_auc": 0.7603,
+      "pr_auc": 0.5347,
+      "brier": 0.1385,
+      "threshold": 0.25,
+      "precision": 0.4949,
+      "recall": 0.5859,
+      "f1": 0.5366,
+      "confusion_matrix": {
+        "tn": 2910,
+        "fp": 595,
+        "fn": 412,
+        "tp": 583
+      }
+    },
+    "rule_baseline_delayed_last_month": {
+      "roc_auc": 0.6972,
+      "pr_auc": 0.382,
+      "brier": 0.2104,
+      "threshold": 0.5,
+      "precision": 0.5238,
+      "recall": 0.5317,
+      "f1": 0.5277,
+      "confusion_matrix": {
+        "tn": 3024,
+        "fp": 481,
+        "fn": 466,
+        "tp": 529
+      }
+    }
+  },
+  "beats_logistic_regression_on_test_roc_auc": true,
+  "shap_global_mean_abs": [
+    {
+      "feature": "Latest payment status",
+      "mean_abs_shap": 0.3595
+    },
+    {
+      "feature": "Worst payment delay (6 months)",
+      "mean_abs_shap": 0.32
+    },
+    {
+      "feature": "Months with no payment made",
+      "mean_abs_shap": 0.1492
+    },
+    {
+      "feature": "Average utilisation (6 months)",
+      "mean_abs_shap": 0.1372
+    },
+    {
+      "feature": "Months with a delayed payment",
+      "mean_abs_shap": 0.1143
+    },
+    {
+      "feature": "Utilisation trend",
+      "mean_abs_shap": 0.1137
+    },
+    {
+      "feature": "Latest credit utilisation",
+      "mean_abs_shap": 0.1045
+    },
+    {
+      "feature": "Average share of bill repaid",
+      "mean_abs_shap": 0.0977
+    },
+    {
+      "feature": "Age",
+      "mean_abs_shap": 0.0697
+    },
+    {
+      "feature": "Share of last bill repaid",
+      "mean_abs_shap": 0.0566
+    },
+    {
+      "feature": "Months paying only part of the bill",
+      "mean_abs_shap": 0.0565
+    },
+    {
+      "feature": "Payment status 2 months ago",
+      "mean_abs_shap": 0.0329
+    },
+    {
+      "feature": "Payment status 3 months ago",
+      "mean_abs_shap": 0.0309
+    },
+    {
+      "feature": "Months paid in full",
+      "mean_abs_shap": 0.0232
+    }
+  ],
+  "features": [
+    "Age",
+    "Latest payment status",
+    "Payment status 2 months ago",
+    "Payment status 3 months ago",
+    "Worst payment delay (6 months)",
+    "Months with a delayed payment",
+    "Months paying only part of the bill",
+    "Months paid in full",
+    "Latest credit utilisation",
+    "Average utilisation (6 months)",
+    "Utilisation trend",
+    "Share of last bill repaid",
+    "Average share of bill repaid",
+    "Months with no payment made"
+  ]
+}

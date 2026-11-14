@@ -1,0 +1,94 @@
+{
+  "model": "credit_risk",
+  "version": "v20261114-211415",
+  "command": "python -m app.ml.train credit_risk",
+  "training_started": "2026-11-14T21:14:15+00:00",
+  "training_finished": "2026-11-14T21:14:18+00:00",
+  "training_seconds": 3.0,
+  "peak_memory_mb": 219.5,
+  "environment": {
+    "machine": "Mac14,2",
+    "chip": "Apple M2",
+    "cpu_cores": "8",
+    "memory_gb": 8.0,
+    "os": "Darwin 27.2.1",
+    "python": "3.14.0",
+    "libraries": {
+      "scikit-learn": "1.9.1",
+      "xgboost": "3.4.1",
+      "pandas": "3.1.1",
+      "numpy": "2.5.4",
+      "shap": "0.54.1",
+      "scipy": "1.18.1",
+      "joblib": "1.6.0"
+    },
+    "accelerator": "CPU (XGBoost and scikit-learn do not use the Apple GPU/MPS here)",
+    "trained_locally": true,
+    "remote_services_used": false
+  },
+  "artifact": {
+    "path": "real/credit_risk/v20261114-211415/model.joblib",
+    "sha256": "cd6162b04adaf8960bc10dc1455b858747461c62175a6b79ef361b4709382b90",
+    "bytes": 555638
+  },
+  "data_status": "real",
+  "evaluation_passed": true,
+  "approved_by_owner": true,
+  "deployment_label": "Trained on real Taiwanese card data (2005); not an Indian credit-bureau score",
+  "datasets": [
+    {
+      "key": "uci_credit",
+      "name": "Default of Credit Card Clients",
+      "publisher": "UCI Machine Learning Repository (I-Cheng Yeh, Che-hui Lien)",
+      "source_url": "https://archive.ics.uci.edu/dataset/350/default+of+credit+card+clients",
+      "doi": "10.24432/C55S3H",
+      "download_url": "https://archive.ics.uci.edu/static/public/350/default+of+credit+card+clients.zip",
+      "publication": "Yeh & Lien (2009), Expert Systems with Applications 36(2) 2473-2480",
+      "collection_period": "April-September 2005 (target: October 2005)",
+      "geography": "Taiwan",
+      "population": "Credit-card clients of a Taiwanese bank",
+      "records": 30000,
+      "features": 23,
+      "format": "Excel .xls (official); CSV copy used for training",
+      "target": "default payment next month (1 = default)",
+      "observations": "real, anonymised",
+      "synthetic_observations": "none",
+      "licence": "CC BY 4.0",
+      "file_used": "uci_credit_card_default.csv",
+      "file_sha256": "a0f0ab49d6326671d6cd83be5c88dcf18007025fe9a53ecd699119c871176ca1",
+      "official_zip_sha256": "56c885f84457f6680f8438f02bfcdac9579323d8a94465ee5f26e32baa727602",
+      "downloaded": "2026-11-14T21:12:26+00:00",
+      "verification": "The local CSV is a cell-for-cell copy of the official UCI .xls: 30,000 x 25 values, 750,000 of 750,000 cells identical, 0 rows differing (checked 2026-11-15 with xlrd 2.0.2 in a scratch environment against 'default of credit card clients.xls', SHA-256 30c6be3abd8dcfd3e6096c828bad8c2f011238620f5369220bd60cfc82700933, from the official zip).",
+      "data_notes": {
+        "rows": 30000,
+        "columns": 25,
+        "missing_values": 0,
+        "duplicate_rows_excluding_id": 35,
+        "duplicate_treatment": "Kept: identical feature values for different customer IDs are plausible (distinct customers); they are counted and disclosed, not removed.",
+        "negative_bill_amount_rows": 1930,
+        "negative_bill_treatment": "Kept: a negative bill is a credit balance (overpayment). Utilisation uses max(0, bill).",
+        "undocumented_codes": {
+          "EDUCATION": [
+            0,
+            5,
+            6
+          ],
+          "MARRIAGE": [
+            0
+          ]
+        },
+        "undocumented_code_treatment": "No effect: SEX, EDUCATION and MARRIAGE are excluded from the model (fairness and portability), so their undocumented codes are not used.",
+        "pay_status_codes": "-2 no consumption, -1 paid in full, 0 revolving credit, 1..8 months of payment delay (codes -2 and 0 are not in the original paper's description; they are kept as observed).",
+        "target_positive": 6636,
+        "target_negative": 23364
+      },
+      "preprocessing": "Per customer: 14 behavioural features from 6 months of status, bills and payments (credit_risk.features_from_history): money as ratios to the credit limit, delay counts, utilisation and repayment ratios. SEX, EDUCATION and MARRIAGE excluded.",
+      "missing_values": "none in the source",
+      "duplicates": "35 duplicate feature rows kept and disclosed",
+      "known_biases": "Taiwan 2005, one bank, card customers only; 22% default rate; not representative of Indian borrowers."
+    }
+  ],
+  "methodology": "XGBoost classifier (unchanged hyperparameters) + SHAP TreeExplainer; threshold maximising F1 on validation.",
+  "limitations": "Learned on Taiwanese card customers in 2005. It estimates a default-risk pattern from payment behaviour; it is not an Indian credit-bureau score and its accuracy for Indian borrowers is not established.",
+  "reproducible": "python -m app.ml.train credit_risk (seed 7) with the same CSV (SHA-256 above)"
+}

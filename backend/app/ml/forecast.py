@@ -168,7 +168,8 @@ def analyse(art: dict, ident, monthly: pd.DataFrame, snap: dict) -> dict:
     rows = total_rows(m, include_next=True)
     if rows.empty:
         return {"available": False, "note": f"Need at least {MIN_HIST} months of history to forecast."}
-    rows["pred"] = art["total"].predict(rows[TOTAL_FEATURES]) * rows["base"]
+    feats = art.get("features", TOTAL_FEATURES)
+    rows["pred"] = art["total"].predict(rows[feats]) * rows["base"]
     nxt, hist = rows.iloc[-1], rows.iloc[:-1]
     predicted = float(nxt["pred"])
     band = 1.28 * art["resid_ratio"] * float(nxt["base"])  # ~80% interval from held-out residuals
@@ -177,7 +178,7 @@ def analyse(art: dict, ident, monthly: pd.DataFrame, snap: dict) -> dict:
     mat = category_matrix(ident.transactions, list(m["month"]))
     crow = category_rows(mat, include_next=True)
     cats = []
-    if not crow.empty:
+    if not crow.empty and art.get("category") is not None:
         crow["pred"] = np.clip(art["category"].predict(crow[CAT_FEATURES]), 0, None) * crow["base"]
         for _, r in crow[crow["month"] == nxt["month"]].sort_values("pred", ascending=False).iterrows():
             chg = (r["pred"] - r["avg3"]) / r["avg3"] * 100 if r["avg3"] > 0 else None
@@ -209,4 +210,9 @@ def analyse(art: dict, ident, monthly: pd.DataFrame, snap: dict) -> dict:
         "actual_vs_predicted": [{"month": r["month"], "actual": round(float(r["target"])), "predicted": round(float(r["pred"]))} for _, r in hist.iterrows()],
         "backtest_on_this_person": {"months": int(len(hist)), "mae": round(float(err.mean())) if len(hist) else None,
                                     "note": "Demo identities are never used for training, so this is an out-of-sample check."},
+        "model_scope": art.get("scope", "legacy"),
+        "category_forecast_available": art.get("category") is not None,
+        "model_note": ("Experimental model trained on ONE real person's UK bank account (MoneyVis). It has not been shown to "
+                       "work for other people; per-category forecasts are not shown because no real data trains them."
+                       if art.get("scope") == "single-person" else None),
     }

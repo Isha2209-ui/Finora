@@ -36,6 +36,25 @@ def clean_json(o):
 PEERS_MIN_MONTHS = 3
 
 
+def model_info(name: str) -> dict:
+    """Status of the model behind an output: version, accepted / experimental, unmet criteria, measured comparison."""
+    from ..ml import provenance as PV
+    e = PV.active().get(name) or {}
+    info = {"model": name, "version": e.get("version"), "status": e.get("status", "accepted") if e else None,
+            "label": e.get("label"), "experimental_reason": e.get("experimental_reason"),
+            "unmet_criteria": e.get("unmet_criteria", [])}
+    if name == "forecast" and e:
+        try:
+            ev = registry.metrics()["forecast"]["evaluation"]
+            info["evaluation"] = {"xgboost_mae": ev["xgboost"]["mae"], "baseline_3m_average_mae": ev["baseline_moving_average_3m"]["mae"],
+                                  "baseline_last_month_mae": ev["baseline_last_month"]["mae"], "test_months": ev["test_months"],
+                                  "currency": "GBP", "beats_baseline": ev["beats_moving_average_on_mae"],
+                                  "note": "Measured on one real UK account (MoneyVis), chronological test 2018-08 to 2022-06."}
+        except (KeyError, TypeError):
+            pass
+    return info
+
+
 def run(db: Session, uid: int, save: bool = True, fire_overrides: dict | None = None) -> dict:
     ident = load_identity(db, uid)
     snap = build(ident, fire_overrides)
@@ -67,10 +86,17 @@ def run(db: Session, uid: int, save: bool = True, fire_overrides: dict | None = 
     for name, fn in steps.items():
         try:
             ml[name] = fn()
+        except registry.ModelUnavailable:
+            # Not an error: no approved real-data model of this kind exists yet. Never falls back to a synthetic model.
+            ml[name] = {"available": False, "model_status": "awaiting_approved_model",
+                        "note": "no real-data model has passed its acceptance criteria yet, so this is not shown. See Model Lab."}
         except FileNotFoundError as e:
             errors[name] = str(e)
         except Exception as e:  # one model failing must not take down the analysis
             errors[name] = f"{type(e).__name__}: {e}"
+    for name, out in ml.items():                     # every model output says which model produced it and how far to trust it
+        if isinstance(out, dict) and out.get("model_status") != "awaiting_approved_model":
+            out["model_info"] = model_info(name)
     recs = R.build(snap, ml)
     result = clean_json({**snap, "ml": ml, "ml_errors": errors, "recommendations": recs,
                          "alerts": R.alerts(snap, ml, recs), "generated_at": datetime.utcnow().isoformat(timespec="seconds")})

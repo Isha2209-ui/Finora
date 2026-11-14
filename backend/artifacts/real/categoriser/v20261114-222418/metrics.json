@@ -1,0 +1,863 @@
+{
+  "task": "Merchant-category classification of card transaction descriptors (not Indian bank-statement narrations)",
+  "categories_learned": [
+    "Dining",
+    "Education",
+    "Entertainment",
+    "Fuel",
+    "Groceries",
+    "Health",
+    "Insurance",
+    "Shopping",
+    "Subscriptions",
+    "Travel",
+    "Utilities"
+  ],
+  "bank_side_categories": "Rent, EMI, Investment, Transfer, Card Payment, Cash: rules, not ML",
+  "training": {
+    "rows": 45477,
+    "merchant_groups": 32065,
+    "cap_per_merchant": 40,
+    "class_counts": {
+      "Shopping": 18318,
+      "Travel": 8709,
+      "Dining": 8150,
+      "Education": 2828,
+      "Fuel": 1643,
+      "Subscriptions": 1444,
+      "Entertainment": 1397,
+      "Groceries": 1238,
+      "Health": 908,
+      "Utilities": 768,
+      "Insurance": 74
+    }
+  },
+  "split": "GroupShuffleSplit 80/20 by merchant group (no merchant in both train and test), random_state=7",
+  "held_out_merchants_oklahoma": {
+    "rows": 8822,
+    "macro_f1": 0.5998,
+    "accuracy": 0.7888,
+    "keyword_rule_macro_f1": 0.1494,
+    "keyword_rule_accuracy": 0.4384,
+    "per_class": [
+      {
+        "category": "Dining",
+        "precision": 0.841,
+        "recall": 0.857,
+        "f1": 0.848,
+        "support": 1422
+      },
+      {
+        "category": "Education",
+        "precision": 0.594,
+        "recall": 0.524,
+        "f1": 0.557,
+        "support": 548
+      },
+      {
+        "category": "Entertainment",
+        "precision": 0.589,
+        "recall": 0.372,
+        "f1": 0.456,
+        "support": 285
+      },
+      {
+        "category": "Fuel",
+        "precision": 0.907,
+        "recall": 0.517,
+        "f1": 0.659,
+        "support": 265
+      },
+      {
+        "category": "Groceries",
+        "precision": 0.592,
+        "recall": 0.209,
+        "f1": 0.309,
+        "support": 215
+      },
+      {
+        "category": "Health",
+        "precision": 0.732,
+        "recall": 0.462,
+        "f1": 0.566,
+        "support": 195
+      },
+      {
+        "category": "Insurance",
+        "precision": 1.0,
+        "recall": 0.286,
+        "f1": 0.444,
+        "support": 14
+      },
+      {
+        "category": "Shopping",
+        "precision": 0.751,
+        "recall": 0.918,
+        "f1": 0.826,
+        "support": 3688
+      },
+      {
+        "category": "Subscriptions",
+        "precision": 0.793,
+        "recall": 0.291,
+        "f1": 0.426,
+        "support": 251
+      },
+      {
+        "category": "Travel",
+        "precision": 0.924,
+        "recall": 0.854,
+        "f1": 0.887,
+        "support": 1818
+      },
+      {
+        "category": "Utilities",
+        "precision": 0.822,
+        "recall": 0.496,
+        "f1": 0.619,
+        "support": 121
+      }
+    ],
+    "confusion_matrix": {
+      "labels": [
+        "Dining",
+        "Education",
+        "Entertainment",
+        "Fuel",
+        "Groceries",
+        "Health",
+        "Insurance",
+        "Shopping",
+        "Subscriptions",
+        "Travel",
+        "Utilities"
+      ],
+      "matrix": [
+        [
+          1218,
+          11,
+          9,
+          3,
+          10,
+          0,
+          0,
+          135,
+          1,
+          35,
+          0
+        ],
+        [
+          12,
+          287,
+          3,
+          1,
+          3,
+          6,
+          0,
+          231,
+          2,
+          3,
+          0
+        ],
+        [
+          25,
+          13,
+          106,
+          0,
+          2,
+          0,
+          0,
+          119,
+          1,
+          16,
+          3
+        ],
+        [
+          8,
+          1,
+          1,
+          137,
+          3,
+          0,
+          0,
+          108,
+          0,
+          7,
+          0
+        ],
+        [
+          51,
+          0,
+          4,
+          3,
+          45,
+          2,
+          0,
+          106,
+          0,
+          4,
+          0
+        ],
+        [
+          6,
+          18,
+          6,
+          0,
+          2,
+          90,
+          0,
+          69,
+          0,
+          3,
+          1
+        ],
+        [
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          4,
+          7,
+          0,
+          1,
+          0
+        ],
+        [
+          76,
+          88,
+          32,
+          5,
+          9,
+          18,
+          0,
+          3387,
+          15,
+          49,
+          9
+        ],
+        [
+          6,
+          10,
+          5,
+          0,
+          0,
+          2,
+          0,
+          149,
+          73,
+          6,
+          0
+        ],
+        [
+          44,
+          51,
+          13,
+          2,
+          1,
+          3,
+          0,
+          152,
+          0,
+          1552,
+          0
+        ],
+        [
+          2,
+          3,
+          1,
+          0,
+          1,
+          2,
+          0,
+          48,
+          0,
+          4,
+          60
+        ]
+      ]
+    },
+    "class_distribution": {
+      "Dining": 1422,
+      "Education": 548,
+      "Entertainment": 285,
+      "Fuel": 265,
+      "Groceries": 215,
+      "Health": 195,
+      "Insurance": 14,
+      "Shopping": 3688,
+      "Subscriptions": 251,
+      "Travel": 1818,
+      "Utilities": 121
+    },
+    "confidence": {
+      "review_threshold": 0.5,
+      "share_confident": 0.8958,
+      "accuracy_when_confident": 0.8335,
+      "accuracy_when_sent_for_review": 0.4048
+    }
+  },
+  "independent_test_dc": {
+    "rows": 36395,
+    "macro_f1": 0.5851,
+    "accuracy": 0.8475,
+    "keyword_rule_macro_f1": 0.1433,
+    "keyword_rule_accuracy": 0.5351,
+    "per_class": [
+      {
+        "category": "Dining",
+        "precision": 0.754,
+        "recall": 0.763,
+        "f1": 0.759,
+        "support": 1940
+      },
+      {
+        "category": "Education",
+        "precision": 0.057,
+        "recall": 0.5,
+        "f1": 0.102,
+        "support": 106
+      },
+      {
+        "category": "Entertainment",
+        "precision": 0.615,
+        "recall": 0.213,
+        "f1": 0.316,
+        "support": 878
+      },
+      {
+        "category": "Fuel",
+        "precision": 0.772,
+        "recall": 0.731,
+        "f1": 0.751,
+        "support": 208
+      },
+      {
+        "category": "Groceries",
+        "precision": 0.685,
+        "recall": 0.447,
+        "f1": 0.541,
+        "support": 501
+      },
+      {
+        "category": "Health",
+        "precision": 0.897,
+        "recall": 0.375,
+        "f1": 0.529,
+        "support": 835
+      },
+      {
+        "category": "Insurance",
+        "precision": 0.889,
+        "recall": 0.262,
+        "f1": 0.405,
+        "support": 61
+      },
+      {
+        "category": "Shopping",
+        "precision": 0.847,
+        "recall": 0.949,
+        "f1": 0.895,
+        "support": 19084
+      },
+      {
+        "category": "Subscriptions",
+        "precision": 0.863,
+        "recall": 0.772,
+        "f1": 0.815,
+        "support": 1711
+      },
+      {
+        "category": "Travel",
+        "precision": 0.963,
+        "recall": 0.824,
+        "f1": 0.888,
+        "support": 10771
+      },
+      {
+        "category": "Utilities",
+        "precision": 0.639,
+        "recall": 0.33,
+        "f1": 0.435,
+        "support": 300
+      }
+    ],
+    "confusion_matrix": {
+      "labels": [
+        "Dining",
+        "Education",
+        "Entertainment",
+        "Fuel",
+        "Groceries",
+        "Health",
+        "Insurance",
+        "Shopping",
+        "Subscriptions",
+        "Travel",
+        "Utilities"
+      ],
+      "matrix": [
+        [
+          1481,
+          14,
+          9,
+          8,
+          31,
+          2,
+          0,
+          314,
+          1,
+          80,
+          0
+        ],
+        [
+          6,
+          53,
+          0,
+          0,
+          0,
+          1,
+          0,
+          44,
+          0,
+          2,
+          0
+        ],
+        [
+          59,
+          51,
+          187,
+          5,
+          3,
+          6,
+          0,
+          497,
+          8,
+          60,
+          2
+        ],
+        [
+          7,
+          1,
+          3,
+          152,
+          1,
+          0,
+          0,
+          39,
+          1,
+          4,
+          0
+        ],
+        [
+          51,
+          8,
+          3,
+          5,
+          224,
+          3,
+          0,
+          196,
+          3,
+          8,
+          0
+        ],
+        [
+          30,
+          93,
+          14,
+          2,
+          10,
+          313,
+          1,
+          329,
+          3,
+          39,
+          1
+        ],
+        [
+          1,
+          4,
+          0,
+          1,
+          0,
+          1,
+          16,
+          30,
+          1,
+          6,
+          1
+        ],
+        [
+          164,
+          329,
+          56,
+          16,
+          50,
+          21,
+          1,
+          18119,
+          182,
+          126,
+          20
+        ],
+        [
+          17,
+          31,
+          2,
+          1,
+          2,
+          1,
+          0,
+          299,
+          1321,
+          8,
+          29
+        ],
+        [
+          145,
+          343,
+          30,
+          6,
+          5,
+          1,
+          0,
+          1355,
+          4,
+          8879,
+          3
+        ],
+        [
+          3,
+          11,
+          0,
+          1,
+          1,
+          0,
+          0,
+          170,
+          6,
+          9,
+          99
+        ]
+      ]
+    },
+    "class_distribution": {
+      "Dining": 1940,
+      "Education": 106,
+      "Entertainment": 878,
+      "Fuel": 208,
+      "Groceries": 501,
+      "Health": 835,
+      "Insurance": 61,
+      "Shopping": 19084,
+      "Subscriptions": 1711,
+      "Travel": 10771,
+      "Utilities": 300
+    },
+    "confidence": {
+      "review_threshold": 0.5,
+      "share_confident": 0.9193,
+      "accuracy_when_confident": 0.8946,
+      "accuracy_when_sent_for_review": 0.311
+    },
+    "merchants_also_in_oklahoma_training": 18022,
+    "unseen_merchants_only": {
+      "rows": 18373,
+      "macro_f1": 0.4493,
+      "accuracy": 0.718,
+      "keyword_rule_macro_f1": 0.1563,
+      "keyword_rule_accuracy": 0.4881
+    }
+  },
+  "independent_test_moneyvis_uk_personal": {
+    "rows": 602,
+    "macro_f1": 0.3815,
+    "accuracy": 0.6329,
+    "keyword_rule_macro_f1": 0.1305,
+    "keyword_rule_accuracy": 0.4269,
+    "per_class": [
+      {
+        "category": "Dining",
+        "precision": 0.708,
+        "recall": 0.602,
+        "f1": 0.65,
+        "support": 133
+      },
+      {
+        "category": "Education",
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      {
+        "category": "Entertainment",
+        "precision": 0.273,
+        "recall": 0.073,
+        "f1": 0.115,
+        "support": 41
+      },
+      {
+        "category": "Fuel",
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      {
+        "category": "Groceries",
+        "precision": 0.955,
+        "recall": 0.375,
+        "f1": 0.538,
+        "support": 56
+      },
+      {
+        "category": "Health",
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 1
+      },
+      {
+        "category": "Insurance",
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 7
+      },
+      {
+        "category": "Shopping",
+        "precision": 0.621,
+        "recall": 0.897,
+        "f1": 0.734,
+        "support": 234
+      },
+      {
+        "category": "Subscriptions",
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      {
+        "category": "Travel",
+        "precision": 0.817,
+        "recall": 0.515,
+        "f1": 0.632,
+        "support": 130
+      },
+      {
+        "category": "Utilities",
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      }
+    ],
+    "confusion_matrix": {
+      "labels": [
+        "Dining",
+        "Education",
+        "Entertainment",
+        "Fuel",
+        "Groceries",
+        "Health",
+        "Insurance",
+        "Shopping",
+        "Subscriptions",
+        "Travel",
+        "Utilities"
+      ],
+      "matrix": [
+        [
+          80,
+          2,
+          2,
+          0,
+          1,
+          0,
+          0,
+          41,
+          0,
+          7,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          7,
+          1,
+          3,
+          0,
+          0,
+          0,
+          0,
+          22,
+          3,
+          5,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          8,
+          1,
+          0,
+          3,
+          21,
+          0,
+          0,
+          23,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          5,
+          0,
+          0,
+          0
+        ],
+        [
+          9,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          210,
+          7,
+          3,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          8,
+          10,
+          6,
+          1,
+          0,
+          0,
+          0,
+          36,
+          2,
+          67,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    "class_distribution": {
+      "Dining": 133,
+      "Education": 0,
+      "Entertainment": 41,
+      "Fuel": 0,
+      "Groceries": 56,
+      "Health": 1,
+      "Insurance": 7,
+      "Shopping": 234,
+      "Subscriptions": 0,
+      "Travel": 130,
+      "Utilities": 0
+    },
+    "confidence": {
+      "review_threshold": 0.5,
+      "share_confident": 0.804,
+      "accuracy_when_confident": 0.7211,
+      "accuracy_when_sent_for_review": 0.2712
+    }
+  },
+  "beats_keyword_rule_on_held_out": true,
+  "leakage_checks": {
+    "merchant_groups_in_both": 0,
+    "test_descriptors_identical_to_a_training_descriptor": 0,
+    "dc_rows_whose_descriptor_is_in_oklahoma_training": 1569,
+    "dc_rows_whose_merchant_group_is_in_oklahoma_training": 18022,
+    "method": "GroupShuffleSplit by merchant group; descriptors de-duplicated per (text, label) before splitting"
+  },
+  "rare_categories": {
+    "Insurance": {
+      "training_descriptors": 74,
+      "held_out_f1": 0.444,
+      "held_out_support": 14
+    }
+  },
+  "unmapped": {
+    "mcc_descriptions_total": 548,
+    "mcc_descriptions_excluded": 209,
+    "transaction_rows_excluded": 559432,
+    "transaction_rows_total": 1548316,
+    "dc_transaction_rows_excluded": 328251,
+    "rule": "MCC descriptions with no personal-finance meaning (app/ml/data/pcard.EXCLUDED) or no match are excluded, never forced into a category"
+  },
+  "keyword_baseline_note": "The keyword rules were written for Indian merchant names (Swiggy, BigBasket ...), so on US descriptors they mostly fall back to Shopping; beating them is a low bar, which is why macro-F1 >= 0.50 is also required."
+}

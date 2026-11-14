@@ -167,8 +167,9 @@ def transactions(ctx: ProfileCtx = Depends(profile_reader), db: Session = Depend
                                        .where(M.Transaction.user_id == user.id)).all()]
     return {"total": total, "limit": limit, "offset": offset, "items": items, "categories": ALL_CATEGORIES,
             "months": sorted(months, reverse=True),
-            "anomaly_summary": {k: an.get(k) for k in ["transactions_scored", "flagged_count", "flagged_amount_total", "by_category",
-                                                        "by_month", "severity_rule", "disclaimer"]},
+            "anomaly_summary": {**{k: an.get(k) for k in ["transactions_scored", "flagged_count", "flagged_amount_total", "by_category",
+                                                           "by_month", "severity_rule", "disclaimer", "model_note", "note"]},
+                                "available": an.get("available", "transactions_scored" in an)},
             "flagged": an.get("flagged", [])}
 
 
@@ -185,6 +186,32 @@ def recategorise(tx_id: int, body: S.CategoryPatch, ctx: ProfileCtx = Depends(pr
     db.commit()
     common.invalidate(user.id)
     return {"id": t.id, "category": t.category, "category_source": t.category_source}
+
+
+@router.post("/profiles/{internal_id}/transactions/{tx_id}/suggestion", summary="Accept or reject a categoriser suggestion")
+def decide_suggestion(tx_id: int, body: S.SuggestionDecision, request: Request, ctx: ProfileCtx = Depends(profile_writer),
+                      db: Session = Depends(get_db)):
+    """accept: the suggested category becomes the person's own (source 'user', never re-predicted).
+    reject: the suggestion is removed; the row stays uncategorised and in Review until the person chooses a category.
+    Only a pending MODEL suggestion can be accepted or rejected; a category the person set is never touched."""
+    user = ctx.profile
+    t = db.get(M.Transaction, tx_id)
+    if t is None or t.user_id != user.id:
+        raise HTTPException(404, "Transaction not found.")
+    if t.category_source != "model" or not t.category:
+        raise HTTPException(409, "This transaction has no pending category suggestion.")
+    suggested = t.category
+    if body.action == "accept":
+        t.category_source, t.needs_review, t.review_reason = "user", False, None
+    else:
+        t.category, t.category_source, t.confidence = None, "none", None
+        t.needs_review, t.review_reason = True, f"You rejected the suggestion '{suggested}'. Choose the right category."
+    audit(db, f"categoriser.suggestion_{body.action}", request=request, app_user_id=ctx.account.id, profile_id=user.id,
+          detail={"tx": t.id}, commit=False)
+    db.commit()
+    common.invalidate(user.id)
+    return {"id": t.id, "category": t.category, "category_source": t.category_source, "needs_review": bool(t.needs_review),
+            "suggested": suggested, "action": body.action}
 
 
 @router.get("/profiles/{internal_id}/recommendations", summary="Saved recommendations with their status")

@@ -1,0 +1,64 @@
+{
+  "model": "anomaly_ulb_benchmark",
+  "version": "v20261114-214646",
+  "command": "python -m app.ml.train anomaly_ulb",
+  "training_started": "2026-11-14T21:46:46+00:00",
+  "training_finished": "2026-11-14T21:46:50+00:00",
+  "training_seconds": 3.9,
+  "peak_memory_mb": 500.1,
+  "environment": {
+    "machine": "Mac14,2",
+    "chip": "Apple M2",
+    "cpu_cores": "8",
+    "memory_gb": 8.0,
+    "os": "Darwin 27.2.1",
+    "python": "3.14.0",
+    "libraries": {
+      "scikit-learn": "1.9.1",
+      "xgboost": "3.4.1",
+      "pandas": "3.1.1",
+      "numpy": "2.5.4",
+      "shap": "0.54.1",
+      "scipy": "1.18.1",
+      "joblib": "1.6.0"
+    },
+    "accelerator": "CPU (XGBoost and scikit-learn do not use the Apple GPU/MPS here)",
+    "trained_locally": true,
+    "remote_services_used": false
+  },
+  "artifact": {
+    "path": "real/anomaly_ulb_benchmark/v20261114-214646/model.joblib",
+    "sha256": "747c48c298c3247558dd5cde66a25a868deb58014ef24f4b20c3e3e1cbb0f2e1",
+    "bytes": 2533089
+  },
+  "data_status": "real",
+  "evaluation_passed": true,
+  "approved_by_owner": false,
+  "deployable": false,
+  "deployment_label": "Benchmark only. Not used by Finora and not the deployed anomaly model's accuracy.",
+  "datasets": [
+    {
+      "key": "ulb_fraud",
+      "role": "separate benchmark",
+      "name": "Credit Card Fraud Detection (ULB Machine Learning Group / Worldline)",
+      "source_url": "https://www.openml.org/d/1597",
+      "licence": "Public (OpenML licence field); Database Contents License on the original Kaggle release",
+      "geography": "Europe",
+      "collection_period": "September 2013, 2 days",
+      "records": 284807,
+      "observations": "real (PCA-transformed)",
+      "synthetic_observations": "none",
+      "files": [
+        {
+          "file": "creditcard.csv",
+          "sha256": "76274b691b16a6c49d3f159c883398e03ccd6d1ee12d9d8ee38f4b4b98551a89",
+          "url": "https://storage.googleapis.com/download.tensorflow.org/data/creditcard.csv"
+        }
+      ],
+      "labels": "confirmed fraud flags from the card processor",
+      "acquisition_note": "The official OpenML ARFF (https://openml.org/data/v1/download/1673544/creditcard.arff, MD5 178bcf9bb1f31a3dfe12d0e577884add) could not be downloaded: the server drops the connection after a few minutes and does not support resuming (byte ranges ignored); three attempts failed. The same data was taken from Google's public mirror (used by the TensorFlow imbalanced-data tutorial).",
+      "verification": "Mirror file MD5 matches the mirror's published hash. Content checked against the OFFICIAL OpenML ARFF: the first 32,017 data rows (the complete rows of the official download before it was cut off, ~11% of the data) are identical value for value in all 31 columns, with the same column order. Totals match the published dataset: 284,807 rows, 492 frauds. The remaining rows could not be compared with the official file."
+    }
+  ],
+  "limitations": "Features are anonymised PCA components; results do not transfer to Finora's per-person features."
+}

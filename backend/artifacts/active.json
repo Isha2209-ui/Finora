@@ -1,0 +1,167 @@
+{
+  "credit_risk": {
+    "version": "v20261114-211415",
+    "path": "real/credit_risk/v20261114-211415/model.joblib",
+    "sha256": "cd6162b04adaf8960bc10dc1455b858747461c62175a6b79ef361b4709382b90",
+    "activated_at": "2026-11-14T21:27:56+00:00",
+    "reason": "Phase 6 owner approval 2026-11-14 (approved dataset + method); training, evaluation and checksum verified",
+    "label": "Trained on real Taiwanese card data (2005); not an Indian credit-bureau score"
+  },
+  "_history": [
+    {
+      "model": "forecast",
+      "action": "deactivate",
+      "previous": {
+        "version": "v20261114-211601",
+        "path": "real/forecast/v20261114-211601/model.joblib",
+        "sha256": "e84f1f62b9ff103c892f0665a8d7c589b24c2701a52a012fcbbc4c9035c5d896",
+        "activated_at": "2026-11-14T21:27:56+00:00",
+        "reason": "Phase 6 owner approval 2026-11-14 (approved dataset + method); training, evaluation and checksum verified; single-person experimental",
+        "label": "Experimental: trained on ONE real UK person's account (MoneyVis); accuracy for other people is not established"
+      },
+      "at": "2026-11-14T21:55:40+00:00",
+      "reason": "Fails its predefined acceptance criterion: XGBoost MAE 856.93 vs 3-month moving average 809.49 (owner instruction 2026-11-15). Kept as a documented single-person experiment."
+    },
+    {
+      "model": "peers",
+      "action": "activate",
+      "version": "v20261114-215812",
+      "previous": {
+        "version": "v20261114-212605",
+        "path": "real/peers/v20261114-212605/model.joblib",
+        "sha256": "cb5972465c53cebcbaf2a934df85849ac2303bcf221ed2568da171d576dccd51",
+        "activated_at": "2026-11-14T21:27:57+00:00",
+        "reason": "Phase 6 owner approval 2026-11-14 (approved dataset + method); training, evaluation and checksum verified",
+        "label": "US household peer groups (Federal Reserve SCF 2022); not Indian benchmarks"
+      },
+      "at": "2026-11-14T21:58:22+00:00",
+      "reason": "Owner-requested verification 2026-11-15: stacked weight corrected to WGT (total 130.8 M, population once); cluster labels identical to v20261114-212605; Finora ratios aligned with SCF definitions"
+    },
+    {
+      "model": "categoriser",
+      "action": "activate",
+      "version": "v20261114-222418",
+      "previous": null,
+      "at": "2026-11-14T22:25:57+00:00",
+      "reason": "Passes all 4 predefined acceptance criteria (held-out macro-F1 0.600; DC 0.585; no merchant leakage). Suggestion model: confidence shown, < 0.5 sent for review; not validated on Indian statements (owner rule 2026-11-15: activate only if criteria pass)"
+    },
+    {
+      "model": "forecast",
+      "action": "activate",
+      "status": "experimental",
+      "version": "v20261114-215913",
+      "previous": null,
+      "at": "2026-11-14T23:15:10+00:00",
+      "reason": "Owner instruction 2026-11-15: every built feature must be visible; shown as EXPERIMENTAL with its baseline comparison (XGBoost MAE 856.93 vs 3-month average 809.49)"
+    },
+    {
+      "model": "anomaly",
+      "action": "activate",
+      "status": "experimental",
+      "version": "v20261114-222608",
+      "previous": null,
+      "at": "2026-11-14T23:15:10+00:00",
+      "reason": "Owner instruction 2026-11-15: the Anomaly Detection Scanner must be visible; shown as EXPERIMENTAL and NOT HUMAN-VALIDATED until the blinded review is complete"
+    }
+  ],
+  "peers": {
+    "version": "v20261114-215812",
+    "path": "real/peers/v20261114-215812/model.joblib",
+    "sha256": "46f62c7ac252e8125430f789634bf7efa5227a347a27dcea00799a2bc9c8d816",
+    "activated_at": "2026-11-14T21:58:22+00:00",
+    "reason": "Owner-requested verification 2026-11-15: stacked weight corrected to WGT (total 130.8 M, population once); cluster labels identical to v20261114-212605; Finora ratios aligned with SCF definitions",
+    "label": "US household peer groups (Federal Reserve SCF 2022); not Indian benchmarks",
+    "acceptance": [
+      {
+        "criterion": "minimum cross-implicate adjusted Rand index >= 0.70 (clusters stable across the 5 SCF implicates)",
+        "passed": true,
+        "value": 0.8669
+      },
+      {
+        "criterion": "silhouette > 0 for the chosen k",
+        "passed": true,
+        "value": 0.2187
+      },
+      {
+        "criterion": "survey-weight shares of the groups sum to 100%",
+        "passed": true,
+        "value": 100.0
+      }
+    ]
+  },
+  "categoriser": {
+    "version": "v20261114-222418",
+    "path": "real/categoriser/v20261114-222418/model.joblib",
+    "sha256": "ff36635ab6a34d280c25452b65af968b7a22c37ac5d71556e69177bf2ffa6d31",
+    "activated_at": "2026-11-14T22:25:57+00:00",
+    "reason": "Passes all 4 predefined acceptance criteria (held-out macro-F1 0.600; DC 0.585; no merchant leakage). Suggestion model: confidence shown, < 0.5 sent for review; not validated on Indian statements (owner rule 2026-11-15: activate only if criteria pass)",
+    "label": "Merchant categories learned from real US government purchase-card transactions; not validated on Indian bank statements. Rent, EMI, Investment, Transfer, Card Payment and Cash are rules.",
+    "acceptance": [
+      {
+        "criterion": "held-out-merchant macro-F1 >= 0.50",
+        "passed": true,
+        "value": 0.5998
+      },
+      {
+        "criterion": "beats the keyword rules on held-out merchants (macro-F1)",
+        "passed": true,
+        "value": "0.5998 vs 0.1494"
+      },
+      {
+        "criterion": "beats the keyword rules on the independent DC test (macro-F1)",
+        "passed": true,
+        "value": "0.5851 vs 0.1433"
+      },
+      {
+        "criterion": "no merchant group in both training and test",
+        "passed": true,
+        "value": 0
+      }
+    ]
+  },
+  "forecast": {
+    "version": "v20261114-215913",
+    "path": "real/forecast/v20261114-215913/model.joblib",
+    "sha256": "e84f1f62b9ff103c892f0665a8d7c589b24c2701a52a012fcbbc4c9035c5d896",
+    "activated_at": "2026-11-14T23:15:10+00:00",
+    "reason": "Owner instruction 2026-11-15: every built feature must be visible; shown as EXPERIMENTAL with its baseline comparison (XGBoost MAE 856.93 vs 3-month average 809.49)",
+    "label": "Experimental: trained on ONE real UK person's account (MoneyVis); accuracy for other people is not established",
+    "status": "experimental",
+    "acceptance": [
+      {
+        "criterion": "XGBoost MAE below the 3-month moving average's MAE on the chronological test months",
+        "passed": false,
+        "value": "856.93 vs 809.49"
+      }
+    ],
+    "unmet_criteria": [
+      "XGBoost MAE below the 3-month moving average's MAE on the chronological test months"
+    ],
+    "experimental_reason": "Available as EXPERIMENTAL: on its chronological test it did not beat the 3-month moving average."
+  },
+  "anomaly": {
+    "version": "v20261114-222608",
+    "path": "real/anomaly/v20261114-222608/model.joblib",
+    "sha256": "e23b30dd4cba12c24373647a2aaa3061098910c08762513d6256f403384a276a",
+    "activated_at": "2026-11-14T23:15:10+00:00",
+    "reason": "Owner instruction 2026-11-15: the Anomaly Detection Scanner must be visible; shown as EXPERIMENTAL and NOT HUMAN-VALIDATED until the blinded review is complete",
+    "label": "Unusual for you, compared with your own history. Trained on real US government cardholder histories; no verified accuracy yet (human review pending). Not fraud detection.",
+    "status": "experimental",
+    "acceptance": [
+      {
+        "criterion": "flagged set stable across random seeds (Jaccard >= 0.70)",
+        "passed": true,
+        "value": 0.823
+      },
+      {
+        "criterion": "a completed blinded human review supports the flags (precision of flagged transactions judged unusual >= 0.50)",
+        "passed": false,
+        "value": "review not completed"
+      }
+    ],
+    "unmet_criteria": [
+      "a completed blinded human review supports the flags (precision of flagged transactions judged unusual >= 0.50)"
+    ],
+    "experimental_reason": "Available as EXPERIMENTAL, NOT HUMAN-VALIDATED: the blinded human review of its flags is not complete."
+  }
+}

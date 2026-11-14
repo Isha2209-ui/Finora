@@ -1,0 +1,77 @@
+{
+  "model": "peers",
+  "version": "v20261114-211718",
+  "command": "python -m app.ml.train peers",
+  "training_started": "2026-11-14T21:17:18+00:00",
+  "training_finished": "2026-11-14T21:17:20+00:00",
+  "training_seconds": 2.0,
+  "peak_memory_mb": 313.4,
+  "environment": {
+    "machine": "Mac14,2",
+    "chip": "Apple M2",
+    "cpu_cores": "8",
+    "memory_gb": 8.0,
+    "os": "Darwin 27.2.1",
+    "python": "3.14.0",
+    "libraries": {
+      "scikit-learn": "1.9.1",
+      "xgboost": "3.4.1",
+      "pandas": "3.1.1",
+      "numpy": "2.5.4",
+      "shap": "0.54.1",
+      "scipy": "1.18.1",
+      "joblib": "1.6.0"
+    },
+    "accelerator": "CPU (XGBoost and scikit-learn do not use the Apple GPU/MPS here)",
+    "trained_locally": true,
+    "remote_services_used": false
+  },
+  "artifact": {
+    "path": "real/peers/v20261114-211718/model.joblib",
+    "sha256": "e4365ef7f93c368fe9306b70d4dcc7842abbea0360a2a0ba16d7be4bb28a1658",
+    "bytes": 1826741
+  },
+  "data_status": "real",
+  "evaluation_passed": true,
+  "approved_by_owner": true,
+  "evaluation_note": "Cluster agreement across the 5 implicates: mean ARI 0.88 (stable).",
+  "deployment_label": "US household peer groups (Federal Reserve SCF 2022); not Indian benchmarks",
+  "scope": "US households",
+  "datasets": [
+    {
+      "key": "scf2022",
+      "name": "Survey of Consumer Finances 2022, summary extract",
+      "publisher": "Board of Governors of the Federal Reserve System",
+      "source_url": "https://www.federalreserve.gov/econres/scf_2022.htm",
+      "download_url": "https://www.federalreserve.gov/econres/files/scfp2022excel.zip",
+      "collection_period": "Survey year 2022 (income refers to 2021)",
+      "geography": "United States",
+      "population": "US families (household-level), with survey weights",
+      "records": 22975,
+      "families": 4595,
+      "features": 362,
+      "format": "CSV in zip",
+      "target": "none (unsupervised clustering)",
+      "observations": "real survey responses; missing answers are multiply imputed by the Federal Reserve (5 implicates)",
+      "synthetic_observations": "none (imputation of item non-response by the publisher is disclosed, not synthetic people)",
+      "licence": "US Federal Reserve public data (no restriction stated on the page; cite the Federal Reserve)",
+      "file_sha256": "ad0df8bec513ff932d7421bc17a89ddfd16cbd9f678380f91d41c822d22be257",
+      "codebook_sha256": "f0011275e744071a53c038238328156868442174b46e2a8507c6dc62e0245bf9",
+      "downloaded": "2026-11-14T21:12:34+00:00",
+      "cleaning": {
+        "records": 22975,
+        "families": 4595,
+        "implicates_per_family": 5,
+        "totspendnh_nonzero_records": 0,
+        "records_without_positive_income_excluded": 197,
+        "records_used": 22778
+      },
+      "preprocessing": "8 ratio features (see module docstring), clipped and signed-log compressed, standardised with survey weights.",
+      "missing_values": "none after the publisher's imputation; families with income <= 0 excluded (counted)",
+      "known_biases": "US households, 2022 dollars; wealthy households oversampled by design (weights correct for this)."
+    }
+  ],
+  "methodology": "Weighted K-Means on stacked implicates (weight WGT/5); k by silhouette; stability by ARI across implicates.",
+  "limitations": "US households, not Indian; household-level, while a Finora profile may be one person; spending is not in the 2022 summary extract, so groups are about savings, debt and assets rather than spending habits.",
+  "reproducible": "python -m app.ml.train peers (seed 7) with the raw file above"
+}

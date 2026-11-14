@@ -1,0 +1,95 @@
+{
+  "benchmark_only": true,
+  "not_the_deployed_model": true,
+  "dataset": "ULB / Worldline credit-card fraud, September 2013 (2 days)",
+  "rows": 284807,
+  "fraud_rows": 492,
+  "train_day1_rows": 144786,
+  "test_day2_rows": 140021,
+  "test_fraud_rows": 211,
+  "labels_used_for_training": false,
+  "isolation_forest": {
+    "precision": 0.0616,
+    "recall": 0.654,
+    "f1": 0.1125,
+    "false_positive_rate": 0.01505,
+    "flagged": 2242,
+    "confusion_matrix": {
+      "tn": 137706,
+      "fp": 2104,
+      "fn": 73,
+      "tp": 138
+    },
+    "pr_auc": 0.1301,
+    "roc_auc": 0.9606
+  },
+  "rule_amount_above_day1_p99": {
+    "precision": 0.0031,
+    "recall": 0.019,
+    "f1": 0.0053,
+    "false_positive_rate": 0.00933,
+    "flagged": 1309,
+    "confusion_matrix": {
+      "tn": 138505,
+      "fp": 1305,
+      "fn": 207,
+      "tp": 4
+    },
+    "pr_auc": 0.0018
+  },
+  "fraud_base_rate_test": 0.00151,
+  "false_alarm_investigation": {
+    "base_rate": 0.00151,
+    "by_alert_budget": [
+      {
+        "flag_share_pct": 0.1,
+        "flagged": 140,
+        "true_frauds_caught": 40,
+        "precision": 0.2857,
+        "recall": 0.1896,
+        "best_possible_precision": 1.0
+      },
+      {
+        "flag_share_pct": 0.17,
+        "flagged": 238,
+        "true_frauds_caught": 44,
+        "precision": 0.1849,
+        "recall": 0.2085,
+        "best_possible_precision": 0.8866
+      },
+      {
+        "flag_share_pct": 0.5,
+        "flagged": 700,
+        "true_frauds_caught": 76,
+        "precision": 0.1086,
+        "recall": 0.3602,
+        "best_possible_precision": 0.3014
+      },
+      {
+        "flag_share_pct": 1.0,
+        "flagged": 1400,
+        "true_frauds_caught": 110,
+        "precision": 0.0786,
+        "recall": 0.5213,
+        "best_possible_precision": 0.1507
+      },
+      {
+        "flag_share_pct": 1.5,
+        "flagged": 2100,
+        "true_frauds_caught": 132,
+        "precision": 0.0629,
+        "recall": 0.6256,
+        "best_possible_precision": 0.1005
+      },
+      {
+        "flag_share_pct": 3.0,
+        "flagged": 4201,
+        "true_frauds_caught": 173,
+        "precision": 0.0412,
+        "recall": 0.8199,
+        "best_possible_precision": 0.0502
+      }
+    ],
+    "explanation": "The deployed contamination (1.5%) flags about 10x more transactions than there are frauds (0.15%), so even a perfect ranking would be at most ~10% precise at that budget. Precision rises as fewer transactions are flagged, at the cost of recall. This is a property of rare events, not evidence about Finora's users."
+  }
+}
