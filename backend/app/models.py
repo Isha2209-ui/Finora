@@ -1,7 +1,17 @@
 """Finora database schema - a person's complete financial identity.
 
-Every financial record belongs to a user through users.id (the internal user ID).
-PAN is never stored in plain text: only a salted SHA-256 hash (for lookup) and a masked form.
+Two kinds of "user" exist and must not be confused:
+  * AppUser (table app_users)  - a login account (email + password hash). Owns profiles.
+  * User    (table users)      - a financial profile / identity. Every financial record belongs to a
+                                 profile through users.id. Kept as "User" for backwards compatibility.
+
+Profile kinds (users.kind):
+  template   - one of the four read-only demo identities (synthetic). Never modified through the API.
+  population - the synthetic population used only to train/evaluate models. Never reachable through the API.
+  sandbox    - an editable copy of a template owned by one account, deleted after SANDBOX_TTL_HOURS.
+  private    - a profile an account built itself. Only its owner can see it.
+
+PAN is never stored in plain text: only a salted SHA-256 hash (for demo lookup) and a masked form.
 """
 from datetime import date, datetime
 
@@ -14,6 +24,45 @@ from .database import Base
 
 def _fk(table: str, nullable: bool = False):
     return mapped_column(ForeignKey(f"{table}.id", ondelete="CASCADE"), index=True, nullable=nullable)
+
+
+# ---------------------------------------------------------------- login accounts & security
+class AppUser(Base):
+    __tablename__ = "app_users"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email: Mapped[str] = mapped_column(String(254), unique=True, index=True)  # stored lower-cased
+    password_hash: Mapped[str] = mapped_column(String(255))  # argon2id (or bcrypt fallback); never the password
+    display_name: Mapped[str] = mapped_column(String(80), default="")
+    is_guest: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class AuthSession(Base):
+    """Server-side session. The cookie holds a random token; only its SHA-256 hash is stored."""
+    __tablename__ = "auth_sessions"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    app_user_id: Mapped[int] = _fk("app_users")
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    csrf_token: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    revoked: Mapped[bool] = mapped_column(Boolean, default=False)
+    user_agent: Mapped[str] = mapped_column(String(160), default="")
+
+
+class AuditEvent(Base):
+    """Security-relevant actions. Holds IDs and action names only - never PANs, passwords, tokens or raw statement data."""
+    __tablename__ = "audit_events"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    app_user_id: Mapped[int | None] = mapped_column(ForeignKey("app_users.id", ondelete="SET NULL"), index=True, nullable=True)
+    profile_id: Mapped[int | None] = mapped_column(Integer, index=True, nullable=True)  # no FK: survives profile deletion
+    action: Mapped[str] = mapped_column(String(60), index=True)
+    outcome: Mapped[str] = mapped_column(String(20), default="ok")  # ok | denied | failed
+    detail: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    ip_hash: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
 
 # ---------------------------------------------------------------- people & accounts
@@ -33,6 +82,11 @@ class User(Base):
     # Generator archetype - used ONLY to evaluate models afterwards, never as a model input.
     archetype: Mapped[str] = mapped_column(String(40), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    # Ownership (see module docstring). Templates and population profiles have no owner.
+    kind: Mapped[str] = mapped_column(String(12), default="private", index=True)
+    owner_id: Mapped[int | None] = mapped_column(ForeignKey("app_users.id", ondelete="CASCADE"), index=True, nullable=True)
+    template_id: Mapped[int | None] = mapped_column(Integer, nullable=True)  # sandbox -> the template it was cloned from
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
 
     bank_accounts = relationship("BankAccount", cascade="all, delete-orphan", passive_deletes=True)
     credit_cards = relationship("CreditCard", cascade="all, delete-orphan", passive_deletes=True)
@@ -290,6 +344,7 @@ class Report(Base):
     __tablename__ = "reports"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = _fk("users")
+    app_user_id: Mapped[int | None] = mapped_column(Integer, index=True, nullable=True)  # who generated it
     report_path: Mapped[str] = mapped_column(String(300))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
@@ -298,6 +353,7 @@ class ChatMessage(Base):
     __tablename__ = "chat_messages"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = _fk("users")
+    app_user_id: Mapped[int | None] = mapped_column(Integer, index=True, nullable=True)  # whose conversation
     role: Mapped[str] = mapped_column(String(12))  # user | assistant
     content: Mapped[str] = mapped_column(Text)
     meta: Mapped[dict | None] = mapped_column(JSON, nullable=True)

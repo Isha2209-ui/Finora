@@ -16,10 +16,15 @@ import ModelLab from './pages/ModelLab.jsx'
 import Recommendations from './pages/Recommendations.jsx'
 import Reports from './pages/Reports.jsx'
 import Transactions from './pages/Transactions.jsx'
+import { useAuth } from './auth.jsx'
+import SignIn from './pages/SignIn.jsx'
 import { useFinora } from './store.jsx'
 
 export default function App() {
+  const { account } = useAuth()
   const { profileId, analysis, loading, error, refresh } = useFinora()
+  if (account === undefined) return <Loading full label="Checking your session…" />
+  if (account === null) return <Routes><Route path="*" element={<SignIn />} /></Routes>
   if (!profileId) return <Routes><Route path="*" element={<Lookup />} /></Routes>
   return (
     <Layout>

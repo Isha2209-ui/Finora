@@ -12,17 +12,19 @@ from .. import schemas as S
 from ..database import get_db
 from ..services import pan as P
 from ..services.cleaning import ALL_CATEGORIES, standardise_category
+from ..auth import Current, ProfileCtx, can_read, current_account, profile_reader, profile_writer
 from . import common
 
 router = APIRouter(prefix="/api", tags=["Profiles & analysis"])
 
 
 @router.post("/lookup", summary="Find a profile by PAN (sent in the body, never in the URL)")
-def lookup(body: S.LookupIn, db: Session = Depends(get_db)):
+def lookup(body: S.LookupIn, cur: Current = Depends(current_account), db: Session = Depends(get_db)):
     err = P.validation_error(body.pan)
     if err:
         raise HTTPException(422, err)
-    user = db.scalar(select(M.User).where(M.User.pan_hash == P.hash_pan(body.pan)))
+    # Only the four synthetic demo templates can be found this way. A PAN never unlocks any other data.
+    user = db.scalar(select(M.User).where(M.User.pan_hash == P.hash_pan(body.pan), M.User.kind == "template"))
     if user is None:
         raise HTTPException(404, "No financial profile is linked to this PAN. Try one of the demo identifiers.")
     return {"found": True, "profile": common.public_profile(user),
@@ -30,26 +32,27 @@ def lookup(body: S.LookupIn, db: Session = Depends(get_db)):
                       "production access would use the RBI Account Aggregator framework with user consent."}
 
 
-@router.get("/profiles", summary="List profiles (PAN shown masked only)")
-def list_profiles(db: Session = Depends(get_db)):
-    users = db.scalars(select(M.User).where(M.User.pan_hash.is_not(None)).order_by(M.User.id)).all()
-    return [common.public_profile(u) for u in users]
+@router.get("/profiles", summary="Profiles you can open: the demo templates plus your own (PAN shown masked only)")
+def list_profiles(cur: Current = Depends(current_account), db: Session = Depends(get_db)):
+    users = db.scalars(select(M.User).where((M.User.kind == "template") | (M.User.owner_id == cur.user.id))
+                       .order_by(M.User.id)).all()
+    return [common.public_profile(u) for u in users if can_read(u, cur.user)]
 
 
 @router.get("/profiles/{internal_id}", summary="Basic profile")
-def get_profile(internal_id: str, db: Session = Depends(get_db)):
-    return common.public_profile(common.get_user(db, internal_id))
+def get_profile(ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db)):
+    return common.public_profile(ctx.profile)
 
 
 @router.post("/profiles/{internal_id}/analyze", summary="Run the full analysis (all models + calculations) and save it")
-def analyze(internal_id: str, db: Session = Depends(get_db)):
-    user = common.get_user(db, internal_id)
+def analyze(ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db)):
+    user = ctx.profile
     return _strip(common.get_analysis(db, user, refresh=True))
 
 
 @router.get("/profiles/{internal_id}/analysis", summary="Latest analysis (computed on first request)")
-def get_analysis(internal_id: str, db: Session = Depends(get_db)):
-    return _strip(common.get_analysis(db, common.get_user(db, internal_id)))
+def get_analysis(ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db)):
+    return _strip(common.get_analysis(db, ctx.profile))
 
 
 def _strip(a: dict) -> dict:
@@ -59,8 +62,8 @@ def _strip(a: dict) -> dict:
 
 
 @router.get("/profiles/{internal_id}/accounts", summary="Bank accounts and credit cards")
-def accounts(internal_id: str, db: Session = Depends(get_db)):
-    user = common.get_user(db, internal_id)
+def accounts(ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db)):
+    user = ctx.profile
     a = common.get_analysis(db, user)
     accts = db.scalars(select(M.BankAccount).where(M.BankAccount.user_id == user.id)).all()
     counts = dict(db.execute(select(M.Transaction.account_id, func.count()).where(M.Transaction.user_id == user.id)
@@ -75,11 +78,11 @@ def accounts(internal_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/profiles/{internal_id}/transactions", summary="Transactions with filters and anomaly flags")
-def transactions(internal_id: str, db: Session = Depends(get_db), category: str | None = None,
+def transactions(ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db), category: str | None = None,
                  source: str | None = Query(None, description="account:<id> or card:<id>"), flagged_only: bool = False,
                  month: str | None = Query(None, pattern=r"^\d{4}-\d{2}$"), search: str | None = None,
                  limit: int = Query(100, ge=1, le=500), offset: int = Query(0, ge=0)):
-    user = common.get_user(db, internal_id)
+    user = ctx.profile
     a = common.get_analysis(db, user)
     an = a["ml"].get("anomaly", {})
     flagged = {f["transaction_id"]: f for f in an.get("flagged", [])}
@@ -124,8 +127,8 @@ def transactions(internal_id: str, db: Session = Depends(get_db), category: str 
 
 
 @router.patch("/profiles/{internal_id}/transactions/{tx_id}", summary="Correct a transaction's category")
-def recategorise(internal_id: str, tx_id: int, body: S.CategoryPatch, db: Session = Depends(get_db)):
-    user = common.get_user(db, internal_id)
+def recategorise(tx_id: int, body: S.CategoryPatch, ctx: ProfileCtx = Depends(profile_writer), db: Session = Depends(get_db)):
+    user = ctx.profile
     t = db.get(M.Transaction, tx_id)
     if t is None or t.user_id != user.id:
         raise HTTPException(404, "Transaction not found.")
@@ -139,8 +142,8 @@ def recategorise(internal_id: str, tx_id: int, body: S.CategoryPatch, db: Sessio
 
 
 @router.get("/profiles/{internal_id}/recommendations", summary="Saved recommendations with their status")
-def recommendations(internal_id: str, db: Session = Depends(get_db)):
-    user = common.get_user(db, internal_id)
+def recommendations(ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db)):
+    user = ctx.profile
     common.get_analysis(db, user)
     rows = db.scalars(select(M.Recommendation).where(M.Recommendation.user_id == user.id)).all()
     order = {"high": 0, "medium": 1, "low": 2}
@@ -151,8 +154,8 @@ def recommendations(internal_id: str, db: Session = Depends(get_db)):
 
 
 @router.patch("/profiles/{internal_id}/recommendations/{rec_id}", summary="Accept or dismiss a recommendation")
-def set_recommendation_status(internal_id: str, rec_id: int, body: S.RecStatus, db: Session = Depends(get_db)):
-    user = common.get_user(db, internal_id)
+def set_recommendation_status(rec_id: int, body: S.RecStatus, ctx: ProfileCtx = Depends(profile_writer), db: Session = Depends(get_db)):
+    user = ctx.profile
     r = db.get(M.Recommendation, rec_id)
     if r is None or r.user_id != user.id:
         raise HTTPException(404, "Recommendation not found.")

@@ -21,6 +21,7 @@ def _insert_identity(db, spec: G.Spec, sim: dict) -> int:
     user = M.User(internal_id=spec.internal_id, name=spec.name, age=spec.age, occupation=spec.occupation,
                   employment_type=spec.employment_type, city=spec.city, archetype=spec.archetype,
                   retirement_age_target=spec.retirement_age_target, is_demo=spec.is_demo,
+                  kind="template" if spec.pan else "population",
                   pan_hash=P.hash_pan(spec.pan) if spec.pan else None,
                   pan_masked=P.mask(spec.pan) if spec.pan else None)
     db.add(user)

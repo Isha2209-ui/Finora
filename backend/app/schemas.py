@@ -67,7 +67,7 @@ class TransactionIn(BaseModel):
 
 class ProfileIn(BaseModel):
     name: str = Field(..., min_length=2, max_length=120)
-    pan: str
+    pan: str | None = Field(None, description="Optional. Stored masked for display only; never used to look anything up.")
     age: int = Field(..., ge=18, le=80)
     occupation: str = "Professional"
     employment_type: Literal["salaried", "self_employed"] = "salaried"

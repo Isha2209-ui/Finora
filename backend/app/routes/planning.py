@@ -14,14 +14,16 @@ from ..services import decision as D
 from ..services import fire as F
 from ..services import tax as T
 from ..services.loader import load_identity
+from ..auth import ProfileCtx, profile_reader, rate_limit
+from ..config import CHAT_MAX_PER_MINUTE
 from . import common
 
 router = APIRouter(prefix="/api", tags=["Planning & AI CFO"])
 
 
 @router.post("/profiles/{internal_id}/fire", summary="FIRE projection with what-if inputs")
-def fire(internal_id: str, body: S.FireIn, db: Session = Depends(get_db)):
-    user = common.get_user(db, internal_id)
+def fire(body: S.FireIn, ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db)):
+    user = ctx.profile
     base = common.get_analysis(db, user)["fire"]
     fi = base["inputs"]
     pick = lambda v, d: d if v is None else v  # noqa: E731
@@ -43,8 +45,8 @@ def fire(internal_id: str, body: S.FireIn, db: Session = Depends(get_db)):
 
 
 @router.post("/profiles/{internal_id}/decision", summary="Decision Simulator: should I make this purchase?")
-def decision(internal_id: str, body: S.DecisionIn, db: Session = Depends(get_db)):
-    user = common.get_user(db, internal_id)
+def decision(body: S.DecisionIn, ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db)):
+    user = ctx.profile
     return D.simulate(load_identity(db, user.id), snap=common.get_analysis(db, user), **body.model_dump())
 
 
@@ -55,8 +57,8 @@ def tax_compare(body: S.TaxIn):
 
 
 @router.post("/profiles/{internal_id}/payoff", summary="Debt payoff plan with an extra monthly payment")
-def payoff(internal_id: str, body: S.PayoffIn, db: Session = Depends(get_db)):
-    a = common.get_analysis(db, common.get_user(db, internal_id))
+def payoff(body: S.PayoffIn, ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db)):
+    a = common.get_analysis(db, ctx.profile)
     debts = [{"name": d["name"], "balance": d["balance"], "rate": d["rate"], "payment": d["payment"]} for d in a["debt"].get("debts", [])]
     if not debts:
         return {"has_debt": False}
@@ -73,34 +75,38 @@ def cfo_status():
     return llm.status(force=True)
 
 
+def _mine(profile_id: int, account_id: int):
+    """Chat history is per (profile, account): two people looking at the same demo template never see each other's questions."""
+    return select(M.ChatMessage).where(M.ChatMessage.user_id == profile_id, M.ChatMessage.app_user_id == account_id)
+
+
 @router.post("/profiles/{internal_id}/chat", summary="Ask the AI CFO a question")
-def chat(internal_id: str, body: S.ChatIn, db: Session = Depends(get_db)):
-    user = common.get_user(db, internal_id)
+def chat(body: S.ChatIn, ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db)):
+    user, me = ctx.profile, ctx.account.id
+    rate_limit(f"chat:{me}", CHAT_MAX_PER_MINUTE, 60, "You are asking questions very quickly.")
     hist = [{"role": m.role, "content": m.content} for m in db.scalars(
-        select(M.ChatMessage).where(M.ChatMessage.user_id == user.id).order_by(M.ChatMessage.id.desc()).limit(6)).all()][::-1]
+        _mine(user.id, me).order_by(M.ChatMessage.id.desc()).limit(6)).all()][::-1]
     res = agent.answer(body.message, common.cfo_context(db, user), hist, use_llm=body.use_llm)
-    db.add(M.ChatMessage(user_id=user.id, role="user", content=body.message))
-    db.add(M.ChatMessage(user_id=user.id, role="assistant", content=res["answer"],
+    db.add(M.ChatMessage(user_id=user.id, app_user_id=me, role="user", content=body.message))
+    db.add(M.ChatMessage(user_id=user.id, app_user_id=me, role="assistant", content=res["answer"],
                          meta={"engine": res["engine"], "tools_used": res.get("tools_used", [])}))
     db.commit()
     return res
 
 
 @router.get("/profiles/{internal_id}/chat", summary="Chat history")
-def chat_history(internal_id: str, db: Session = Depends(get_db)):
-    user = common.get_user(db, internal_id)
+def chat_history(ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db)):
     return [{"role": m.role, "content": m.content, "meta": m.meta, "at": m.created_at.isoformat()} for m in
-            db.scalars(select(M.ChatMessage).where(M.ChatMessage.user_id == user.id).order_by(M.ChatMessage.id)).all()]
+            db.scalars(_mine(ctx.profile.id, ctx.account.id).order_by(M.ChatMessage.id)).all()]
 
 
 @router.delete("/profiles/{internal_id}/chat", summary="Clear chat history")
-def clear_chat(internal_id: str, db: Session = Depends(get_db)):
-    user = common.get_user(db, internal_id)
-    db.execute(delete(M.ChatMessage).where(M.ChatMessage.user_id == user.id))
+def clear_chat(ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db)):
+    db.execute(delete(M.ChatMessage).where(M.ChatMessage.user_id == ctx.profile.id, M.ChatMessage.app_user_id == ctx.account.id))
     db.commit()
     return {"cleared": True}
 
 
 @router.get("/profiles/{internal_id}/briefing", summary="Monthly CFO briefing")
-def briefing(internal_id: str, use_llm: bool = True, db: Session = Depends(get_db)):
-    return agent.briefing(common.cfo_context(db, common.get_user(db, internal_id)), use_llm=use_llm)
+def briefing(use_llm: bool = True, ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db)):
+    return agent.briefing(common.cfo_context(db, ctx.profile), use_llm=use_llm)

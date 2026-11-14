@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   Activity, BadgeIndianRupee, Bot, BrainCircuit, CreditCard, Database, FileText, Flame, Landmark, Lightbulb, LogOut,
-  MessageSquare, PiggyBank, RefreshCw, Scale, ScanSearch, TrendingUp, UserRound, Wallet,
+  Eye, MessageSquare, PiggyBank, RefreshCw, Repeat, Scale, ScanSearch, TrendingUp, UserRound, Wallet,
 } from 'lucide-react'
+import { useAuth } from '../auth.jsx'
 import { useFinora } from '../store.jsx'
 import ChatPanel from './ChatPanel.jsx'
 import { Badge, cx } from './ui.jsx'
@@ -16,7 +17,8 @@ const NAV = [
 ]
 
 export default function Layout({ children }) {
-  const { analysis, signOut, refresh, loading } = useFinora()
+  const { analysis, profile, signOut, refresh, loading } = useFinora()
+  const { account, logout } = useAuth()
   const [chat, setChat] = useState(false)
   const loc = useLocation()
   const p = analysis?.profile
@@ -59,6 +61,7 @@ export default function Layout({ children }) {
               </div>
             </div>
           ) : <div className="text-sm text-muted">Loading profile…</div>}
+          {profile?.read_only && <Badge tone="warn"><Eye size={12} /> Read-only demo</Badge>}
           <div className="flex-1" />
           {hs && <Badge tone={hs.score >= 65 ? 'good' : hs.score >= 45 ? 'warn' : 'bad'}><Wallet size={12} /> Health {hs.score}/100 · {hs.band}</Badge>}
           <button onClick={() => refresh({ rerun: true })} title="Re-run the full analysis" className="rounded-lg border border-line bg-raised p-2 text-muted hover:text-ink">
@@ -67,7 +70,9 @@ export default function Layout({ children }) {
           <button onClick={() => setChat((v) => !v)} className={cx('flex items-center gap-2 rounded-lg border px-3 py-2 text-sm', chat ? 'border-accent/50 bg-accent/15 text-accent' : 'border-line bg-raised text-ink hover:border-faint')}>
             <MessageSquare size={15} /> Ask AI CFO
           </button>
-          <button onClick={signOut} title="Switch profile" className="rounded-lg border border-line bg-raised p-2 text-muted hover:text-ink"><LogOut size={15} /></button>
+          <button onClick={signOut} title="Switch profile" className="rounded-lg border border-line bg-raised p-2 text-muted hover:text-ink"><Repeat size={15} /></button>
+          <div className="hidden max-w-40 truncate text-xs text-faint xl:block" title={account?.email}>{account?.display_name || account?.email}</div>
+          <button onClick={logout} title="Sign out of your account" className="rounded-lg border border-line bg-raised p-2 text-muted hover:text-ink"><LogOut size={15} /></button>
         </header>
         <div className="flex min-h-0 flex-1">
           <main key={loc.pathname} className="rise min-w-0 flex-1 overflow-y-auto px-6 py-6">{children}</main>

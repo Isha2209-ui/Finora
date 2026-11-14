@@ -1,8 +1,6 @@
-"""Shared helpers for API routes: user lookup and the per-user analysis cache."""
+"""Shared helpers for API routes: the per-profile analysis cache and public profile view. Access checks live in app/auth.py."""
 from __future__ import annotations
 
-from fastapi import HTTPException
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .. import models as M
@@ -10,13 +8,6 @@ from ..services import analysis
 from ..services.loader import load_identity
 
 _cache: dict[int, dict] = {}
-
-
-def get_user(db: Session, internal_id: str) -> M.User:
-    user = db.scalar(select(M.User).where(M.User.internal_id == internal_id))
-    if user is None:
-        raise HTTPException(404, f"Profile '{internal_id}' not found.")
-    return user
 
 
 def get_analysis(db: Session, user: M.User, refresh: bool = False) -> dict:
@@ -39,4 +30,5 @@ def cfo_context(db: Session, user: M.User) -> dict:
 def public_profile(u: M.User) -> dict:
     return {"internal_id": u.internal_id, "pan_masked": u.pan_masked, "name": u.name, "age": u.age,
             "occupation": u.occupation, "employment_type": u.employment_type, "city": u.city,
-            "retirement_age_target": u.retirement_age_target, "is_demo": u.is_demo}
+            "retirement_age_target": u.retirement_age_target, "is_demo": u.is_demo, "kind": u.kind,
+            "read_only": u.kind == "template", "expires_at": u.expires_at.isoformat() if u.expires_at else None}

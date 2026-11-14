@@ -130,12 +130,13 @@ def test_model_lab_and_categorise(client):
 
 def test_full_lifecycle_create_upload_analyse_delete(client):
     pan = "TESTP1234Q"
-    client.delete("/api/profiles/FINORA_USER_900")
     r = client.post("/api/profiles", json={"name": "Test User", "pan": pan, "age": 30, "monthly_income": 90000, "bank_balance": 150000})
     assert r.status_code == 200, r.text
-    uid = r.json()["profile"]["internal_id"]
+    prof = r.json()["profile"]
+    uid = prof["internal_id"]
+    assert prof["kind"] == "private" and not prof["read_only"] and uid.startswith("FP_") and pan not in r.text
     try:
-        assert client.post("/api/profiles", json={"name": "Dup", "pan": pan, "age": 30, "monthly_income": 1}).status_code == 409
+        assert client.post("/api/lookup", json={"pan": pan}).status_code == 404       # a PAN never unlocks a private profile
         rows = ["Date,Narration,Withdrawal,Deposit"]
         for m in range(4, 11):
             rows += [f"05/{m:02d}/2026,IMPS/P2A/123456789012/RENT FLAT,20000,", f"08/{m:02d}/2026,UPI/DR/123456789012/SWIGGY/YESB/swiggy@ybl/Payment,{600 + m * 10},",
@@ -163,15 +164,20 @@ def test_full_lifecycle_create_upload_analyse_delete(client):
         assert client.patch(f"/api/profiles/{uid}", json={"retirement_age_target": 52}).json()["retirement_age_target"] == 52
         bad = client.post(f"/api/profiles/{uid}/upload", files={"file": ("x.csv", io.BytesIO(b"foo,bar\n1,2\n"), "text/csv")})
         assert bad.status_code == 422
+        recs = client.get(f"/api/profiles/{uid}/recommendations").json()
+        if recs:
+            rid = recs[0]["id"]
+            assert client.patch(f"/api/profiles/{uid}/recommendations/{rid}", json={"status": "accepted"}).json()["status"] == "accepted"
     finally:
         assert client.delete(f"/api/profiles/{uid}").status_code == 200
     assert client.post("/api/lookup", json={"pan": pan}).status_code == 404
     assert client.delete("/api/profiles/FINORA_USER_001").status_code == 403                # demo profiles are protected
 
 
-def test_recommendation_status(client):
+def test_recommendation_status_on_template_is_read_only(client):
     recs = client.get("/api/profiles/FINORA_USER_004/recommendations").json()
     assert recs
     rid = recs[0]["id"]
-    assert client.patch(f"/api/profiles/FINORA_USER_004/recommendations/{rid}", json={"status": "accepted"}).json()["status"] == "accepted"
-    client.patch(f"/api/profiles/FINORA_USER_004/recommendations/{rid}", json={"status": "open"})
+    r = client.patch(f"/api/profiles/FINORA_USER_004/recommendations/{rid}", json={"status": "accepted"})
+    assert r.status_code == 403 and "read-only" in r.json()["detail"]
+    assert client.get("/api/profiles/FINORA_USER_004/recommendations").json()[0]["status"] == "open"

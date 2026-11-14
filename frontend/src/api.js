@@ -1,12 +1,21 @@
-// Thin API client. All requests go to /api (proxied to FastAPI on port 8001).
+// Thin API client. All requests go to /api (proxied to FastAPI on port 8001), so cookies stay same-origin.
+// The session lives in an httpOnly cookie the page cannot read. State-changing requests echo the CSRF token
+// (from the readable finora_csrf cookie) in the X-CSRF-Token header.
 const BASE = import.meta.env.VITE_API_URL || ''
 
-async function request(path, { method = 'GET', body, form } = {}) {
+let onUnauthorized = () => {}
+export const setUnauthorizedHandler = (fn) => { onUnauthorized = fn }
+
+const csrfToken = () => document.cookie.split('; ').find((c) => c.startsWith('finora_csrf='))?.slice('finora_csrf='.length) || ''
+
+async function request(path, { method = 'GET', body, form, quiet401 = false } = {}) {
   let res
+  const headers = {}
+  if (body) headers['Content-Type'] = 'application/json'
+  if (method !== 'GET') headers['X-CSRF-Token'] = decodeURIComponent(csrfToken())
   try {
     res = await fetch(`${BASE}/api${path}`, {
-      method,
-      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      method, headers, credentials: 'include',
       body: form || (body ? JSON.stringify(body) : undefined),
     })
   } catch {
@@ -18,15 +27,23 @@ async function request(path, { method = 'GET', body, form } = {}) {
       const j = await res.json()
       msg = typeof j.detail === 'string' ? j.detail : Array.isArray(j.detail) ? j.detail.map((d) => `${d.loc?.slice(-1)[0]}: ${d.msg}`).join('; ') : msg
     } catch { /* keep default */ }
-    const err = new Error(msg); err.status = res.status; throw err
+    const err = new Error(msg); err.status = res.status
+    if (res.status === 401 && !quiet401) onUnauthorized()
+    throw err
   }
   return res.json()
 }
 
 export const api = {
+  me: () => request('/auth/me', { quiet401: true }),
+  login: (email, password) => request('/auth/login', { method: 'POST', body: { email, password }, quiet401: true }),
+  register: (email, password, display_name) => request('/auth/register', { method: 'POST', body: { email, password, display_name } }),
+  logout: () => request('/auth/logout', { method: 'POST', quiet401: true }),
+  activity: () => request('/auth/activity'),
   health: () => request('/health'),
   lookup: (pan) => request('/lookup', { method: 'POST', body: { pan } }),
   profiles: () => request('/profiles'),
+  profile: (id) => request(`/profiles/${id}`),
   analysis: (id) => request(`/profiles/${id}/analysis`),
   analyze: (id) => request(`/profiles/${id}/analyze`, { method: 'POST' }),
   accounts: (id) => request(`/profiles/${id}/accounts`),

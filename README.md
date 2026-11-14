@@ -18,7 +18,7 @@ AI assistant that can only state numbers the backend has computed.
 ./run.sh        # starts backend + frontend
 ```
 
-Open **http://localhost:5173**. In VS Code: `Cmd+Shift+B` runs the same thing ("Run Finora").
+Open **http://localhost:5173**, create a local account (e-mail + password) and sign in. In VS Code: `Cmd+Shift+B` runs the same thing ("Run Finora").
 
 Demo PANs: `ABCDE1234F` (balanced saver) · `PQRST5678K` (overspender, 3 cards) · `LMNOP2345D` (loan-heavy) · `XYZAB9876C` (freelancer)
 
@@ -31,7 +31,7 @@ Demo PANs: `ABCDE1234F` (balanced saver) · `PQRST5678K` (overspender, 3 cards) 
 Useful commands (inside `backend/` with the venv active):
 
 ```bash
-pytest -q                    # 143 tests
+pytest -q                    # 206 tests
 python -m app.ml.train       # retrain all models, rewrite artifacts/metrics.json
 python -m app.data.seed      # reset the database to the original demo data
 ```
@@ -72,6 +72,17 @@ Exact, current figures are in `backend/artifacts/metrics.json` and on the **Mode
 - The credit-risk data is from Taiwan (2005): it captures behaviour patterns, not Indian bureau scores. Demographic columns were dropped on purpose.
 - The categoriser gets only ~15% right on brand names it has never seen; those are returned with low confidence for review.
 - Market prices are stored "as of" values, not a live feed. Tax follows FY 2026-27 slabs without surcharge.
+
+## Accounts, ownership and security
+
+- **Accounts:** e-mail + password, hashed with argon2id (`argon2-cffi`; bcrypt is accepted as a fallback). No verification e-mail in this local version.
+- **Sessions:** random 256-bit token in an `httpOnly`, `SameSite=Lax` cookie (`Secure` in production); the database stores only its SHA-256 hash. Sign-out revokes the session server-side.
+- **CSRF:** every state-changing request must echo the session's CSRF token in `X-CSRF-Token`.
+- **Ownership:** every profile route checks the signed-in account against the profile's `kind`. Demo *templates* are readable by any account and never writable. *Private* and *sandbox* profiles are visible only to their owner (others get 404). The 240 synthetic *population* profiles are used only for model training and cannot be reached through the API.
+- **Training data:** models train only on the synthetic population and the public UCI dataset, never on account holders' profiles (there is a test for this).
+- **Limits & audit:** rate limits on sign-in (per account and per IP), sign-up, uploads and chat; uploads are capped at 5 MB. Sign-ins, profile creation and deletion, uploads, exports, reports and retraining are written to `audit_events`, which holds IDs and counts only.
+- **Logs:** a logging filter redacts PAN-like strings, long card or account numbers, e-mail addresses and session tokens.
+- **Config:** secrets come from the environment (`.env`, git-ignored). With `FINORA_ENV=production` the server refuses to start on a default `PAN_PEPPER` or without `COOKIE_SECURE=true`.
 
 ## How the AI CFO avoids making numbers up
 

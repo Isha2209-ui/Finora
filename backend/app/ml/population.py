@@ -1,4 +1,9 @@
-"""Bulk-loads the TRAINING population (non-demo users) from the database."""
+"""Bulk-loads the TRAINING population from the database.
+
+Only profiles with kind == "population" (the synthetic training population created by the seed script) are used.
+Demo templates, sandboxes and - most importantly - private profiles built by real account holders are never
+used for training.
+"""
 from __future__ import annotations
 
 import pandas as pd
@@ -12,7 +17,7 @@ from ..data.generator import DISCRETIONARY, ESSENTIAL, NON_EXPENSE
 def load(db: Session) -> dict:
     bind = db.get_bind()
     users = pd.read_sql(select(M.User.id, M.User.age, M.User.archetype, M.User.city, M.User.employment_type)
-                        .where(M.User.is_demo.is_(False)), bind)
+                        .where(M.User.kind == "population"), bind)
     ids = users["id"].tolist()
     tx = pd.read_sql(select(M.Transaction.id, M.Transaction.user_id, M.Transaction.account_id, M.Transaction.card_id,
                             M.Transaction.date, M.Transaction.amount, M.Transaction.type, M.Transaction.category,

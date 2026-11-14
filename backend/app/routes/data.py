@@ -3,9 +3,12 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+import secrets
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import Response
-from sqlalchemy import delete, func, select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .. import models as M
@@ -18,28 +21,41 @@ from ..services import pan as P
 from ..services import report as R
 from ..services import statement_import
 from ..services.cleaning import ALL_CATEGORIES, standardise_category
+from ..auth import Current, ProfileCtx, audit, can_write, current_account, profile_reader, profile_writer, rate_limit
+from ..config import ENABLE_RETRAIN_ENDPOINT, UPLOAD_MAX_BYTES, UPLOAD_MAX_PER_HOUR
+from ..services.profile_ops import delete_profile_data
 from . import common
+
+
+def new_profile_id(db: Session) -> str:
+    """Random, non-sequential ID for profiles created by account holders, so IDs cannot be guessed or enumerated."""
+    while True:
+        iid = f"FP_{secrets.token_hex(8).upper()}"
+        if not db.scalar(select(M.User.id).where(M.User.internal_id == iid)):
+            return iid
 
 router = APIRouter(prefix="/api", tags=["Reports, data & models"])
 
 
 # ---------------------------------------------------------------- reports
 @router.get("/profiles/{internal_id}/report.pdf", summary="Download the Financial Intelligence Report (PDF)")
-def report_pdf(internal_id: str, use_llm: bool = False, db: Session = Depends(get_db)):
-    user = common.get_user(db, internal_id)
+def report_pdf(request: Request, use_llm: bool = False, ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db)):
+    user = ctx.profile
     a = common.get_analysis(db, user)
     brief = agent.briefing(common.cfo_context(db, user), use_llm=use_llm)["briefing"]
     pdf = R.build_pdf(a, brief, registry.metrics())
-    name = f"Finora_Report_{user.internal_id}_{datetime.now():%Y%m%d_%H%M}.pdf"
+    name = f"Finora_Report_{user.internal_id}_{datetime.now():%Y%m%d_%H%M%S}_{secrets.token_hex(3)}.pdf"
     (REPORTS_DIR / name).write_bytes(pdf)
-    db.add(M.Report(user_id=user.id, report_path=str(REPORTS_DIR / name)))
+    db.add(M.Report(user_id=user.id, app_user_id=ctx.account.id, report_path=str(REPORTS_DIR / name)))
+    audit(db, "report.generate", request=request, app_user_id=ctx.account.id, profile_id=user.id, commit=False)
     db.commit()
     return Response(pdf, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{name}"'})
 
 
 @router.get("/profiles/{internal_id}/export.zip", summary="Download all data and analysis as CSV files (zip)")
-def export_zip(internal_id: str, db: Session = Depends(get_db)):
-    user = common.get_user(db, internal_id)
+def export_zip(request: Request, ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db)):
+    user = ctx.profile
+    audit(db, "data.export", request=request, app_user_id=ctx.account.id, profile_id=user.id, detail={"format": "zip"})
     a = common.get_analysis(db, user)
     tx = [{"date": t.date.isoformat(), "amount": t.amount, "type": t.type, "category": t.category, "merchant": t.merchant,
            "description": t.raw_description, "ref": t.ref} for t in
@@ -49,8 +65,9 @@ def export_zip(internal_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/profiles/{internal_id}/transactions.csv", summary="Download transactions as CSV")
-def transactions_csv(internal_id: str, db: Session = Depends(get_db)):
-    user = common.get_user(db, internal_id)
+def transactions_csv(request: Request, ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db)):
+    user = ctx.profile
+    audit(db, "data.export", request=request, app_user_id=ctx.account.id, profile_id=user.id, detail={"format": "transactions_csv"})
     lines = ["date,amount,type,category,merchant,description"]
     for t in db.scalars(select(M.Transaction).where(M.Transaction.user_id == user.id).order_by(M.Transaction.date)):
         desc = t.raw_description.replace('"', "'")
@@ -59,21 +76,24 @@ def transactions_csv(internal_id: str, db: Session = Depends(get_db)):
                     headers={"Content-Disposition": f'attachment; filename="transactions_{user.internal_id}.csv"'})
 
 
-@router.get("/profiles/{internal_id}/reports", summary="Previously generated reports")
-def reports(internal_id: str, db: Session = Depends(get_db)):
-    user = common.get_user(db, internal_id)
-    return [{"id": r.id, "file": r.report_path.split("/")[-1], "created_at": r.created_at.isoformat()} for r in
-            db.scalars(select(M.Report).where(M.Report.user_id == user.id).order_by(M.Report.id.desc()).limit(20))]
+@router.get("/profiles/{internal_id}/reports", summary="Reports you generated for this profile")
+def reports(ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db)):
+    q = select(M.Report).where(M.Report.user_id == ctx.profile.id, M.Report.app_user_id == ctx.account.id)
+    return [{"id": r.id, "file": Path(r.report_path).name, "created_at": r.created_at.isoformat()} for r in
+            db.scalars(q.order_by(M.Report.id.desc()).limit(20))]
 
 
 # ---------------------------------------------------------------- statement upload & categoriser
 @router.post("/profiles/{internal_id}/upload", summary="Upload a bank/card statement CSV; it is cleaned and categorised by the ML model")
-async def upload(internal_id: str, file: UploadFile = File(...), account_id: int | None = Form(None),
-                 card_id: int | None = Form(None), db: Session = Depends(get_db)):
-    user = common.get_user(db, internal_id)
-    content = await file.read()
-    if len(content) > 5_000_000:
-        raise HTTPException(413, "File too large (limit 5 MB).")
+async def upload(request: Request, file: UploadFile = File(...), account_id: int | None = Form(None),
+                 card_id: int | None = Form(None), ctx: ProfileCtx = Depends(profile_writer), db: Session = Depends(get_db)):
+    user = ctx.profile
+    rate_limit(f"upload:{ctx.account.id}", UPLOAD_MAX_PER_HOUR, 3600, "Too many uploads in the last hour.")
+    content = await file.read(UPLOAD_MAX_BYTES + 1)  # never read more than the limit into memory
+    if len(content) > UPLOAD_MAX_BYTES:
+        audit(db, "statement.upload", request=request, app_user_id=ctx.account.id, profile_id=user.id, outcome="denied",
+              detail={"reason": "too_large"})
+        raise HTTPException(413, f"File too large (limit {UPLOAD_MAX_BYTES // 1_000_000} MB).")
     if account_id and db.scalar(select(M.BankAccount.user_id).where(M.BankAccount.id == account_id)) != user.id:
         raise HTTPException(422, "That account does not belong to this profile.")
     if card_id and db.scalar(select(M.CreditCard.user_id).where(M.CreditCard.id == card_id)) != user.id:
@@ -83,9 +103,12 @@ async def upload(internal_id: str, file: UploadFile = File(...), account_id: int
     try:
         res = statement_import.import_statement(db, user, content, account_id, card_id)
     except ValueError as e:
+        audit(db, "statement.upload", request=request, app_user_id=ctx.account.id, profile_id=user.id, outcome="failed")
         raise HTTPException(422, str(e))
     common.invalidate(user.id)
-    return {"filename": file.filename, **res}
+    audit(db, "statement.upload", request=request, app_user_id=ctx.account.id, profile_id=user.id,
+          detail={"added": res.get("transactions_added"), "skipped": res.get("duplicates_skipped")})
+    return {"filename": Path(file.filename or "statement.csv").name[:120], **res}
 
 
 @router.post("/categorise", summary="Try the transaction categoriser on any narration text")
@@ -98,20 +121,19 @@ def categorise(body: dict):
 
 
 # ---------------------------------------------------------------- profile & data management
-@router.post("/profiles", summary="Create a new profile (then upload a statement to fill it)")
-def create_profile(body: S.ProfileIn, db: Session = Depends(get_db)):
-    err = P.validation_error(body.pan)
-    if err:
-        raise HTTPException(422, err)
-    h = P.hash_pan(body.pan)
-    if db.scalar(select(M.User.id).where(M.User.pan_hash == h)):
-        raise HTTPException(409, "A profile with this PAN already exists.")
-    n = (db.scalar(select(func.count()).select_from(M.User).where(M.User.internal_id.like("FINORA_USER_%"))) or 0) + 1
-    while db.scalar(select(M.User.id).where(M.User.internal_id == f"FINORA_USER_{n:03d}")):
-        n += 1
-    u = M.User(internal_id=f"FINORA_USER_{n:03d}", pan_hash=h, pan_masked=P.mask(body.pan), name=body.name, age=body.age,
+@router.post("/profiles", summary="Create your own private profile (then add data or upload a statement)")
+def create_profile(body: S.ProfileIn, request: Request, cur: Current = Depends(current_account), db: Session = Depends(get_db)):
+    masked = None
+    if body.pan:  # optional, for display only: never hashed for lookup, never used to fetch anything
+        err = P.validation_error(body.pan)
+        if err:
+            raise HTTPException(422, err)
+        masked = P.mask(body.pan)
+    iid = new_profile_id(db)
+    u = M.User(internal_id=iid, pan_hash=None, pan_masked=masked, name=body.name, age=body.age,
                occupation=body.occupation, employment_type=body.employment_type, city=body.city,
-               retirement_age_target=body.retirement_age_target, is_demo=True, archetype="custom")
+               retirement_age_target=body.retirement_age_target, is_demo=False, archetype="custom",
+               kind="private", owner_id=cur.user.id)
     db.add(u)
     db.flush()
     acct = M.BankAccount(user_id=u.id, bank_name=body.bank_name, account_type="savings", account_masked="XXXX0001",
@@ -122,14 +144,15 @@ def create_profile(body: S.ProfileIn, db: Session = Depends(get_db)):
     for y, m in [(2026, k) for k in range(5, 11)]:
         db.add(M.IncomeRecord(user_id=u.id, account_id=acct.id, amount=body.monthly_income,
                               source="Salary" if body.employment_type == "salaried" else "Client payment", date=date(y, m, 1)))
+    audit(db, "profile.create", request=request, app_user_id=cur.user.id, profile_id=u.id, commit=False)
     db.commit()
     return {"created": True, "profile": common.public_profile(u), "account_id": acct.id,
             "next_step": "Upload a statement CSV for this profile to analyse it."}
 
 
 @router.patch("/profiles/{internal_id}", summary="Edit profile details")
-def patch_profile(internal_id: str, body: S.ProfilePatch, db: Session = Depends(get_db)):
-    user = common.get_user(db, internal_id)
+def patch_profile(body: S.ProfilePatch, ctx: ProfileCtx = Depends(profile_writer), db: Session = Depends(get_db)):
+    user = ctx.profile
     for k, v in body.model_dump(exclude_none=True).items():
         setattr(user, k, v)
     db.commit()
@@ -137,28 +160,21 @@ def patch_profile(internal_id: str, body: S.ProfilePatch, db: Session = Depends(
     return common.public_profile(user)
 
 
-@router.delete("/profiles/{internal_id}", summary="Delete a custom profile (the four built-in demo profiles are protected)")
-def delete_profile(internal_id: str, db: Session = Depends(get_db)):
-    user = common.get_user(db, internal_id)
-    if user.archetype != "custom":
-        raise HTTPException(403, "Built-in demo profiles cannot be deleted.")
-    uid = user.id
-    card_ids = [c for (c,) in db.execute(select(M.CreditCard.id).where(M.CreditCard.user_id == uid))]
-    if card_ids:
-        db.execute(delete(M.CardStatement).where(M.CardStatement.card_id.in_(card_ids)))
-    for model in [M.Transaction, M.IncomeRecord, M.RecurringPayment, M.StockHolding, M.MutualFundHolding, M.SIP, M.FixedDeposit,
-                  M.OtherAsset, M.Loan, M.InsurancePolicy, M.Goal, M.SavingsRecord, M.MonthlySummary, M.NetWorthSnapshot,
-                  M.AnalysisResult, M.Recommendation, M.Report, M.ChatMessage, M.Property, M.CreditCard, M.BankAccount]:
-        db.execute(delete(model).where(model.user_id == uid))
-    db.delete(user)
+@router.delete("/profiles/{internal_id}", summary="Delete one of your profiles and all of its data (demo templates are protected)")
+def delete_profile(request: Request, ctx: ProfileCtx = Depends(profile_writer), db: Session = Depends(get_db)):
+    user = ctx.profile
+    uid, iid, kind = user.id, user.internal_id, user.kind
+    rows = delete_profile_data(db, user)
+    audit(db, "profile.delete", request=request, app_user_id=ctx.account.id, profile_id=uid, commit=False,
+          detail={"kind": kind, "rows_deleted": rows})
     db.commit()
     common.invalidate(uid)
-    return {"deleted": internal_id}
+    return {"deleted": iid, "rows_deleted": rows}
 
 
 @router.post("/profiles/{internal_id}/transactions", summary="Add one transaction (category predicted if not given)")
-def add_transaction(internal_id: str, body: S.TransactionIn, db: Session = Depends(get_db)):
-    user = common.get_user(db, internal_id)
+def add_transaction(body: S.TransactionIn, ctx: ProfileCtx = Depends(profile_writer), db: Session = Depends(get_db)):
+    user = ctx.profile
     cat, src = standardise_category(body.category), "user"
     if not cat:
         p = categoriser.predict(registry.get("categoriser"), [body.description])[0]
@@ -179,8 +195,8 @@ def add_transaction(internal_id: str, body: S.TransactionIn, db: Session = Depen
 
 
 @router.delete("/profiles/{internal_id}/transactions/{tx_id}", summary="Delete one transaction")
-def delete_transaction(internal_id: str, tx_id: int, db: Session = Depends(get_db)):
-    user = common.get_user(db, internal_id)
+def delete_transaction(tx_id: int, ctx: ProfileCtx = Depends(profile_writer), db: Session = Depends(get_db)):
+    user = ctx.profile
     t = db.get(M.Transaction, tx_id)
     if t is None or t.user_id != user.id:
         raise HTTPException(404, "Transaction not found.")
@@ -191,13 +207,13 @@ def delete_transaction(internal_id: str, tx_id: int, db: Session = Depends(get_d
 
 
 @router.get("/profiles/{internal_id}/data-summary", summary="Row counts per table for this profile")
-def data_summary(internal_id: str, db: Session = Depends(get_db)):
-    user = common.get_user(db, internal_id)
+def data_summary(ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db)):
+    user = ctx.profile
     tables = {"Bank accounts": M.BankAccount, "Credit cards": M.CreditCard, "Transactions": M.Transaction, "Income records": M.IncomeRecord,
               "Recurring payments": M.RecurringPayment, "Stocks": M.StockHolding, "Mutual funds": M.MutualFundHolding, "SIPs": M.SIP,
               "Fixed deposits": M.FixedDeposit, "Properties": M.Property, "Other assets": M.OtherAsset, "Loans": M.Loan,
               "Insurance policies": M.InsurancePolicy, "Goals": M.Goal, "Recommendations": M.Recommendation, "Reports": M.Report}
-    return {"profile": common.public_profile(user), "can_delete": user.archetype == "custom",
+    return {"profile": common.public_profile(user), "can_delete": can_write(user, ctx.account),
             "tables": [{"table": k, "rows": db.scalar(select(func.count()).select_from(v).where(v.user_id == user.id))} for k, v in tables.items()]}
 
 
@@ -210,9 +226,13 @@ def model_metrics():
     return {"status": registry.status(), **m}
 
 
-@router.post("/models/retrain", summary="Retrain all models on the current database (takes ~40 seconds)")
-def retrain():
+@router.post("/models/retrain", summary="Retrain all models on the synthetic population + public datasets (local only, ~40 s)")
+def retrain(request: Request, cur: Current = Depends(current_account), db: Session = Depends(get_db)):
+    if not ENABLE_RETRAIN_ENDPOINT:
+        raise HTTPException(403, "Retraining through the API is disabled on this server. Run: python -m app.ml.train")
+    rate_limit("retrain", 2, 600, "Retraining was started recently.")
     from ..ml import train
+    audit(db, "models.retrain", request=request, app_user_id=cur.user.id)
     m = train.run(verbose=False)
     registry.reload()
     common.invalidate()
