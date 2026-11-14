@@ -90,3 +90,11 @@ Other pages were not redesigned (that is Phase 8).
 - **Independent actions:** each action's effect is measured on its own. Accepted actions are combined in "Your plan" and over-commitment is flagged, but actions are not re-ranked against each other.
 - **Ranking weights:** the weights are a published heuristic, not an optimiser.
 - **Mobile layout:** the overall app shell is not yet responsive (Phase 8). The Plan page's own layout adapts.
+
+
+## Phase 5 follow-up limitations (recorded at merge, approved by the product owner)
+1. **Health score projection:** the projected score does not yet recalculate the debt-load and credit-use components. Only savings, emergency fund and investing are re-projected.
+2. **FIRE and freed EMIs:** FIRE projections do not yet reinvest the EMIs freed after a debt is repaid, so extra repayment never changes the FIRE age.
+3. **Mobile sidebar:** making the app-shell sidebar responsive is deferred to Phase 8 (product shell and UI).
+
+No other change was made at merge time.
