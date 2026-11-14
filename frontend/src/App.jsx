@@ -11,12 +11,15 @@ import Decision from './pages/Decision.jsx'
 import Fire from './pages/Fire.jsx'
 import Forecast from './pages/Forecast.jsx'
 import Identity from './pages/Identity.jsx'
+import Insights from './pages/Insights.jsx'
 import Investments from './pages/Investments.jsx'
 import Lookup from './pages/Lookup.jsx'
 import ModelLab from './pages/ModelLab.jsx'
 import Recommendations from './pages/Recommendations.jsx'
 import Records from './pages/Records.jsx'
 import Reports from './pages/Reports.jsx'
+import Review from './pages/Review.jsx'
+import Statements from './pages/Statements.jsx'
 import Transactions from './pages/Transactions.jsx'
 import { useAuth } from './auth.jsx'
 import SignIn from './pages/SignIn.jsx'
@@ -40,6 +43,9 @@ export default function App() {
               <Route path="/records" element={<Records />} />
               <Route path="/accounts" element={<Accounts />} />
               <Route path="/investments" element={<Investments />} />
+              <Route path="/statements" element={<Statements />} />
+              <Route path="/insights" element={<Insights />} />
+              <Route path="/review" element={<Review />} />
               <Route path="/transactions" element={<Transactions />} />
               <Route path="/forecast" element={<Forecast />} />
               <Route path="/credit" element={<Credit />} />

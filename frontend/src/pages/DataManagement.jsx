@@ -1,59 +1,36 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Plus, Trash2, Upload } from 'lucide-react'
 import { api } from '../api'
-import { Badge, Button, Card, ErrorBox, Field, Input, Loading, Note, PageHeader, Select, Table } from '../components/ui.jsx'
+import { Button, Card, ErrorBox, Field, Input, Loading, Note, PageHeader, Select, Table } from '../components/ui.jsx'
 import { useAsync, useFinora } from '../store.jsx'
-
-const SAMPLE = `Date,Narration,Withdrawal,Deposit
-02/11/2026,UPI/DR/402918376152/SWIGGY/YESB/swiggy@ybl/Payment,640,
-03/11/2026,POS 4521XXXXXXXX8812 AMAZON BANGALORE,2499,
-04/11/2026,UPI/DR/402918371111/BIGBASKET/ICIC/bigbasket@ybl/Payment,3180,
-05/11/2026,BIL/BPAY/556677889/AIRTEL/AUTOPAY,799,
-06/11/2026,UPI/DR/402918372222/UBER/AXIS/uber@okaxis/Payment,412,
-07/11/2026,POS 4521XXXXXXXX8812 MYNTRA MUMBAI,38500,
-08/11/2026,ATM WDL HDFC ATM JAIPUR,5000,
-`
 
 export default function DataManagement() {
   const { profileId, analysis: a, refresh, signOut } = useFinora()
   const sum = useAsync(() => api.dataSummary(profileId), [profileId])
   const [targets, setTargets] = useState([])
   const [target, setTarget] = useState('')
-  const [up, setUp] = useState(null)
   const [busy, setBusy] = useState(null)
   const [err, setErr] = useState(null)
-  const file = useRef(null)
   const [tx, setTx] = useState({ date: '2026-10-30', amount: '', description: '', type: 'debit' })
   const [txMsg, setTxMsg] = useState(null)
   const [prof, setProf] = useState({ age: a.profile.age, retirement_age_target: a.profile.retirement_age_target, occupation: a.profile.occupation, city: a.profile.city })
   useEffect(() => { api.accounts(profileId).then((d) => { const t = [...d.accounts.map((x) => [`account:${x.id}`, `${x.bank_name} ${x.account_masked}`]), ...d.card_ids.map((c) => [`card:${c.id}`, c.label])]; setTargets(t); setTarget(t[0]?.[0] || '') }).catch(() => {}) }, [profileId])
 
   const wrap = async (key, fn) => { setBusy(key); setErr(null); try { await fn() } catch (e) { setErr(e.message) } finally { setBusy(null) } }
-  const upload = (f) => wrap('up', async () => { const r = await api.upload(profileId, f, target); setUp(r); sum.reload(); refresh({ rerun: true }) })
-  const uploadSample = () => upload(new File([SAMPLE], 'sample_statement.csv', { type: 'text/csv' }))
   const addTx = (e) => { e.preventDefault(); wrap('tx', async () => { const r = await api.addTransaction(profileId, { ...tx, amount: Number(tx.amount), ...(target.startsWith('card:') ? { card_id: Number(target.split(':')[1]) } : { account_id: Number(target.split(':')[1]) }) }); setTxMsg(`Added as ${r.category} (${r.category_source === 'model' ? 'predicted by the model' : 'set by you'}).`); setTx({ ...tx, amount: '', description: '' }); sum.reload(); refresh({ rerun: true }) }) }
   const saveProf = () => wrap('prof', async () => { await api.patchProfile(profileId, { ...prof, age: Number(prof.age), retirement_age_target: Number(prof.retirement_age_target) }); refresh({ rerun: true }) })
   const del = () => wrap('del', async () => { if (!window.confirm(`Delete ${a.profile.name} and all of its data? This cannot be undone.`)) return; await api.deleteProfile(profileId); signOut() })
 
   return (
     <>
-      <PageHeader title="Profile & Data" subtitle="Upload a statement, add transactions or edit the profile. Every change re-runs the analysis. New profiles are started from the start screen." />
+      <PageHeader title="Profile & Data" subtitle="Add transactions or edit the profile; import statements from Import Statements. Every change re-runs the analysis. New profiles are started from the start screen." />
       {err && <div className="mb-4"><ErrorBox message={err} /></div>}
       <div className="grid gap-4 xl:grid-cols-2">
-        <Card title="Upload a bank or card statement (CSV)" subtitle="Columns are detected automatically. Each line is cleaned and categorised by the ML model, and duplicates are skipped.">
-          <div className="grid grid-cols-[1fr_auto] gap-2"><Select value={target} onChange={(e) => setTarget(e.target.value)}>{targets.map(([v, l]) => <option key={v} value={v}>Add to: {l}</option>)}</Select>
-            <input ref={file} type="file" accept=".csv,text/csv" hidden onChange={(e) => e.target.files[0] && upload(e.target.files[0])} />
-            <Button icon={Upload} loading={busy === 'up'} onClick={() => file.current.click()}>Choose CSV</Button></div>
-          <button onClick={uploadSample} className="mt-2 text-xs text-accent hover:underline">No file handy? Upload a 7-line sample statement (includes one unusual purchase)</button>
-          {up && (
-            <div className="mt-3 rounded-xl border border-good/30 bg-good/10 p-3 text-sm">
-              <div className="font-medium text-good">{up.filename}: {up.transactions_added} transactions added{up.income_records_added ? `, ${up.income_records_added} income records` : ''}{up.duplicates_skipped ? `, ${up.duplicates_skipped} duplicates skipped` : ''}</div>
-              <div className="mt-1 text-xs text-muted">{up.rows_in_file} rows read · {up.rows_dropped} invalid dropped · {up.categorised_by_model} categorised by the model · layout: {up.layout}</div>
-              <div className="mt-2 flex flex-wrap gap-1.5">{Object.entries(up.by_category).map(([c, n]) => <Badge key={c} tone="accent">{c} · {n}</Badge>)}</div>
-              {up.low_confidence_count > 0 && <div className="mt-2 text-xs text-warn">{up.low_confidence_count} low-confidence line(s) to review in Transaction Intelligence: {up.low_confidence.slice(0, 3).map((l) => `"${l.description.slice(0, 28)}…" → ${l.predicted}`).join('; ')}</div>}
-            </div>
-          )}
-          <div className="mt-3"><Note>Accepted layouts: <code>Date, Narration, Amount[, Type]</code> or <code>Date, Narration, Withdrawal, Deposit</code>. Bank header lines above the table are ignored. Dates are read day-first.</Note></div>
+        <Card title="Bank & card statements" subtitle="One or two years of history at a time, with layout detection, live progress, review and undo">
+          <p className="text-sm text-muted">Statements are imported on their own page: Finora shows what it detected before anything is saved, categorises every line with the ML model, recognises salary, transfers, refunds and card payments, and only updates a balance that reconciles.</p>
+          <div className="mt-3 flex flex-wrap gap-2"><Link to="/statements"><Button icon={Upload}>Import statements</Button></Link>
+            <Link to="/insights"><Button variant="ghost">Statement Intelligence</Button></Link><Link to="/review"><Button variant="ghost">Review & corrections</Button></Link></div>
         </Card>
 
         <Card title="Add a transaction" subtitle="Leave the category to the model - it reads the description">

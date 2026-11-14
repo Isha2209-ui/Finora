@@ -31,6 +31,7 @@ from sqlalchemy.orm import Session
 
 from .. import models as M
 from ..config import IMPORT_TMP_DIR, STATEMENT_MAX_ROWS
+from ..data.generator import NON_EXPENSE
 from ..database import SessionLocal
 from ..ml import registry
 from . import statement_parser as P
@@ -324,6 +325,8 @@ def run(imp_id: int) -> None:
                 balance_out["reason"] = f"Account balance set to the verified closing balance as of {closing_date.isoformat()}."
         elif bal.get("present") and not account_id:
             balance_out["reason"] = "No account was selected, so no balance was updated."
+        elif not bal.get("present"):
+            balance_out["reason"] = "This file has no running balance, so Finora cannot establish a balance from it; the account balance was not changed."
         imp.summary = _summary(parsed, rows, new, dup, possible, cstats, balance_out, time.time() - t0, created_account)
         imp.rows_processed = int(len(rows))
         db.commit()
@@ -398,7 +401,11 @@ def _summary(parsed, rows, new, dup, possible, cstats, balance, secs, created_ac
         "categorised_by_model": int((rows["category_source"] == "model").sum()),
         "distinct_narrations_scored": cstats["distinct_narrations_scored"], "decided_by": cstats["by_source"],
         "by_category": {k: int(v) for k, v in deb["category"].value_counts().items()},
-        "spend_by_category": {k: round(float(v), 2) for k, v in deb.groupby("category")["amount"].sum().sort_values(ascending=False).items()},
+        # spending only: card bills, own transfers and investments move money, they are not spent
+        "spend_by_category": {k: round(float(v), 2) for k, v in deb[~deb["category"].isin(NON_EXPENSE)].groupby("category")["amount"].sum()
+                              .sort_values(ascending=False).items()},
+        "money_moved": {k: round(float(v), 2) for k, v in deb[deb["category"].isin(NON_EXPENSE)].groupby("category")["amount"].sum()
+                        .sort_values(ascending=False).items()},
         "income_by_source": {k: round(float(v), 2) for k, v in inc.groupby("income_source")["amount"].sum().items()},
         "transfers": int(flags.str.contains("transfer").sum()), "refunds": int(flags.str.contains("refund").sum()),
         "card_payments": int(flags.str.contains("card_payment").sum()),

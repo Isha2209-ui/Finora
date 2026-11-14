@@ -123,6 +123,8 @@ def test_bank_import_classifies_against_ground_truth(ivy):
     assert s["refunds"] == sum(r.truth.startswith("refund") for r in BANK)
     assert s["unrecognised_credits"] == sum(r.truth == "unrecognised" for r in BANK)
     assert s["investment_outflow"] == round(sum(r.amount for r in BANK if r.truth == "Investment"), 2)
+    assert not {"Card Payment", "Transfer", "Investment"} & set(s["spend_by_category"])      # money moved is not spending
+    assert s["money_moved"]["Card Payment"] == round(sum(r.amount for r in BANK if r.truth == "Card Payment"), 2)
     # every row lands in the right table with the right class
     with SessionLocal() as db:
         imp = ivy.bank["id"]
@@ -291,7 +293,7 @@ def test_statement_without_balance_never_sets_a_balance():
     pid, acc, *_ = _profile(c)
     _, s = _import(c, pid, F.generic_signed(BANK[:60], with_balance=False), account_id=acc)
     b = s["summary"]["balance"]
-    assert not b["applied"] and not b["present"]
+    assert not b["applied"] and not b["present"] and "no running balance" in b["reason"]
     with SessionLocal() as db:
         a = db.get(M.BankAccount, acc)
         assert a.balance == 50000 and a.balance_source is None

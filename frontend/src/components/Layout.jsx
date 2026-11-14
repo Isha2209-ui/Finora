@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   Activity, BadgeIndianRupee, Bot, BrainCircuit, CreditCard, Database, FileText, Flame, Landmark, Lightbulb, LogOut,
-  Clock, Eye, FlaskConical, MessageSquare, PencilLine, PiggyBank, RefreshCw, Repeat, Scale, ScanSearch, TrendingUp, UserRound, Wallet,
+  Clock, Eye, FileUp, FlaskConical, ListChecks, Sparkles, MessageSquare, PencilLine, PiggyBank, RefreshCw, Repeat, Scale, ScanSearch, TrendingUp, UserRound, Wallet,
 } from 'lucide-react'
 import { api } from '../api'
 import { useAuth } from '../auth.jsx'
@@ -11,8 +11,8 @@ import ChatPanel from './ChatPanel.jsx'
 import { Badge, cx } from './ui.jsx'
 
 const NAV = [
-  ['Overview', [['/identity', 'Financial Identity', UserRound], ['/records', 'My Data (add & edit)', PencilLine], ['/accounts', 'Accounts & Cards', Landmark], ['/investments', 'Investments & Assets', TrendingUp]]],
-  ['Intelligence', [['/transactions', 'Transaction Intelligence', ScanSearch], ['/forecast', 'Cash-Flow Forecast', Activity], ['/credit', 'Credit & Debt', CreditCard], ['/budget', 'Budget, Savings & Tax', PiggyBank]]],
+  ['Overview', [['/identity', 'Financial Identity', UserRound], ['/records', 'My Data (add & edit)', PencilLine], ['/statements', 'Import Statements', FileUp], ['/accounts', 'Accounts & Cards', Landmark], ['/investments', 'Investments & Assets', TrendingUp]]],
+  ['Intelligence', [['/insights', 'Statement Intelligence', Sparkles], ['/review', 'Review & Corrections', ListChecks], ['/transactions', 'Transaction Intelligence', ScanSearch], ['/forecast', 'Cash-Flow Forecast', Activity], ['/credit', 'Credit & Debt', CreditCard], ['/budget', 'Budget, Savings & Tax', PiggyBank]]],
   ['Planning', [['/fire', 'FIRE & Retirement', Flame], ['/decision', 'Decision Simulator', Scale], ['/cfo', 'AI CFO', Bot], ['/recommendations', 'Recommendations', Lightbulb]]],
   ['System', [['/reports', 'Reports', FileText], ['/models', 'Model Lab', BrainCircuit], ['/data', 'Profile & Data', Database]]],
 ]
