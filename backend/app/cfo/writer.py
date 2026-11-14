@@ -5,7 +5,14 @@ Produces a clear answer from tool results WITHOUT a language model. It is used
 """
 from __future__ import annotations
 
-from ..services.recommendations import _inr as inr
+from ..services.recommendations import _inr
+
+NOT_KNOWN = "not known yet"
+
+
+def inr(x) -> str:
+    """Rupees - and an unknown amount is said to be unknown, never shown as Rs 0."""
+    return NOT_KNOWN if x is None else _inr(x)
 
 DISCLAIMER = "Educational guidance, not a substitute for a licensed financial advisor."
 
@@ -39,42 +46,77 @@ def glossary_answer(question: str) -> str | None:
     return None
 
 
+def _missing(f) -> str:
+    return f" Still missing: {', '.join(f['missing_data'][:4])}." if f.get("missing_data") else ""
+
+
 def _w_profile(f):
-    return (f"Your net worth is {inr(f['net_worth'])} (assets {inr(f['total_assets'])}, liabilities {inr(f['total_liabilities'])}). "
-            f"You earn about {inr(f['avg_monthly_income'])} and spend {inr(f['avg_monthly_expenses'])} a month, a savings rate of {f['savings_rate_pct']}%. "
-            f"Your financial health score is {f['health_score']}/100 ({f['health_band']}). "
-            f"Weakest area: {min(f['health_pillars'], key=f['health_pillars'].get)}; strongest: {max(f['health_pillars'], key=f['health_pillars'].get)}.")
+    s = f"Your net worth is {inr(f['net_worth'])} (assets {inr(f['total_assets'])}, liabilities {inr(f['total_liabilities'])}). "
+    inc, sp = f.get("income_known", True), f.get("spending_known", True)
+    if inc and sp:
+        s += (f"You earn about {inr(f['avg_monthly_income'])} and spend {inr(f['avg_monthly_expenses'])} a month, "
+              f"a savings rate of {f['savings_rate_pct']}%. ")
+    elif inc:
+        s += f"You earn about {inr(f['avg_monthly_income'])} a month; spending is not recorded yet, so savings cannot be measured. "
+    elif sp:
+        s += f"You spend about {inr(f['avg_monthly_expenses'])} a month; income is not recorded yet, so savings cannot be measured. "
+    else:
+        s += "There is no income or spending history yet. "
+    if f["health_score"] is not None:
+        s += (f"Your financial health score is {f['health_score']}/100 ({f['health_band']}). "
+              f"Weakest area: {min(f['health_pillars'], key=f['health_pillars'].get)}; strongest: {max(f['health_pillars'], key=f['health_pillars'].get)}.")
+    else:
+        s += "A health score needs income or spending history, so it is not calculated yet."
+    return s + _missing(f)
 
 
 def _w_cash(f):
+    inc, sp = f.get("income_known", True), f.get("spending_known", True)
     tops = ", ".join(f"{c['category']} {inr(c['monthly_avg'])}" for c in f["top_categories"][:4])
+    if not (inc and sp):
+        if inc:
+            return (f"You earn about {inr(f['avg_monthly_income'])} a month. No transactions are recorded yet, so spending and your "
+                    "savings rate cannot be measured - add transactions or upload a statement.")
+        if sp:
+            return (f"You spend about {inr(f['avg_monthly_expenses'])} a month" + (f"; biggest categories: {tops}" if tops else "")
+                    + ". No income is recorded yet, so your savings rate cannot be measured - add your income.")
+        return "There is no income or spending history yet, so cash flow cannot be measured. Add income and transactions, or upload a statement."
     return (f"On average you earn {inr(f['avg_monthly_income'])} and spend {inr(f['avg_monthly_expenses'])} a month, saving {inr(f['avg_monthly_savings'])} "
             f"({f['avg_savings_rate_pct']}%). Essentials take {f['essential_to_income_pct']}% of income and discretionary spending {f['discretionary_to_income_pct']}%. "
             f"Biggest categories per month: {tops}. You ended {f['months_in_deficit']} month(s) in deficit.")
 
 
 def _w_spend(f):
+    if not f.get("available", True):
+        return "No transactions are recorded yet, so there is no spending to analyse. Add transactions or upload a statement."
     if "category" in f:
         s = f"You spend about {inr(f['monthly_avg'])} a month on {f['category']} ({f['share_of_spend_pct']}% of your spending)."
         if f.get("last_3m_avg") is not None:
             s += f" The last 3 months averaged {inr(f['last_3m_avg'])}; a sensible limit is {inr(f['suggested_limit'])}."
         return s
     tops = ", ".join(f"{c['category']} {inr(c['monthly_avg'])}" for c in f["categories"][:5])
+    if not f["budget_scenarios"]:
+        return f"Your biggest monthly spends are: {tops}."
     sc = f["budget_scenarios"][1]
     return (f"Your biggest monthly spends are: {tops}. Cutting discretionary spending by {sc['cut_discretionary_pct']}% would save "
-            f"{inr(sc['monthly_saving'])} a month ({inr(sc['annual_saving'])} a year) and lift your savings rate to {sc['new_savings_rate_pct']}%.")
+            f"{inr(sc['monthly_saving'])} a month ({inr(sc['annual_saving'])} a year)"
+            + (f" and lift your savings rate to {sc['new_savings_rate_pct']}%." if sc["new_savings_rate_pct"] is not None else "."))
 
 
 def _w_networth(f):
     top = sorted(f["breakdown"].items(), key=lambda kv: -kv[1])[:4]
     return (f"Your net worth is {inr(f['net_worth'])}: assets of {inr(f['total_assets'])} minus liabilities of {inr(f['total_liabilities'])}. "
-            f"Largest assets: {', '.join(f'{k} {inr(v)}' for k, v in top)}."
+            + (f"Largest assets: {', '.join(f'{k} {inr(v)}' for k, v in top)}." if top else "No assets are recorded yet.")
             + (f" It changed by {inr(f['change_over_period'])} over the last year." if f.get("change_over_period") is not None else ""))
 
 
 def _w_invest(f):
-    s = (f"Your investments are worth {inr(f['current_value'])} against {inr(f['total_invested'])} invested, a gain of {inr(f['total_gain'])} "
-         f"({f['total_gain_pct']}%). You invest {inr(f['sip_monthly_total'])} a month through SIPs ({f['sip_to_income_pct'] or 0}% of income).")
+    if not f.get("top_holdings") and not f.get("sip_monthly_total"):
+        return "No stock, mutual fund or SIP holdings are recorded yet."
+    s = (f"Your investments are worth {inr(f['current_value'])} against {inr(f['total_invested'])} invested, a gain of {inr(f['total_gain'])}"
+         + (f" ({f['total_gain_pct']}%)." if f["total_gain_pct"] is not None else ".")
+         + f" You invest {inr(f['sip_monthly_total'])} a month through SIPs"
+         + (f" ({f['sip_to_income_pct']}% of income)." if f["sip_to_income_pct"] is not None else "."))
     if f.get("top_sector") and (f["top_sector"]["share_of_stocks_pct"] or 0) >= 50:
         s += f" {f['top_sector']['share_of_stocks_pct']}% of your stocks are in {f['top_sector']['sector']}, which is concentrated."
     if f.get("sips_missed_last_12m"):
@@ -102,8 +144,9 @@ def _w_cards(f):
 def _w_debt(f):
     if not f.get("has_debt", True):
         return "You have no outstanding debt."
-    s = (f"You owe {inr(f['total_debt'])} in total at an average rate of {f['weighted_avg_rate_pct']}%. EMIs are {inr(f['total_emi'])} a month, "
-         f"{f['emi_to_income_pct']}% of income ({f['risk_band']}). ")
+    s = (f"You owe {inr(f['total_debt'])} in total at an average rate of {f['weighted_avg_rate_pct']}%. EMIs are {inr(f['total_emi'])} a month"
+         + (f", {f['emi_to_income_pct']}% of income ({f['risk_band']}). " if f["emi_to_income_pct"] is not None
+            else ("; income is not recorded, so the EMI load cannot be judged yet. " if f["total_emi"] else ". ")))
     s += (f"Paying the highest-rate debt first (avalanche) makes you debt-free in {f['avalanche_months']} months with {inr(f['avalanche_interest'])} interest, "
           f"versus {inr(f['snowball_interest'])} with smallest-balance-first - a saving of {inr(f['interest_saved_by_avalanche'])}. "
           f"Start with {f['highest_rate_debt']}.")
@@ -113,12 +156,18 @@ def _w_debt(f):
 
 
 def _w_runway(f):
+    if not f.get("expenses_known", True) or f["runway_months"] is None:
+        return (f"Your liquid savings are {inr(f['emergency_pool'])}. How long they would last depends on your monthly expenses, which are "
+                "not recorded yet - add transactions or upload a statement.")
     return (f"If your income stopped today, your liquid savings of {inr(f['emergency_pool'])} would last about {f['runway_months']} months at your current "
             f"spending of {inr(f['avg_monthly_expenses'])} a month ({f['runway_months_essentials_only']} months if you cut to essentials). "
             + ("That meets the 6-month target." if (f["runway_months"] or 0) >= 6 else f"The 6-month target needs {inr(f['emergency_fund_gap'])} more."))
 
 
 def _w_fire(f):
+    if not f.get("available", True):
+        return (f"{f['reason']} What is known: {inr(f['current_corpus'])} invested towards retirement and "
+                f"{inr(f['monthly_investment'])} a month going in.")
     i = f["inputs"]
     s = (f"Your FIRE number is {inr(f['fire_number'])} (annual expenses of {inr(i['annual_expenses'])} at a {i['withdrawal_rate_pct']}% withdrawal rate). "
          f"You have {inr(i['current_corpus'])} invested ({f['progress_pct']}% of the way) and invest {inr(i['monthly_investment'])} a month. ")
@@ -137,6 +186,9 @@ def _w_fire(f):
 
 
 def _w_afford(f):
+    if not f.get("available", True):
+        return (f"I cannot judge whether {f['item'].lower()} at {inr(f['price'])} is affordable without your monthly income and expenses. "
+                f"Missing: {', '.join(f['missing'])}. Finora does not guess these.")
     imp = f["impact"]
     s = (f"Verdict: {f['verdict']}. For {f['item']} at {inr(f['price'])} with {inr(f['down_payment'])} down, the loan is {inr(f['loan_amount'])} at "
          f"{f['interest_rate_pct']}% for {f['tenure_months']} months: EMI {inr(f['emi'])}, total interest {inr(f['total_interest'])}. ")
@@ -163,6 +215,9 @@ def _w_emi(f):
 
 
 def _w_tax(f):
+    if not f.get("available", True):
+        return ("Your income is not recorded yet, so I cannot estimate your tax. Ask with an amount, e.g. "
+                "'tax on 15 lakh', or add your income records.")
     return (f"For FY {f['financial_year']} on income of {inr(f['gross_income'])}: new regime tax is {inr(f['new_regime_tax'])}, old regime "
             f"{inr(f['old_regime_tax'])} (using {inr(f['old_regime_deductions_used'])} of deductions). The {f['better_regime']} regime saves you "
             f"{inr(f['saving_with_better'])}. The old regime only wins if your deductions exceed about {inr(f['old_regime_breakeven_deductions'])}. "
@@ -171,16 +226,22 @@ def _w_tax(f):
 
 def _w_forecast(f):
     if not f.get("available", True):
-        return "There is not enough history to forecast next month yet."
+        return "There is not enough history to forecast next month yet (the model needs 6 months of transactions)."
     s = (f"For {f['prediction_month']} the model predicts spending of {inr(f['predicted_total_expense'])} (likely range {inr(f['range']['low'])}"
-         f"-{inr(f['range']['high'])}), {f['change_vs_last_month_pct']:+}% versus last month. With expected income of {inr(f['expected_income'])} "
-         f"that is a projected {f['projected_status']} of {inr(abs(f['projected_surplus']))}.")
+         f"-{inr(f['range']['high'])})" + (f", {f['change_vs_last_month_pct']:+}% versus last month." if f["change_vs_last_month_pct"] is not None else "."))
+    if f["projected_surplus"] is not None:
+        s += (f" With expected income of {inr(f['expected_income'])} that is a projected {f['projected_status']} of "
+              f"{inr(abs(f['projected_surplus']))}.")
+    else:
+        s += " Income is not recorded, so the surplus is not projected."
     if f.get("top_increase_drivers"):
         s += f" Categories pushing it up: {', '.join(f['top_increase_drivers'])}."
     return s
 
 
 def _w_anomaly(f):
+    if not f.get("transactions_scored", 1):
+        return "There are no transactions to check yet."
     if not f["flagged_count"]:
         return "No unusual transactions were flagged."
     items = "; ".join(f"{t['date']} {t['merchant'] or t['category']} {inr(t['amount'])} ({t['times_typical']}× your typical) on {t['source']}"
@@ -190,12 +251,17 @@ def _w_anomaly(f):
 
 
 def _w_recs(f):
+    if not f["recommendations"]:
+        return ("There are no recommendations yet. Most checks need your income and spending history - add them, or upload a "
+                "statement, and I will have specific suggestions.")
     lines = [f"{n}. {r['finding']} - {r['action']}" for n, r in enumerate(f["recommendations"][:4], 1)]
     return "Your top priorities:\n" + "\n".join(lines)
 
 
 def _w_ins(f):
-    s = f"Health cover: {inr(f['health_cover'])} (recommended at least {inr(f['recommended_health_cover'])}). Term life cover: {inr(f['term_cover'])} (guideline {inr(f['recommended_term_cover'])})."
+    s = (f"Health cover: {inr(f['health_cover'])} (recommended at least {inr(f['recommended_health_cover'])}). Term life cover: {inr(f['term_cover'])} "
+         + (f"(guideline {inr(f['recommended_term_cover'])})." if f["recommended_term_cover"] is not None
+            else "(the guideline of 10x income plus loans needs your income, which is not recorded)."))
     gaps = [x for x in (f"health gap {inr(f['health_gap'])}" if f["health_gap"] else "", f"term gap {inr(f['term_gap'])}" if f["term_gap"] else "") if x]
     return s + (" Gaps: " + ", ".join(gaps) + "." if gaps else " You are adequately covered.")
 
@@ -208,6 +274,8 @@ def _w_goals(f):
 
 
 def _w_peers(f):
+    if not f.get("available", True):
+        return f.get("note") or "Peer comparison needs a few months of income and spending history."
     return (f"You are closest to the '{f['peer_group']}' group. Strengths versus others: {', '.join(f['strengths']) or 'none stand out'}. "
             f"Weaker than most on: {', '.join(f['weaknesses']) or 'nothing notable'}.")
 

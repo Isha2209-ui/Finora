@@ -135,7 +135,7 @@ def test_reset_restores_the_original(carol):
 
 
 def test_only_sandboxes_can_be_reset(carol):
-    own = carol.post("/api/profiles", json={"name": "Carol Own", "age": 33, "monthly_income": 70000}).json()["profile"]["internal_id"]
+    own = carol.post("/api/profiles", json={"name": "Carol Own", "age": 33}).json()["profile"]["internal_id"]
     assert carol.post(f"/api/profiles/{own}/reset").status_code == 422
     assert carol.post("/api/profiles/FINORA_USER_001/reset").status_code == 403
 

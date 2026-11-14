@@ -33,16 +33,36 @@ def clean_json(o):
     return o
 
 
+PEERS_MIN_MONTHS = 3
+
+
 def run(db: Session, uid: int, save: bool = True, fire_overrides: dict | None = None) -> dict:
     ident = load_identity(db, uid)
     snap = build(ident, fire_overrides)
     monthly, _, _ = C.monthly_frame(ident)
+    cf = snap["cash_flow"]
     ml, errors = {}, {}
+
+    def _forecast():
+        if not cf["spending_known"]:
+            return {"available": False, "note": "Needs transaction history to forecast spending."}
+        out = forecast.analyse(registry.get("forecast"), ident, monthly, snap)
+        if out.get("available") and not cf["income_known"]:
+            for k in ("expected_income", "projected_surplus", "projected_status", "projected_bank_balance_end_of_month"):
+                out[k] = None
+            out["income_note"] = "No income recorded, so surplus and end-of-month balance are not projected."
+        return out
+
+    def _peers():
+        if not (cf["income_known"] and cf["spending_known"] and cf["coverage"]["months"] >= PEERS_MIN_MONTHS):
+            return {"available": False, "note": f"Peer comparison needs income and spending for at least {PEERS_MIN_MONTHS} months."}
+        return {"available": True, **peers.analyse(registry.get("peers"), ident, monthly)}
+
     steps = {
         "credit_risk": lambda: credit_risk.analyse(registry.get("credit_risk"), ident),
         "anomaly": lambda: anomaly.analyse(registry.get("anomaly"), ident),
-        "forecast": lambda: forecast.analyse(registry.get("forecast"), ident, monthly, snap),
-        "peers": lambda: peers.analyse(registry.get("peers"), ident, monthly),
+        "forecast": _forecast,
+        "peers": _peers,
     }
     for name, fn in steps.items():
         try:

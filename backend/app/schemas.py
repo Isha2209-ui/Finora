@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class LookupIn(BaseModel):
@@ -70,23 +70,32 @@ class TransactionIn(BaseModel):
 
 
 class ProfileIn(BaseModel):
+    """A new private profile starts with personal details only. Nothing financial is invented: accounts, income,
+    transactions and holdings are added afterwards by the person (manual entry or statement upload)."""
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     name: str = Field(..., min_length=2, max_length=120)
     pan: str | None = Field(None, description="Optional. Stored masked for display only; never used to look anything up.")
     age: int = Field(..., ge=18, le=80)
-    occupation: str = "Professional"
+    occupation: str = Field("Professional", min_length=1, max_length=120)
     employment_type: Literal["salaried", "self_employed"] = "salaried"
-    city: str = "Jaipur"
+    city: str = Field("Not specified", min_length=1, max_length=80)
     retirement_age_target: int = Field(60, ge=30, le=75)
-    monthly_income: float = Field(..., gt=0)
-    bank_name: str = "HDFC Bank"
-    bank_balance: float = Field(0, ge=0)
 
 
 class ProfilePatch(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    name: str | None = Field(None, min_length=2, max_length=120)
     age: int | None = Field(None, ge=18, le=80)
     retirement_age_target: int | None = Field(None, ge=30, le=75)
-    occupation: str | None = None
-    city: str | None = None
+    occupation: str | None = Field(None, min_length=1, max_length=120)
+    employment_type: Literal["salaried", "self_employed"] | None = None
+    city: str | None = Field(None, min_length=1, max_length=80)
+
+    @model_validator(mode="after")
+    def _ages(self):
+        if self.age is not None and self.retirement_age_target is not None and self.retirement_age_target <= self.age:
+            raise ValueError("Target retirement age must be above your current age.")
+        return self
 
 
 class RecStatus(BaseModel):

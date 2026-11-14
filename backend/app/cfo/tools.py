@@ -22,7 +22,9 @@ def profile_summary(ctx, **_):
             "total_liabilities": a["net_worth"]["total_liabilities"],
             "avg_monthly_income": a["cash_flow"]["avg_monthly_income"], "avg_monthly_expenses": a["cash_flow"]["avg_monthly_expenses"],
             "savings_rate_pct": a["cash_flow"]["avg_savings_rate_pct"], "health_score": a["health_score"]["score"],
-            "health_band": a["health_score"]["band"], "health_pillars": a["health_score"]["pillars"]}
+            "health_band": a["health_score"]["band"], "health_pillars": a["health_score"]["pillars"],
+            "income_known": a["cash_flow"].get("income_known", True), "spending_known": a["cash_flow"].get("spending_known", True),
+            "missing_data": (a.get("completeness") or {}).get("missing", [])}
 
 
 def cash_flow(ctx, **_):
@@ -33,10 +35,13 @@ def cash_flow(ctx, **_):
     out["top_categories"] = [{"category": c["category"], "monthly_avg": c["monthly_avg"], "share_pct": c["share_of_spend_pct"]}
                              for c in cf["category_totals"][:6]]
     out["last_3_months"] = [_pick(m, ["month", "income", "expenses", "savings"]) for m in cf["monthly_series"][-3:]]
+    out["income_known"], out["spending_known"] = cf.get("income_known", True), cf.get("spending_known", True)
     return out
 
 
 def spending_by_category(ctx, category: str | None = None, **_):
+    if not ctx["analysis"]["cash_flow"].get("spending_known", True):
+        return {"available": False}
     cats = ctx["analysis"]["cash_flow"]["category_totals"]
     if category:
         hit = [c for c in cats if c["category"].lower() == category.lower()]
@@ -95,13 +100,17 @@ def runway(ctx, **_):
     l = ctx["analysis"]["liquidity"]
     return _pick(l, ["runway_months", "runway_months_essentials_only", "runway_months_incl_market", "emergency_pool",
                      "emergency_fund_months", "emergency_fund_gap", "immediate", "within_a_week"]) | \
-        {"avg_monthly_expenses": ctx["analysis"]["cash_flow"]["avg_monthly_expenses"]}
+        {"avg_monthly_expenses": ctx["analysis"]["cash_flow"]["avg_monthly_expenses"],
+         "expenses_known": ctx["analysis"]["cash_flow"].get("spending_known", True)}
 
 
 def fire_forecast(ctx, monthly_investment: float | None = None, retirement_age: int | None = None,
                   annual_expenses: float | None = None, nominal_return_pct: float | None = None, **_):
     f = ctx["analysis"]["fire"]
     fi = f["inputs"]
+    if not f.get("available", True) and annual_expenses is None:
+        return {"available": False, "reason": f["reason"], "current_corpus": fi["current_corpus"],
+                "monthly_investment": fi["monthly_investment"]}
     changed = any(v is not None for v in (monthly_investment, retirement_age, annual_expenses, nominal_return_pct))
     if changed:
         f = F.project(fi["current_corpus"], monthly_investment if monthly_investment is not None else fi["monthly_investment"],
@@ -130,6 +139,8 @@ def affordability(ctx, price: float, down_payment: float | None = None, interest
     res = D.simulate(ctx["identity"], item_type=item_type, item_name=item_name or item_type.title(), price=price,
                      down_payment=dp, interest_rate=float(interest_rate) if interest_rate is not None else r,
                      tenure_months=int(tenure_months) if tenure_months else n, snap=ctx["analysis"])
+    if not res.get("available", True):
+        return {"available": False, "item": res["item"]["name"], "price": round(price), "missing": res["missing"]}
     p = res["plan"]
     return {"item": res["item"]["name"], "price": p["price"], "down_payment": p["down_payment"], "loan_amount": p["loan_amount"],
             "interest_rate_pct": p["interest_rate_pct"], "tenure_months": p["tenure_months"], "emi": p["emi"],
@@ -152,6 +163,8 @@ def tax_comparison(ctx, gross_income: float | None = None, **_):
         t = T.compare(float(gross_income), ctx["analysis"]["profile"]["employment_type"] == "salaried")
     else:
         t = ctx["analysis"]["tax"]
+        if not t.get("available", True):
+            return {"available": False}
     return {"financial_year": t["financial_year"], "gross_income": t["gross_income"], "new_regime_tax": t["new"]["total_tax"],
             "old_regime_tax": t["old"]["total_tax"], "old_regime_deductions_used": t["old"]["deductions"],
             "better_regime": t["better_regime"], "saving_with_better": t["saving_with_better"],
@@ -171,7 +184,7 @@ def spending_forecast(ctx, **_):
 
 def unusual_transactions(ctx, **_):
     a = ctx["analysis"]["ml"].get("anomaly", {})
-    return {"flagged_count": a.get("flagged_count", 0), "flagged_amount_total": a.get("flagged_amount_total", 0),
+    return {"transactions_scored": a.get("transactions_scored", 0), "flagged_count": a.get("flagged_count", 0), "flagged_amount_total": a.get("flagged_amount_total", 0),
             "transactions": [_pick(f, ["date", "merchant", "category", "amount", "typical_amount", "times_typical", "severity", "source"])
                              for f in a.get("flagged", [])[:6]]}
 
@@ -191,6 +204,8 @@ def goals(ctx, **_):
 
 def peer_comparison(ctx, **_):
     p = ctx["analysis"]["ml"].get("peers", {})
+    if not p.get("available", True) or not p.get("peer_group"):
+        return {"available": False, "note": p.get("note")}
     return _pick(p, ["peer_group", "strengths", "weaknesses"]) | {"comparison": p.get("comparison", [])[:5]}
 
 

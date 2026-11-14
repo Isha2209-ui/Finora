@@ -1,7 +1,7 @@
 """Reports, statement upload, profile & data management, model lab."""
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import datetime
 
 import secrets
 from pathlib import Path
@@ -136,25 +136,22 @@ def create_profile(body: S.ProfileIn, request: Request, cur: Current = Depends(c
                kind="private", owner_id=cur.user.id)
     db.add(u)
     db.flush()
-    acct = M.BankAccount(user_id=u.id, bank_name=body.bank_name, account_type="savings", account_masked="XXXX0001",
-                         balance=body.bank_balance, interest_rate=3.0, is_primary=True)
-    db.add(acct)
-    db.flush()
-    # six months of the stated income so ratios are meaningful before a statement is uploaded
-    for y, m in [(2026, k) for k in range(5, 11)]:
-        db.add(M.IncomeRecord(user_id=u.id, account_id=acct.id, amount=body.monthly_income,
-                              source="Salary" if body.employment_type == "salaried" else "Client payment", date=date(y, m, 1)))
     audit(db, "profile.create", request=request, app_user_id=cur.user.id, profile_id=u.id, commit=False)
     db.commit()
-    return {"created": True, "profile": common.public_profile(u), "account_id": acct.id,
-            "next_step": "Upload a statement CSV for this profile to analyse it."}
+    return {"created": True, "profile": common.public_profile(u),
+            "next_step": "Add your accounts, income, holdings and loans, or upload a bank statement CSV."}
 
 
 @router.patch("/profiles/{internal_id}", summary="Edit profile details")
-def patch_profile(body: S.ProfilePatch, ctx: ProfileCtx = Depends(profile_writer), db: Session = Depends(get_db)):
+def patch_profile(body: S.ProfilePatch, request: Request, ctx: ProfileCtx = Depends(profile_writer), db: Session = Depends(get_db)):
     user = ctx.profile
-    for k, v in body.model_dump(exclude_none=True).items():
+    changes = body.model_dump(exclude_none=True)
+    age = changes.get("age", user.age)
+    if changes.get("retirement_age_target", user.retirement_age_target) <= age:
+        raise HTTPException(422, "Target retirement age must be above your current age.")
+    for k, v in changes.items():
         setattr(user, k, v)
+    audit(db, "profile.update", request=request, app_user_id=ctx.account.id, profile_id=user.id, detail={"fields": sorted(changes)}, commit=False)
     db.commit()
     common.invalidate(user.id)
     return common.public_profile(user)

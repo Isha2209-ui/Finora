@@ -1,6 +1,8 @@
 """Recommendation engine + alerts.
 
 Deterministic rules that combine model findings with financial calculations.
+A rule only fires when every number it relies on is actually known for this person: missing data never
+counts as zero (an unknown savings rate is not a 0% savings rate).
 Every recommendation carries: finding, evidence (the actual numbers), explanation,
 action, priority and - only when it can be calculated - the rupee impact.
 The AI assistant may re-word these, but it never invents them.
@@ -30,8 +32,9 @@ def build(snap: dict, ml: dict) -> list[dict]:
                          action=action, impact_inr=None if impact_inr is None else round(float(impact_inr)),
                          impact_text=impact_text, source=source))
 
+    sr_known = cf["avg_savings_rate_pct"] is not None
     # ---- 1. overspending
-    if (cf["avg_savings_rate_pct"] or 0) < 0:
+    if sr_known and cf["avg_savings_rate_pct"] < 0:
         gap = -cf["avg_monthly_savings"]
         add("DEFICIT", "high", "You spend more than you earn",
             f"Average income {_inr(cf['avg_monthly_income'])}/month vs expenses {_inr(cf['avg_monthly_expenses'])}/month; "
@@ -39,7 +42,7 @@ def build(snap: dict, ml: dict) -> list[dict]:
             "A persistent deficit is being funded by credit cards or savings, which compounds quickly.",
             f"Cut discretionary spending by at least {_inr(gap)} a month. A 30% cut frees {_inr(bud['scenarios'][2]['monthly_saving'])}/month.",
             gap * 12, f"Closing the gap stops about {_inr(gap * 12)} of new debt a year.")
-    elif (cf["avg_savings_rate_pct"] or 0) < 20:
+    elif sr_known and cf["avg_savings_rate_pct"] < 20 and bud.get("scenarios"):
         s = bud["scenarios"][1]
         add("LOW_SAVINGS", "medium", "Savings rate is below the 20% guideline",
             f"You save {cf['avg_savings_rate_pct']}% of income ({_inr(cf['avg_monthly_savings'])}/month).",
@@ -50,7 +53,7 @@ def build(snap: dict, ml: dict) -> list[dict]:
     # ---- 2. credit cards
     if cred.get("has_cards"):
         for c in cred["cards"]:
-            if c["months_delayed_last6"] > 0:
+            if (c["months_delayed_last6"] or 0) > 0:
                 add(f"CARD_LATE_{c['last4']}", "high", f"Payments on {c['card']} are overdue",
                     f"{c['months_delayed_last6']} delayed payment(s) in the last 6 months; outstanding {_inr(c['outstanding'])}; minimum due {_inr(c['min_due'])}.",
                     "Late payments add late fees and interest and are the strongest negative signal for a credit score.",
@@ -60,7 +63,9 @@ def build(snap: dict, ml: dict) -> list[dict]:
             elif c["utilisation_pct"] is not None and c["utilisation_pct"] >= 50:
                 add(f"CARD_UTIL_{c['last4']}", "high" if c["utilisation_pct"] >= 75 else "medium",
                     f"{c['card']} is {c['utilisation_pct']:.0f}% utilised",
-                    f"Outstanding {_inr(c['outstanding'])} on a limit of {_inr(c['limit'])}; only part of the bill was paid in {c['months_paid_minimum_only_last6']} of the last 6 months.",
+                    f"Outstanding {_inr(c['outstanding'])} on a limit of {_inr(c['limit'])}"
+                    + (f"; only part of the bill was paid in {c['months_paid_minimum_only_last6']} of the last 6 months."
+                       if c["months_paid_minimum_only_last6"] is not None else "."),
                     "Utilisation above 30% lowers credit scores, and revolving balances are charged about "
                     f"{c['apr_pct']:.0f}% a year.",
                     f"Bring the balance under {_inr(c['limit'] * 0.3)} (30% of the limit); pay more than the minimum every month.",
@@ -78,7 +83,8 @@ def build(snap: dict, ml: dict) -> list[dict]:
 
     # ---- 3. costly debt vs idle money
     costly = [d for d in idle["high_interest_debts"] if d["rate"] >= 12]
-    if idle["idle_in_low_yield_accounts"] > 10000 and costly:
+    idle_amt = idle["idle_in_low_yield_accounts"] if idle.get("available", True) else None
+    if idle_amt is not None and idle_amt > 10000 and costly:
         d = max(costly, key=lambda x: x["rate"])
         pay = min(idle["idle_in_low_yield_accounts"], d["balance"])
         add("IDLE_VS_DEBT", "high", "Idle savings while paying high-interest debt",
@@ -86,7 +92,7 @@ def build(snap: dict, ml: dict) -> list[dict]:
             "Money earning 3% while debt costs far more is a guaranteed loss on the difference.",
             f"Use {_inr(pay)} of the idle balance to prepay {d['name']} (keeping 1.5 months of expenses as a buffer).",
             pay * (d["rate"] - 3) / 100, f"Saves about {_inr(pay * (d['rate'] - 3) / 100)} a year.")
-    elif idle["idle_in_low_yield_accounts"] > 50000:
+    elif idle_amt is not None and idle_amt > 50000:
         add("IDLE_CASH", "low", "Surplus cash is sitting in a low-interest account",
             f"{_inr(idle['idle_in_low_yield_accounts'])} above your operating buffer earns under 4%.",
             "After inflation, money in a savings account loses purchasing power.",
@@ -108,8 +114,10 @@ def build(snap: dict, ml: dict) -> list[dict]:
             debt["payoff"]["interest_saved_by_avalanche"], f"Saves {_inr(debt['payoff']['interest_saved_by_avalanche'])} in interest.")
 
     # ---- 5. emergency fund
-    ef = liq["emergency_fund_months"] or 0
-    if ef < 3:
+    ef = liq["emergency_fund_months"]
+    if ef is None:
+        pass  # expenses unknown: the emergency fund cannot be judged (see data completeness)
+    elif ef < 3:
         add("EMERGENCY_FUND", "high", f"Emergency fund covers only {ef:.1f} months",
             f"Liquid savings {_inr(liq['emergency_pool'])} vs average expenses {_inr(cf['avg_monthly_expenses'])}/month. Target: 6 months ({_inr(6 * cf['avg_monthly_expenses'])}).",
             "Without a cushion, a job loss or medical bill has to go on a credit card or loan.",
@@ -128,7 +136,7 @@ def build(snap: dict, ml: dict) -> list[dict]:
             f"Current cover {_inr(ins['health_cover'])}; recommended at least {_inr(ins['recommended_health_cover'])}.",
             "A single hospitalisation can wipe out years of savings; employer cover ends when the job does.",
             "Buy a personal/family floater health policy of ₹10 lakh or more.")
-    if ins["dependants_likely"] and ins["term_gap"] > 0:
+    if ins["dependants_likely"] and ins["term_gap"] is not None and ins["term_gap"] > 0:
         add("TERM_COVER", "high" if not ins["has_term"] else "medium",
             "No term life insurance" if not ins["has_term"] else "Term cover is lower than recommended",
             f"Current cover {_inr(ins['term_cover'])}; guideline (10× income + loans) {_inr(ins['recommended_term_cover'])}.",
@@ -141,7 +149,7 @@ def build(snap: dict, ml: dict) -> list[dict]:
             "; ".join(f"{s['scheme']}: {s['status']}, {s['missed_last_12m']} missed" for s in inv["sips"] if s["missed_last_12m"]),
             "Skipped instalments break compounding and usually happen when cash flow is tight.",
             "Move the SIP date to 2-3 days after your income arrives, and restart paused SIPs at an amount you can sustain.")
-    if (inv["sip_to_income_pct"] or 0) < 10 and (cf["avg_savings_rate_pct"] or 0) >= 15:
+    if inv["sip_to_income_pct"] is not None and inv["sip_to_income_pct"] < 10 and sr_known and cf["avg_savings_rate_pct"] >= 15:
         extra = max(0.0, cf["avg_monthly_savings"] * 0.6 - inv["sip_monthly_total"])
         alt = fire.get("if_you_invested_80pct_of_surplus", {})
         add("INVEST_SURPLUS", "medium", "You save well but invest little of it",
@@ -201,10 +209,10 @@ def build(snap: dict, ml: dict) -> list[dict]:
                 (lim["last_3m_avg"] - lim["suggested_limit"]) * 12, f"{_inr((lim['last_3m_avg'] - lim['suggested_limit']) * 12)} a year.")
 
     # ---- 11. FIRE
-    if fire["on_track"] is False and fire["monthly_investment_needed_for_target"]:
+    if fire.get("available", True) and fire.get("on_track") is False and fire.get("monthly_investment_needed_for_target"):
         need = fire["monthly_investment_needed_for_target"]
         cur = fire["inputs"]["monthly_investment"]
-        feasible = need <= max(cf["avg_monthly_savings"], 0)
+        feasible = cf["avg_monthly_savings"] is not None and need <= max(cf["avg_monthly_savings"], 0)
         add("FIRE_GAP", "medium" if feasible else "low", f"Not on track to retire at {fire['retirement_age_target']}",
             f"FIRE number {_inr(fire['fire_number'])}; projected corpus at {fire['retirement_age_target']}: {_inr(fire['corpus_at_target_age'])}; "
             f"success probability {fire['success_probability_pct']}%. Projected FIRE age: {fire['fire_age'] or 'beyond 75'}.",
@@ -215,7 +223,7 @@ def build(snap: dict, ml: dict) -> list[dict]:
 
     # ---- 12. tax
     tax = snap["tax"]
-    if tax["saving_with_better"] > 5000:
+    if tax.get("available", True) and tax.get("saving_with_better", 0) > 5000:
         add("TAX_REGIME", "low", f"The {tax['better_regime']} tax regime looks cheaper for you",
             f"Estimated tax: new regime {_inr(tax['new']['total_tax'])} vs old regime {_inr(tax['old']['total_tax'])} (FY {tax['financial_year']}).",
             "The better regime depends on how many deductions you can claim.",
@@ -223,7 +231,9 @@ def build(snap: dict, ml: dict) -> list[dict]:
             tax["saving_with_better"], f"Estimated saving {_inr(tax['saving_with_better'])} a year.", "Tax calculator")
 
     # ---- positive reinforcement when things are healthy
-    if not [r for r in recs if r["priority"] == "high"] and snap["health_score"]["score"] >= 75:
+    hs = snap["health_score"]
+    if not [r for r in recs if r["priority"] == "high"] and hs["score"] is not None and hs["score"] >= 75 and not hs.get("partial") \
+            and sr_known and ef is not None:
         add("ON_TRACK", "low", "Your finances are in good shape",
             f"Health score {snap['health_score']['score']}/100; savings rate {cf['avg_savings_rate_pct']}%; emergency fund {ef:.1f} months.",
             "No urgent issues were found.", "Keep the current plan and review once a quarter.")

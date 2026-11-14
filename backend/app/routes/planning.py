@@ -26,6 +26,9 @@ def fire(body: S.FireIn, ctx: ProfileCtx = Depends(profile_reader), db: Session 
     user = ctx.profile
     base = common.get_analysis(db, user)["fire"]
     fi = base["inputs"]
+    if not base.get("available", True) and body.annual_expenses is None:
+        return {"available": False, "reason": base["reason"], "inputs": fi,
+                "needs": "Enter your expected yearly expenses (annual_expenses) to run the projection."}
     pick = lambda v, d: d if v is None else v  # noqa: E731
     res = F.project(pick(body.current_corpus, fi["current_corpus"]), pick(body.monthly_investment, fi["monthly_investment"]),
                     fi["age"], pick(body.annual_expenses, fi["annual_expenses"]),
@@ -34,6 +37,9 @@ def fire(body: S.FireIn, ctx: ProfileCtx = Depends(profile_reader), db: Session 
                     inflation=pick(body.inflation_pct, fi["inflation_pct"]) / 100,
                     swr=pick(body.withdrawal_rate_pct, fi["withdrawal_rate_pct"]) / 100,
                     step_up=pick(body.step_up_pct, fi["annual_step_up_pct"]) / 100)
+    res["available"] = True
+    res["expenses_source"] = "measured from your transactions" if base.get("available", True) and body.annual_expenses is None \
+        else "entered by you for this projection"
     res["baseline"] = {k: base[k] for k in ["fire_age", "fire_number", "success_probability_pct", "corpus_at_target_age"]}
     res["corpus_by_age"] = F.corpus_by_age(res["inputs"]["current_corpus"], res["inputs"]["monthly_investment"], fi["age"],
                                            [a for a in (35, 40, 45, 50, 55, 60, 65) if a > fi["age"]],

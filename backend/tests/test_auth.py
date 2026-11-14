@@ -35,7 +35,7 @@ def _call(c, method, path, **kw):
 @pytest.fixture(scope="module")
 def alice():
     c = signed_in_client("alice")
-    r = c.post("/api/profiles", json={"name": "Alice Private", "age": 31, "monthly_income": 120000, "bank_balance": 200000})
+    r = c.post("/api/profiles", json={"name": "Alice Private", "age": 31})
     assert r.status_code == 200, r.text
     c.profile_id = r.json()["profile"]["internal_id"]
     return c
@@ -57,7 +57,7 @@ def test_lookup_and_list_need_sign_in():
     anon = TestClient(app)
     assert anon.post("/api/lookup", json={"pan": "ABCDE1234F"}).status_code == 401
     assert anon.get("/api/profiles").status_code == 401
-    assert anon.post("/api/profiles", json={"name": "X Y", "age": 30, "monthly_income": 1}).status_code == 401
+    assert anon.post("/api/profiles", json={"name": "X Y", "age": 30}).status_code == 401
     assert anon.get("/api/auth/me").status_code == 401
     assert anon.get("/api/health").status_code == 200               # public, no personal data
     assert anon.get("/api/models/metrics").status_code == 200
@@ -196,7 +196,7 @@ def test_other_account_cannot_write_into_private_profile(alice, bob):
     assert bob.patch(f"/api/profiles/{pid}/transactions/{tx['id']}", json={"category": "Rent"}).status_code == 404
     assert bob.delete(f"/api/profiles/{pid}/transactions/{tx['id']}").status_code == 404
     # bob's own profile cannot reach alice's transaction ID either
-    bp = bob.post("/api/profiles", json={"name": "Bob Own", "age": 40, "monthly_income": 50000}).json()["profile"]["internal_id"]
+    bp = bob.post("/api/profiles", json={"name": "Bob Own", "age": 40}).json()["profile"]["internal_id"]
     assert bob.patch(f"/api/profiles/{bp}/transactions/{tx['id']}", json={"category": "Rent"}).status_code == 404
     assert bob.delete(f"/api/profiles/{bp}/transactions/{tx['id']}").status_code == 404
     assert alice.delete(f"/api/profiles/{pid}/transactions/{tx['id']}").status_code == 200
@@ -258,12 +258,12 @@ def test_chat_history_and_reports_are_per_account_even_on_templates(alice, bob):
 
 
 def test_account_can_delete_own_profile_and_everything_goes(bob):
-    pid = bob.post("/api/profiles", json={"name": "Temp Bob", "age": 30, "monthly_income": 40000}).json()["profile"]["internal_id"]
+    pid = bob.post("/api/profiles", json={"name": "Temp Bob", "age": 30}).json()["profile"]["internal_id"]
     bob.post(f"/api/profiles/{pid}/transactions", json={"date": "2026-10-03", "amount": 99, "description": "UPI/DR/1/UBER/AXIS/uber@okaxis"})
     with SessionLocal() as db:
         db_id = db.scalar(select(M.User.id).where(M.User.internal_id == pid))
     r = bob.delete(f"/api/profiles/{pid}")
-    assert r.status_code == 200 and r.json()["rows_deleted"] >= 3
+    assert r.status_code == 200 and r.json()["rows_deleted"] >= 2
     with SessionLocal() as db:
         assert db.get(M.User, db_id) is None
         for model in (M.Transaction, M.IncomeRecord, M.BankAccount):

@@ -27,12 +27,30 @@ def r(x, nd=2):
     return None if x is None or (isinstance(x, float) and np.isnan(x)) else round(float(x), nd)
 
 
+# ================================================================ data coverage
+def coverage(ident: Identity) -> dict:
+    """What the history can and cannot support. Missing data is reported as missing - never filled with zeros.
+
+    spending_known: at least one transaction exists, so expenses can be measured for those months.
+    income_known:   at least one income record exists inside the measured window.
+    Cash-flow window: the months that have transactions (expenses are only knowable there); with no
+    transactions at all, the months that have income records.
+    """
+    tx_months = sorted(pd.to_datetime(ident.transactions["date"]).dt.to_period("M").astype(str).unique()) if len(ident.transactions) else []
+    inc_months = sorted(pd.to_datetime(ident.income["date"]).dt.to_period("M").astype(str).unique()) if len(ident.income) else []
+    window = tx_months or inc_months
+    inc_in_window = [m for m in inc_months if m in set(window)]
+    return {"spending_known": bool(tx_months), "income_known": bool(inc_in_window), "window": window,
+            "months": len(window), "transaction_months": len(tx_months), "income_months": len(inc_months),
+            "income_months_in_window": len(inc_in_window)}
+
+
 # ================================================================ cash flow
 def monthly_frame(ident: Identity) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     t, report = clean_transactions(ident.transactions)
     inc = ident.income.copy()
     inc["month"] = pd.to_datetime(inc["date"]).dt.to_period("M").astype(str)
-    months = sorted(set(t["month"]) | set(inc["month"]))
+    months = coverage(ident)["window"]
     g = t.groupby("month")
     f = pd.DataFrame(index=months)
     f["income"] = inc.groupby("month")["amount"].sum()
@@ -49,7 +67,40 @@ def monthly_frame(ident: Identity) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     return f.reset_index(), t, report
 
 
+_CF_INCOME_FIELDS = ["monthly_income", "avg_monthly_income", "income_volatility_pct"]
+_CF_SPEND_FIELDS = ["monthly_expenses", "avg_monthly_expenses", "expense_change", "expense_change_pct", "expense_volatility_pct"]
+_CF_BOTH_FIELDS = ["monthly_savings", "savings_rate_pct", "avg_monthly_savings", "avg_savings_rate_pct", "essential_to_income_pct",
+                   "discretionary_to_income_pct", "emi_to_income_pct", "invested_to_income_pct", "surplus_or_deficit",
+                   "months_in_deficit"]
+
+
 def cash_flow(ident: Identity) -> dict:
+    cov = coverage(ident)
+    if not cov["months"]:
+        return {"available": False, "income_known": False, "spending_known": False, "coverage": cov,
+                "reason": "No income records or transactions yet. Add income and transactions, or upload a statement, "
+                          "to measure cash flow.",
+                "period": None, "latest_month": None, **{k: None for k in _CF_INCOME_FIELDS + _CF_SPEND_FIELDS + _CF_BOTH_FIELDS},
+                "monthly_series": [], "category_totals": [], "spend_by_source": [], "cleaning_report": None}
+    out = _cash_flow(ident)
+    out.update({"available": True, "income_known": cov["income_known"], "spending_known": cov["spending_known"], "coverage": cov})
+    missing = []
+    if not cov["income_known"]:
+        missing += _CF_INCOME_FIELDS + _CF_BOTH_FIELDS
+        out["income_note"] = "No income recorded for these months, so income, savings and income ratios are not calculated."
+    if not cov["spending_known"]:
+        missing += _CF_SPEND_FIELDS + _CF_BOTH_FIELDS
+        out["spending_note"] = "No transactions yet, so spending and savings cannot be measured (not assumed to be zero)."
+    for k in set(missing):
+        out[k] = None
+    if missing:
+        out["monthly_series"] = [{**row, **({"income": None} if not cov["income_known"] else {}),
+                                  **({"expenses": None, "essential": None, "discretionary": None} if not cov["spending_known"] else {}),
+                                  "savings": None} for row in out["monthly_series"]]
+    return out
+
+
+def _cash_flow(ident: Identity) -> dict:
     f, t, report = monthly_frame(ident)
     last, prev = f.iloc[-1], f.iloc[-2] if len(f) > 1 else None
     tot_inc, tot_exp = f["income"].sum(), f["expenses"].sum()
@@ -174,23 +225,46 @@ def liquidity(ident: Identity, avg_monthly_expenses: float, essential_monthly: f
         "emergency_pool": r(emergency_pool),
         "emergency_fund_months": r(emergency_pool / avg_monthly_expenses) if avg_monthly_expenses else None,
         "emergency_fund_target_months": 6,
-        "emergency_fund_gap": r(max(0.0, 6 * avg_monthly_expenses - emergency_pool)),
+        "emergency_fund_gap": r(max(0.0, 6 * avg_monthly_expenses - emergency_pool)) if avg_monthly_expenses else None,
         "runway_months": r(emergency_pool / avg_monthly_expenses) if avg_monthly_expenses else None,
         "runway_months_essentials_only": r(emergency_pool / essential_monthly) if essential_monthly else None,
+        "expenses_known": bool(avg_monthly_expenses),
         "runway_months_incl_market": r((emergency_pool + market) / avg_monthly_expenses) if avg_monthly_expenses else None,
         "definition": "Runway = (bank + cash + liquid gold + FDs + debt funds) / average monthly expenses. "
                       "Equity is excluded because it can fall in value exactly when you need it.",
     }
 
 
+# ================================================================ known fixed commitments
+_PER_MONTH = {"monthly": 1.0, "quarterly": 1 / 3, "yearly": 1 / 12}
+
+
+def commitments(ident: Identity, emergency_pool: float) -> dict:
+    """Fixed monthly outflows the person has told us about (or that follow from their records): recurring payments,
+    loan EMIs, active SIPs and insurance premiums. These are commitments, not measured spending - living costs such as
+    food and travel are not included - so they are reported separately and never used as 'expenses'."""
+    rec = [{"name": p["name"], "category": p["category"], "monthly": r(p["amount"] * _PER_MONTH.get(p["frequency"], 1.0))}
+           for p in ident.recurring]
+    parts = {"Recurring payments": sum(x["monthly"] for x in rec),
+             "Loan EMIs": sum(l["emi"] for l in ident.loans),
+             "Active SIPs": sum(s["amount"] for s in ident.sips if s["status"] == "active"),
+             "Insurance premiums": sum(p["annual_premium"] for p in ident.insurance) / 12}
+    total = sum(parts.values())
+    return {"monthly_total": r(total), "parts": {k: r(v) for k, v in parts.items() if v}, "recurring_payments": rec,
+            "liquid_money_covers_months": r(emergency_pool / total) if total else None,
+            "note": "Known fixed commitments only (recurring payments, EMIs, SIPs, insurance). Day-to-day living costs are "
+                    "not included, so this is a floor, not your total spending."}
+
+
 # ================================================================ credit cards
 def credit_analysis(ident: Identity) -> dict:
     if not ident.cards:
         return {"has_cards": False, "cards": [], "overall_utilisation_pct": 0.0, "total_limit": 0, "total_outstanding": 0}
-    st = pd.DataFrame(ident.card_statements)
+    st = pd.DataFrame(ident.card_statements, columns=["card_id", "month", "bill_amount", "paid_amount", "min_due", "payment_status"])
     cards = []
     for c in ident.cards:
         s = st[st["card_id"] == c["id"]].sort_values("month")
+        has_hist = len(s) > 0
         last6 = s.tail(6)
         min_only = int((last6["payment_status"] == 0).sum())
         delays = int((last6["payment_status"] > 0).sum())
@@ -202,7 +276,8 @@ def credit_analysis(ident: Identity) -> dict:
             "outstanding": r(c["outstanding"]), "min_due": r(c["min_due"]), "due_day": c["due_day"], "apr_pct": c["apr"],
             "utilisation_pct": util,
             "utilisation_band": "healthy" if util < 30 else "elevated" if util < 50 else "high" if util < 75 else "critical",
-            "months_paid_minimum_only_last6": min_only, "months_delayed_last6": delays,
+            "statement_history_months": int(len(s)),
+            "months_paid_minimum_only_last6": min_only if has_hist else None, "months_delayed_last6": delays if has_hist else None,
             "worst_status_last6": int(last6["payment_status"].max()) if len(last6) else None,
             "est_interest_per_month": r(est_interest_month),
             "statements": [{"month": x["month"], "bill": r(x["bill_amount"]), "paid": r(x["paid_amount"]),
@@ -226,7 +301,12 @@ def debt_analysis(ident: Identity, avg_income: float) -> dict:
                           "payment": max(c["min_due"], c["outstanding"] * 0.05), "kind": "card", "remaining_months": None})
     total_emi = sum(l["emi"] for l in ident.loans)
     ratio = pct(total_emi, avg_income)
-    band = "none" if not ident.loans else ("low" if ratio < 20 else "moderate" if ratio < 35 else "high" if ratio < 50 else "very high")
+    if not ident.loans:
+        band = "none"
+    elif ratio is None:
+        band = "unknown"  # loans exist but income is not known
+    else:
+        band = "low" if ratio < 20 else "moderate" if ratio < 35 else "high" if ratio < 50 else "very high"
     total_bal = sum(d["balance"] for d in debts)
     wavg = sum(d["balance"] * d["rate"] for d in debts) / total_bal if total_bal else 0.0
     loans = []
@@ -289,15 +369,15 @@ def payoff_strategies(debts: list[dict], extra: float = 0.0) -> dict:
 
 
 # ================================================================ protection
-def insurance_analysis(ident: Identity, avg_income: float) -> dict:
-    annual_income = avg_income * 12
+def insurance_analysis(ident: Identity, avg_income: float | None) -> dict:
     term = sum(p["cover"] for p in ident.insurance if p["kind"] == "term")
     health = sum(p["cover"] for p in ident.insurance if p["kind"] == "health")
-    needed_term = 10 * annual_income + sum(l["balance"] for l in ident.loans)
+    needed_term = 10 * avg_income * 12 + sum(l["balance"] for l in ident.loans) if avg_income else None
     dependants_likely = ident.user["age"] >= 30 or bool(ident.loans)
     return {
         "term_cover": r(term), "recommended_term_cover": r(needed_term),
-        "term_gap": r(max(0.0, needed_term - term)),
+        "term_gap": r(max(0.0, needed_term - term)) if needed_term is not None else None,
+        "income_known": bool(avg_income),
         "health_cover": r(health), "recommended_health_cover": 1000000.0,
         "health_gap": r(max(0.0, 1000000.0 - health)),
         "has_term": term > 0, "has_health": health > 0, "dependants_likely": dependants_likely,
@@ -351,7 +431,11 @@ def investment_analysis(ident: Identity, avg_income: float) -> dict:
 
 
 # ================================================================ idle money & budget
-def idle_money(ident: Identity, avg_monthly_expenses: float) -> dict:
+def idle_money(ident: Identity, avg_monthly_expenses: float | None) -> dict:
+    if not avg_monthly_expenses:
+        return {"available": False, "bank_total": r(sum(a["balance"] for a in ident.accounts)), "operating_buffer": None,
+                "idle_in_low_yield_accounts": None, "high_interest_debts": [], "annual_opportunity_cost": None,
+                "explanation": "Needs measured monthly expenses to know how much cash is a working buffer."}
     buffer_needed = 1.5 * avg_monthly_expenses
     bank = sum(a["balance"] for a in ident.accounts)
     low_yield = [a for a in ident.accounts if a["interest_rate"] < 4.0]
@@ -362,22 +446,25 @@ def idle_money(ident: Identity, avg_monthly_expenses: float) -> dict:
               if c["outstanding"] > 0 and any(s["payment_status"] >= 0 for s in ident.card_statements if s["card_id"] == c["id"])]
     best_debt_rate = max([d["interest_rate"] for d in costly], default=0.0)
     opp = idle * (best_debt_rate - 3.0) / 100 if costly else idle * (7.0 - 3.0) / 100
-    return {"bank_total": r(bank), "operating_buffer": r(buffer_needed), "idle_in_low_yield_accounts": r(idle),
+    return {"available": True, "bank_total": r(bank), "operating_buffer": r(buffer_needed), "idle_in_low_yield_accounts": r(idle),
             "high_interest_debts": [{"name": d["loan_type"], "balance": r(d["balance"]), "rate": d["interest_rate"]} for d in costly],
             "annual_opportunity_cost": r(opp),
             "explanation": "Idle = money in sub-4% accounts beyond 1.5 months of expenses. Opportunity cost compares it with "
                            "paying off the costliest debt (or a ~7% safe instrument if there is no costly debt)."}
 
 
-def budget_scenarios(ident: Identity, f: pd.DataFrame, t: pd.DataFrame) -> dict:
+def budget_scenarios(ident: Identity, f: pd.DataFrame, t: pd.DataFrame, income_known: bool = True) -> dict:
     n = len(f)
+    if n == 0 or t.empty:
+        return {"available": False, "discretionary_monthly_avg": None, "scenarios": [], "category_limits": [],
+                "note": "Needs transactions to see discretionary spending."}
     disc = t[t["category"].isin(DISCRETIONARY)].groupby("category")["spend"].sum() / n
     avg_inc, avg_sav = f["income"].mean(), f["savings"].mean()
     scen = []
     for p in (10, 20, 30):
         s = float(disc.sum() * p / 100)
         scen.append({"cut_discretionary_pct": p, "monthly_saving": r(s), "annual_saving": r(s * 12),
-                     "new_savings_rate_pct": pct(avg_sav + s, avg_inc)})
+                     "new_savings_rate_pct": pct(avg_sav + s, avg_inc) if income_known else None})
     limits = []
     last3 = t[t["month"].isin(sorted(t["month"].unique())[-3:])]
     l3 = last3[last3["category"].isin(DISCRETIONARY)].groupby("category")["spend"].sum() / 3
@@ -385,7 +472,7 @@ def budget_scenarios(ident: Identity, f: pd.DataFrame, t: pd.DataFrame) -> dict:
         yr = disc.get(c, v)
         limits.append({"category": c, "last_3m_avg": r(v), "12m_avg": r(yr), "suggested_limit": r(round(min(v, yr) * 0.85, -2)),
                        "overspend_vs_12m_pct": pct(v - yr, yr)})
-    return {"discretionary_monthly_avg": r(disc.sum()), "scenarios": scen, "category_limits": limits}
+    return {"available": True, "discretionary_monthly_avg": r(disc.sum()), "scenarios": scen, "category_limits": limits}
 
 
 def goals_progress(ident: Identity) -> list[dict]:
@@ -406,20 +493,47 @@ def _pmt_needed(fv: float, annual: float, months: int) -> float:
 
 
 # ================================================================ health score
+MIN_PILLARS_FOR_SCORE = 3
+
+
 def health_score(cf: dict, liq: dict, cred: dict, debt: dict, ins: dict, inv: dict) -> dict:
-    """Transparent 0-100 score from 6 equally-weighted pillars (each 0-100)."""
+    """Transparent 0-100 score from up to 6 equally-weighted pillars (each 0-100).
+
+    A pillar whose inputs are not known is NOT scored (never counted as 0) and is listed under `not_assessed`.
+    The score is the average of the assessed pillars, and is withheld when fewer than 3 can be assessed.
+    """
     def clamp(x):
         return max(0.0, min(100.0, x))
-    sr = cf["avg_savings_rate_pct"] or 0
-    pillars = {
-        "Savings": clamp(sr / 30 * 100),                                         # 30%+ savings rate = full marks
-        "Emergency fund": clamp((liq["emergency_fund_months"] or 0) / 6 * 100),  # 6 months = full
-        "Debt load": clamp(100 - max(0.0, (debt["emi_to_income_pct"] or 0) - 10) * 2.5),
-        "Credit use": clamp(100 - max(0.0, (cred.get("overall_utilisation_pct") or 0) - 10) * 1.4),
-        "Protection": clamp((50 if ins["has_health"] else 0) + (50 if ins["has_term"] and ins["term_gap"] <= 0 else 25 if ins["has_term"] else 0)),
-        "Investing": clamp((inv["sip_to_income_pct"] or 0) / 15 * 100),          # 15%+ of income invested monthly = full
-    }
-    score = round(sum(pillars.values()) / len(pillars), 1)
-    band = "Excellent" if score >= 80 else "Good" if score >= 65 else "Fair" if score >= 45 else "Needs attention"
-    return {"score": score, "band": band, "pillars": {k: round(v, 1) for k, v in pillars.items()},
-            "method": "Average of six 0-100 pillars with published thresholds (see each pillar)."}
+    inc, spend = cf.get("income_known", True), cf.get("spending_known", True)
+    pillars, skipped = {}, {}
+    if inc and spend:
+        pillars["Savings"] = clamp((cf["avg_savings_rate_pct"] or 0) / 30 * 100)            # 30%+ savings rate = full marks
+    else:
+        skipped["Savings"] = "needs both income and spending history"
+    if spend and liq.get("emergency_fund_months") is not None:
+        pillars["Emergency fund"] = clamp(liq["emergency_fund_months"] / 6 * 100)          # 6 months = full
+    else:
+        skipped["Emergency fund"] = "needs spending history to know monthly expenses"
+    if not debt["loans"]:
+        pillars["Debt load"] = 100.0                                                        # no loans recorded
+    elif debt["emi_to_income_pct"] is not None:
+        pillars["Debt load"] = clamp(100 - max(0.0, debt["emi_to_income_pct"] - 10) * 2.5)
+    else:
+        skipped["Debt load"] = "loans are recorded but income is not"
+    pillars["Credit use"] = clamp(100 - max(0.0, (cred.get("overall_utilisation_pct") or 0) - 10) * 1.4)
+    term_ok = ins["has_term"] and ins["term_gap"] is not None and ins["term_gap"] <= 0
+    pillars["Protection"] = clamp((50 if ins["has_health"] else 0) + (50 if term_ok else 25 if ins["has_term"] else 0))
+    if inc:
+        pillars["Investing"] = clamp((inv["sip_to_income_pct"] or 0) / 15 * 100)          # 15%+ of income invested monthly = full
+    else:
+        skipped["Investing"] = "needs income to compare investing against"
+    # A score needs at least one pillar measured from real cash-flow data; otherwise "no loans / no cards entered"
+    # would make an empty profile look healthy.
+    cash_flow_based = {"Savings", "Emergency fund", "Investing"} & set(pillars)
+    enough = len(pillars) >= MIN_PILLARS_FOR_SCORE and bool(cash_flow_based)
+    score = round(sum(pillars.values()) / len(pillars), 1) if enough else None
+    band = None if score is None else "Excellent" if score >= 80 else "Good" if score >= 65 else "Fair" if score >= 45 else "Needs attention"
+    return {"score": score, "band": band or "Not enough data", "pillars": {k: round(v, 1) for k, v in pillars.items()},
+            "not_assessed": skipped, "assessed_pillars": len(pillars), "partial": bool(skipped),
+            "method": "Average of the assessed 0-100 pillars with published thresholds (see each pillar). "
+                      "Pillars without data are left out, not scored as zero."}

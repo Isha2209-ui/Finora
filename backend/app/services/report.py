@@ -31,6 +31,18 @@ def rs(x, dash="-") -> str:
     return f"{sign}Rs {a:,.0f}"
 
 
+NA = "Not available"
+
+
+def pc(x) -> str:
+    """Percent, or 'Not available' - never 'None%'."""
+    return NA if x is None else f"{x}%"
+
+
+def nv(x, unit: str = "") -> str:
+    return NA if x is None else f"{x}{unit}"
+
+
 def _t(s) -> str:
     return str(s).replace("₹", "Rs ").replace("×", "x").replace("•", "*").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
@@ -74,17 +86,23 @@ def build_pdf(a: dict, briefing_text: str | None = None, metrics: dict | None = 
     p, cf, nw, liq = a["profile"], a["cash_flow"], a["net_worth"], a["liquidity"]
     cred, debt, inv, fire, ins, hs = a["credit"], a["debt"], a["investments"], a["fire"], a["insurance"], a["health_score"]
     ml = a["ml"]
+    comp = a.get("completeness") or {}
+    synthetic = "Synthetic" in a.get("data_notice", "")
 
     # ---------------- cover
     story += [Spacer(1, 30 * mm), Paragraph("<font color='#0D9488'><b>FINORA</b></font>", ParagraphStyle("B", parent=H1, fontSize=30, alignment=TA_CENTER)),
               Paragraph("Financial Intelligence Report", ParagraphStyle("B2", parent=H1, fontSize=16, alignment=TA_CENTER)), Spacer(1, 8 * mm)]
     kv([("Name", p["name"]), ("Profile ID", p["internal_id"]), ("PAN (masked)", p["pan_masked"] or "-"), ("Age", p["age"]),
-        ("Occupation", p["occupation"]), ("City", p["city"]), ("Period analysed", f"{cf['period']['from']} to {cf['period']['to']}"),
+        ("Occupation", p["occupation"]), ("City", p["city"]), ("Period analysed", f"{cf['period']['from']} to {cf['period']['to']}" if cf.get("period") else "No history yet"),
         ("Generated", datetime.now().strftime("%d %b %Y, %H:%M"))])
     story.append(Spacer(1, 6 * mm))
-    kv([("Net worth", rs(nw["net_worth"])), ("Financial health score", f"{hs['score']}/100 ({hs['band']})"),
-        ("Savings rate", f"{cf['avg_savings_rate_pct']}%"), ("Emergency runway", f"{liq['runway_months']} months"),
-        ("FIRE age (projected)", fire["fire_age"] or "Beyond 75"), ("Open recommendations", len(a["recommendations"]))])
+    fire_ok = fire.get("available", True)
+    kv([("Net worth", rs(nw["net_worth"])), ("Financial health score", f"{hs['score']}/100 ({hs['band']})" if hs["score"] is not None else NA),
+        ("Savings rate", pc(cf["avg_savings_rate_pct"])), ("Emergency runway", nv(liq["runway_months"], " months")),
+        ("FIRE age (projected)", (fire["fire_age"] or "Beyond 75") if fire_ok else NA), ("Open recommendations", len(a["recommendations"]))])
+    if comp.get("missing"):
+        story.append(Paragraph(f"Data completeness {comp['score_pct']}%. Not yet provided: {_t(', '.join(comp['missing']))}. "
+                               "Results that depend on missing data are shown as 'Not available' rather than estimated.", S))
     story.append(Paragraph(_t(a["data_notice"]) + " This report is educational guidance, not a substitute for a licensed financial advisor.", S))
     story.append(PageBreak())
 
@@ -93,31 +111,42 @@ def build_pdf(a: dict, briefing_text: str | None = None, metrics: dict | None = 
     if briefing_text:
         story.append(Paragraph(_t(briefing_text), P))
         story.append(Spacer(1, 4))
-    table([["Pillar", "Score (0-100)"]] + [[k, v] for k, v in hs["pillars"].items()], widths=[90 * mm, 40 * mm])
+    table([["Pillar", "Score (0-100)"]] + [[k, v] for k, v in hs["pillars"].items()]
+          + [[k, f"Not assessed - {why}"] for k, why in (hs.get("not_assessed") or {}).items()], widths=[60 * mm, 110 * mm])
     story.append(Paragraph(_t(hs["method"]), S))
 
     # ---------------- 2 identity
     story.append(Paragraph("2. Financial identity and net worth", H1))
     table([["Asset class", "Value"]] + [[k, rs(v)] for k, v in nw["breakdown"].items()] + [["Total assets", rs(nw["total_assets"])]], widths=[100 * mm, 50 * mm])
+    if not nw["breakdown"]:
+        story.append(Paragraph("No assets recorded yet.", P))
     if nw["liabilities"]:
         table([["Liability", "Outstanding"]] + [[k, rs(v)] for k, v in nw["liabilities"].items()] + [["Total liabilities", rs(nw["total_liabilities"])]], widths=[100 * mm, 50 * mm])
     al = a["allocation"]
-    kv([("Net worth", rs(nw["net_worth"])), ("Debt to assets", f"{nw['debt_to_assets_pct']}%"),
-        ("Equity share of financial assets", f"{al['financial_assets_equity_pct']}%"), ("Age-based guide", f"{al['suggested_equity_pct_for_age']}%")])
+    kv([("Net worth", rs(nw["net_worth"])), ("Debt to assets", pc(nw["debt_to_assets_pct"])),
+        ("Equity share of financial assets", pc(al["financial_assets_equity_pct"])), ("Age-based guide", pc(al["suggested_equity_pct_for_age"]))])
 
     # ---------------- 3 income & expenses
     story.append(Paragraph("3. Income and expenditure", H1))
-    kv([("Average monthly income", rs(cf["avg_monthly_income"])), ("Average monthly expenses", rs(cf["avg_monthly_expenses"])),
-        ("Average monthly savings", rs(cf["avg_monthly_savings"])), ("Savings rate", f"{cf['avg_savings_rate_pct']}%"),
-        ("Essentials / income", f"{cf['essential_to_income_pct']}%"), ("Discretionary / income", f"{cf['discretionary_to_income_pct']}%"),
-        ("EMI / income", f"{cf['emi_to_income_pct']}%"), ("Months in deficit", cf["months_in_deficit"])])
-    table([["Month", "Income", "Expenses", "Savings"]] + [[m["month"], rs(m["income"]), rs(m["expenses"]), rs(m["savings"])] for m in cf["monthly_series"]],
-          widths=[35 * mm, 40 * mm, 40 * mm, 40 * mm])
-    table([["Category", "Type", "Monthly average", "Share of spend"]] + [[c["category"], c["type"], rs(c["monthly_avg"]), f"{c['share_of_spend_pct']}%"] for c in cf["category_totals"][:12]],
-          widths=[45 * mm, 35 * mm, 40 * mm, 35 * mm])
-    cr = cf["cleaning_report"]
-    story.append(Paragraph(f"Data cleaning: {cr['rows_in']} rows in, {cr['duplicates_removed']} duplicates removed, {cr['refunds']} refunds netted off, "
-                           f"{cr['non_expense_rows']} transfers/card payments/investments excluded from spending, {cr['one_time_large_flagged']} one-time large spends flagged.", S))
+    for note in (cf.get("reason"), cf.get("income_note"), cf.get("spending_note")):
+        if note:
+            story.append(Paragraph(_t(note), S))
+    def money(x):
+        return NA if x is None else rs(x)
+    kv([("Average monthly income", money(cf["avg_monthly_income"])), ("Average monthly expenses", money(cf["avg_monthly_expenses"])),
+        ("Average monthly savings", money(cf["avg_monthly_savings"])), ("Savings rate", pc(cf["avg_savings_rate_pct"])),
+        ("Essentials / income", pc(cf["essential_to_income_pct"])), ("Discretionary / income", pc(cf["discretionary_to_income_pct"])),
+        ("EMI / income", pc(cf["emi_to_income_pct"])), ("Months in deficit", nv(cf["months_in_deficit"]))])
+    if cf["monthly_series"]:
+        table([["Month", "Income", "Expenses", "Savings"]] + [[m["month"], money(m["income"]), money(m["expenses"]), money(m["savings"])] for m in cf["monthly_series"]],
+              widths=[35 * mm, 40 * mm, 40 * mm, 40 * mm])
+    if cf["category_totals"]:
+        table([["Category", "Type", "Monthly average", "Share of spend"]] + [[c["category"], c["type"], rs(c["monthly_avg"]), pc(c["share_of_spend_pct"])] for c in cf["category_totals"][:12]],
+              widths=[45 * mm, 35 * mm, 40 * mm, 35 * mm])
+    cr = cf.get("cleaning_report")
+    if cr:
+        story.append(Paragraph(f"Data cleaning: {cr['rows_in']} rows in, {cr['duplicates_removed']} duplicates removed, {cr['refunds']} refunds netted off, "
+                               f"{cr['non_expense_rows']} transfers/card payments/investments excluded from spending, {cr['one_time_large_flagged']} one-time large spends flagged.", S))
 
     # ---------------- 4 anomalies
     story.append(Paragraph("4. Transaction anomaly analysis (Isolation Forest)", H1))
@@ -135,18 +164,21 @@ def build_pdf(a: dict, briefing_text: str | None = None, metrics: dict | None = 
     if fc.get("available"):
         kv([("Forecast month", fc["prediction_month"]), ("Predicted spending", rs(fc["predicted_total_expense"])),
             ("Likely range", f"{rs(fc['range']['low'])} to {rs(fc['range']['high'])}"), ("Last month actual", rs(fc["last_month_actual"])),
-            ("Expected income", rs(fc["expected_income"])), (f"Projected {fc['projected_status']}", rs(abs(fc["projected_surplus"])))])
+            ("Expected income", NA if fc["expected_income"] is None else rs(fc["expected_income"])),
+            (f"Projected {fc['projected_status']}" if fc["projected_status"] else "Projected surplus",
+             NA if fc["projected_surplus"] is None else rs(abs(fc["projected_surplus"])))])
         table([["Category", "Predicted", "3-month average", "Change", "Suggested budget"]] +
               [[c["category"], rs(c["predicted"]), rs(c["three_month_avg"]), f"{c['change_vs_3m_avg_pct']}%", rs(c["suggested_budget"])] for c in fc["category_predictions"]],
               widths=[38 * mm, 32 * mm, 34 * mm, 24 * mm, 34 * mm])
     else:
-        story.append(Paragraph("Not enough history to forecast.", P))
+        story.append(Paragraph(_t(fc.get("note") or "Not enough history to forecast."), P))
 
     # ---------------- 6 credit & debt
     story.append(Paragraph("6. Credit, loans and EMI assessment", H1))
     if cred.get("has_cards"):
         table([["Card", "Limit", "Outstanding", "Utilisation", "Min-only (6m)", "Delays (6m)"]] +
-              [[c["card"], rs(c["limit"]), rs(c["outstanding"]), f"{c['utilisation_pct']}% ({c['utilisation_band']})", c["months_paid_minimum_only_last6"], c["months_delayed_last6"]]
+              [[c["card"], rs(c["limit"]), rs(c["outstanding"]), f"{c['utilisation_pct']}% ({c['utilisation_band']})",
+                nv(c["months_paid_minimum_only_last6"]), nv(c["months_delayed_last6"])]
                for c in cred["cards"]], widths=[42 * mm, 24 * mm, 26 * mm, 32 * mm, 22 * mm, 20 * mm])
         risk = ml.get("credit_risk", {})
         if risk.get("cards"):
@@ -154,54 +186,65 @@ def build_pdf(a: dict, briefing_text: str | None = None, metrics: dict | None = 
                                    f"({risk['overall_risk_band']}); average across the training population is {risk['population_base_rate_pct']}%. {_t(risk['interpretation'])}", P))
             w = max(risk["cards"], key=lambda c: c["default_probability_pct"])
             table([["Top factors for " + w["card"], "Effect"]] + [[f["factor"], f["effect"]] for f in w["top_factors"]], widths=[100 * mm, 50 * mm])
+        elif risk.get("note"):
+            story.append(Paragraph(_t(risk["note"]), S))
     else:
         story.append(Paragraph("No credit cards on file.", P))
     if debt["has_debt"] and debt["loans"]:
         table([["Loan", "Balance", "EMI", "Rate", "Months left", "EMI / income"]] +
-              [[f"{l['loan_type']} ({l['lender']})", rs(l["balance"]), rs(l["emi"]), f"{l['interest_rate']}%", l["remaining_months"], f"{l['emi_share_of_income_pct']}%"] for l in debt["loans"]],
+              [[f"{l['loan_type']} ({l['lender']})", rs(l["balance"]), rs(l["emi"]), f"{l['interest_rate']}%", l["remaining_months"], pc(l["emi_share_of_income_pct"])] for l in debt["loans"]],
               widths=[52 * mm, 26 * mm, 22 * mm, 16 * mm, 22 * mm, 24 * mm])
-    kv([("Total EMIs", rs(debt["total_emi"])), ("EMI to income", f"{debt['emi_to_income_pct']}% ({debt['risk_band']})"),
+    kv([("Total EMIs", rs(debt["total_emi"])), ("EMI to income", f"{pc(debt['emi_to_income_pct'])} ({debt['risk_band']})"),
         ("Total debt", rs(debt["total_debt"])), ("Average interest rate", f"{debt['weighted_avg_rate_pct']}%")])
 
     # ---------------- 7 savings, budget, liquidity
     story.append(Paragraph("7. Savings, budget and liquidity", H1))
-    kv([("Liquid savings", rs(liq["emergency_pool"])), ("Emergency fund", f"{liq['emergency_fund_months']} of 6 months"),
-        ("Runway if income stops", f"{liq['runway_months']} months"), ("Runway on essentials only", f"{liq['runway_months_essentials_only']} months")])
-    table([["Cut discretionary by", "Monthly saving", "Annual saving", "New savings rate"]] +
-          [[f"{s['cut_discretionary_pct']}%", rs(s["monthly_saving"]), rs(s["annual_saving"]), f"{s['new_savings_rate_pct']}%"] for s in a["budget"]["scenarios"]],
-          widths=[40 * mm, 38 * mm, 38 * mm, 38 * mm])
+    kv([("Liquid savings", rs(liq["emergency_pool"])), ("Emergency fund", nv(liq["emergency_fund_months"], " of 6 months")),
+        ("Runway if income stops", nv(liq["runway_months"], " months")), ("Runway on essentials only", nv(liq["runway_months_essentials_only"], " months"))])
+    if a["budget"]["scenarios"]:
+        table([["Cut discretionary by", "Monthly saving", "Annual saving", "New savings rate"]] +
+              [[f"{s['cut_discretionary_pct']}%", rs(s["monthly_saving"]), rs(s["annual_saving"]), pc(s["new_savings_rate_pct"])] for s in a["budget"]["scenarios"]],
+              widths=[40 * mm, 38 * mm, 38 * mm, 38 * mm])
 
     # ---------------- 8 investments
     story.append(Paragraph("8. Investments", H1))
-    kv([("Invested", rs(inv["total_invested"])), ("Current value", rs(inv["current_value"])), ("Gain", f"{rs(inv['total_gain'])} ({inv['total_gain_pct']}%)"),
-        ("Monthly SIPs", f"{rs(inv['sip_monthly_total'])} ({inv['sip_to_income_pct'] or 0}% of income)")])
+    kv([("Invested", rs(inv["total_invested"])), ("Current value", rs(inv["current_value"])), ("Gain", f"{rs(inv['total_gain'])} ({pc(inv['total_gain_pct'])})"),
+        ("Monthly SIPs", rs(inv["sip_monthly_total"]) + (f" ({inv['sip_to_income_pct']}% of income)" if inv["sip_to_income_pct"] is not None else ""))])
     if inv["holdings"]:
-        table([["Holding", "Type", "Invested", "Current", "Gain"]] + [[h["name"], h["sector"], rs(h["invested"]), rs(h["current"]), f"{h['gain_pct']}%"] for h in inv["holdings"][:12]],
+        table([["Holding", "Type", "Invested", "Current", "Gain"]] + [[h["name"], h["sector"], rs(h["invested"]), rs(h["current"]), pc(h["gain_pct"])] for h in inv["holdings"][:12]],
               widths=[62 * mm, 30 * mm, 24 * mm, 24 * mm, 18 * mm])
     story.append(Paragraph(f"Prices are stored values as of {inv['prices_as_of']}, not live market data.", S))
 
     # ---------------- 9 FIRE
     story.append(Paragraph("9. Financial independence (FIRE) forecast", H1))
     fi = fire["inputs"]
-    kv([("FIRE number", rs(fire["fire_number"])), ("Current corpus", f"{rs(fi['current_corpus'])} ({fire['progress_pct']}%)"),
+    if not fire_ok:
+        story.append(Paragraph(_t(fire["reason"]), P))
+        kv([("Current corpus", rs(fi["current_corpus"])), ("Monthly investment", rs(fi["monthly_investment"]))])
+    else:
+        kv([("FIRE number", rs(fire["fire_number"])), ("Current corpus", f"{rs(fi['current_corpus'])} ({fire['progress_pct']}%)"),
         ("Monthly investment", rs(fi["monthly_investment"])), ("Projected FIRE age", fire["fire_age"] or "Beyond 75"),
         ("Lean / Fat FIRE age", f"{fire['lean_fire_age'] or '-'} / {fire['fat_fire_age'] or '-'}"), ("Coast FIRE reached", "Yes" if fire["coast_fire_reached"] else "No"),
         (f"Corpus at target age {fire['retirement_age_target']}", rs(fire["corpus_at_target_age"])), ("Success probability", f"{fire['success_probability_pct']}%"),
         ("Investment needed for target", rs(fire["monthly_investment_needed_for_target"])), ("Assumptions", f"{fi['nominal_return_pct']}% return, {fi['inflation_pct']}% inflation, {fi['withdrawal_rate_pct']}% withdrawal")])
-    story.append(Paragraph(_t(fire["corpus_definition"]) + " " + _t(fire["note"]), S))
+        story.append(Paragraph(_t(fire["corpus_definition"]) + " " + _t(fire["note"]), S))
 
     # ---------------- 10 protection + peers
     story.append(Paragraph("10. Protection and peer comparison", H1))
-    kv([("Term life cover", rs(ins["term_cover"])), ("Guideline", rs(ins["recommended_term_cover"])), ("Health cover", rs(ins["health_cover"])), ("Guideline", rs(ins["recommended_health_cover"]))])
+    kv([("Term life cover", rs(ins["term_cover"])), ("Guideline", rs(ins["recommended_term_cover"]) if ins["recommended_term_cover"] is not None else NA + " (needs income)"), ("Health cover", rs(ins["health_cover"])), ("Guideline", rs(ins["recommended_health_cover"]))])
     pe = ml.get("peers", {})
     if pe.get("comparison"):
         story.append(Paragraph(f"Closest peer group: <b>{_t(pe['peer_group'])}</b> ({pe['peer_group_size']} of {pe['population_size']} people).", P))
         table([["Metric", "You", "Peer median", "Everyone", "Better than"]] + [[c["metric"], f"{c['you']}%", f"{c['peer_group_median']}%", f"{c['everyone_median']}%", f"{c['better_than_pct_of_people']}% of people"] for c in pe["comparison"]],
               widths=[50 * mm, 22 * mm, 28 * mm, 24 * mm, 36 * mm])
+    elif pe.get("note"):
+        story.append(Paragraph(_t(pe["note"]), S))
 
     # ---------------- 11 recommendations
     story.append(PageBreak())
     story.append(Paragraph("11. Financial concerns and personalised recommendations", H1))
+    if not a["recommendations"]:
+        story.append(Paragraph("No recommendations yet. Most rules need income and spending history; see data completeness above.", P))
     for i, r in enumerate(a["recommendations"], 1):
         col = PRI[r["priority"]].hexval()[2:]
         story.append(Paragraph(f"<font color='#{col}'><b>[{r['priority'].upper()}]</b></font> <b>{i}. {_t(r['finding'])}</b>", P))
@@ -239,7 +282,8 @@ def build_pdf(a: dict, briefing_text: str | None = None, metrics: dict | None = 
         canvas.saveState()
         canvas.setFont("Helvetica", 7.5)
         canvas.setFillColor(MUTED)
-        canvas.drawString(18 * mm, 10 * mm, f"Finora - Financial Intelligence Report - {p['name']} - synthetic demonstration data")
+        canvas.drawString(18 * mm, 10 * mm, f"Finora - Financial Intelligence Report - {p['name']} - "
+                          + ("synthetic demonstration data" if synthetic else "based on data entered or uploaded by the account holder"))
         canvas.drawRightString(192 * mm, 10 * mm, f"Page {doc.page}")
         canvas.restoreState()
 

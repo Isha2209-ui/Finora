@@ -9,3 +9,7 @@ dist/
 backend/reports/*.pdf
 .DS_Store
 backend/backups/
+
+# macOS / iCloud Drive conflict copies ("file 2.py") - never commit
+* 2
+* 2.*

@@ -131,7 +131,7 @@ def analyse(art: dict, ident) -> dict:
 
     if not ident.cards:
         return {"has_cards": False, "note": "No credit cards on file, so card-default risk is not applicable."}
-    st = pd.DataFrame(ident.card_statements)
+    st = pd.DataFrame(ident.card_statements, columns=["card_id", "month", "bill_amount", "paid_amount", "min_due", "payment_status"])
     rows, meta = [], []
     for c in ident.cards:
         s = st[st["card_id"] == c["id"]].sort_values("month", ascending=False).head(6)
@@ -141,7 +141,9 @@ def analyse(art: dict, ident) -> dict:
                                           s["bill_amount"].tolist(), s["paid_amount"].tolist()))
         meta.append(c)
     if not rows:
-        return {"has_cards": True, "note": "Not enough statement history (need 3+ months)."}
+        return {"has_cards": True, "available": False,
+                "note": "Not enough statement history to score (the model needs 3+ months of bills, payments and payment "
+                        "status per card). Card utilisation is still shown from the balance and limit you entered."}
     X = pd.DataFrame(rows)[FEATURES]
     proba = art["model"].predict_proba(X)[:, 1]
     sv = shap.TreeExplainer(art["model"]).shap_values(X)

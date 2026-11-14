@@ -132,7 +132,7 @@ def test_model_lab_and_categorise(client):
 
 def test_full_lifecycle_create_upload_analyse_delete(client):
     pan = "TESTP1234Q"
-    r = client.post("/api/profiles", json={"name": "Test User", "pan": pan, "age": 30, "monthly_income": 90000, "bank_balance": 150000})
+    r = client.post("/api/profiles", json={"name": "Test User", "pan": pan, "age": 30})
     assert r.status_code == 200, r.text
     prof = r.json()["profile"]
     uid = prof["internal_id"]

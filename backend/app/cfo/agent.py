@@ -134,15 +134,27 @@ def briefing(ctx: dict, use_llm: bool = True) -> dict:
         "next_month_predicted_spend": fc.get("predicted_total_expense"), "next_month_status": fc.get("projected_status"),
         "top_actions": [{"priority": r["priority"], "finding": r["finding"], "action": r["action"]} for r in a["recommendations"][:3]],
     }
-    lines = [
-        f"In {facts['month']} you earned {writer.inr(facts['income'])} and spent {writer.inr(facts['expenses'])}, "
-        + (f"saving {writer.inr(facts['saved'])} ({facts['savings_rate_pct']}%)." if (facts["saved"] or 0) >= 0 else f"a deficit of {writer.inr(-facts['saved'])}.")
-        + (f" Spending moved {facts['expense_change_pct_vs_previous_month']:+}% versus the previous month." if facts["expense_change_pct_vs_previous_month"] is not None else ""),
-        f"Net worth stands at {writer.inr(facts['net_worth'])}"
-        + (f" ({'up' if facts['net_worth_change_12m'] >= 0 else 'down'} {writer.inr(abs(facts['net_worth_change_12m']))} over 12 months)" if facts["net_worth_change_12m"] is not None else "")
-        + f"; health score {facts['health_score']}/100; runway {facts['runway_months']} months.",
-        f"FIRE progress: {facts['fire_progress_pct']}% of your number" + (f", on course for age {facts['fire_age']}." if facts["fire_age"] else ", not reachable before 75 at the current pace."),
-    ]
+    lines = []
+    if facts["income"] is not None and facts["expenses"] is not None:
+        lines.append(f"In {facts['month']} you earned {writer.inr(facts['income'])} and spent {writer.inr(facts['expenses'])}, "
+                     + (f"saving {writer.inr(facts['saved'])} ({facts['savings_rate_pct']}%)." if (facts["saved"] or 0) >= 0 else f"a deficit of {writer.inr(-facts['saved'])}.")
+                     + (f" Spending moved {facts['expense_change_pct_vs_previous_month']:+}% versus the previous month." if facts["expense_change_pct_vs_previous_month"] is not None else ""))
+    elif facts["income"] is not None:
+        lines.append(f"In {facts['month']} you recorded income of {writer.inr(facts['income'])}; spending is not known yet, so savings cannot be measured.")
+    elif facts["expenses"] is not None:
+        lines.append(f"In {facts['month']} you spent {writer.inr(facts['expenses'])}; income is not recorded, so savings cannot be measured.")
+    else:
+        lines.append("There is no income or spending history yet, so this briefing covers balances and holdings only.")
+    lines.append(f"Net worth stands at {writer.inr(facts['net_worth'])}"
+                 + (f" ({'up' if facts['net_worth_change_12m'] >= 0 else 'down'} {writer.inr(abs(facts['net_worth_change_12m']))} over 12 months)" if facts["net_worth_change_12m"] is not None else "")
+                 + (f"; health score {facts['health_score']}/100" if facts["health_score"] is not None else "; health score not yet available")
+                 + (f"; runway {facts['runway_months']} months." if facts["runway_months"] is not None else "."))
+    if fire.get("available", True):
+        lines.append(f"FIRE progress: {facts['fire_progress_pct']}% of your number" + (f", on course for age {facts['fire_age']}." if facts["fire_age"] else ", not reachable before 75 at the current pace."))
+    else:
+        lines.append("A FIRE projection needs your yearly expenses, which are not known yet.")
+    if a.get("completeness", {}).get("missing"):
+        lines.append("Still missing: " + ", ".join(a["completeness"]["missing"][:4]) + ".")
     if facts["next_month_predicted_spend"]:
         lines.append(f"Next month's spending is forecast at {writer.inr(facts['next_month_predicted_spend'])} - a projected {facts['next_month_status']}.")
     text = " ".join(lines)

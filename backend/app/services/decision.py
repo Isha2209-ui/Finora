@@ -119,6 +119,14 @@ def simulate(ident: Identity, *, item_type: str, item_name: str, price: float, d
              interest_rate: float, tenure_months: int, running_cost_monthly: float | None = None,
              snap: dict | None = None) -> dict:
     snap = snap or build(ident)
+    cf = snap["cash_flow"]
+    missing = ([] if cf.get("income_known", True) else ["income records"]) + \
+              ([] if cf.get("spending_known", True) else ["spending history (transactions or a statement)"])
+    if missing:
+        return {"available": False, "item": {"type": item_type, "name": item_name}, "missing": missing,
+                "message": "An affordability verdict needs your monthly income and expenses. Missing: " + ", ".join(missing)
+                           + ". Finora does not guess these.",
+                "disclaimer": "Educational guidance, not a substitute for a licensed financial advisor."}
     item_type = item_type.lower() if item_type.lower() in RUNNING_COST_DEFAULTS else "other"
     if running_cost_monthly is None:
         running_cost_monthly = price * RUNNING_COST_DEFAULTS[item_type] / 12
@@ -151,7 +159,7 @@ def simulate(ident: Identity, *, item_type: str, item_name: str, price: float, d
             lo = mid
         else:
             hi = mid
-    return {"item": {"type": item_type, "name": item_name}, "plan": main, "alternatives": alts,
+    return {"available": True, "item": {"type": item_type, "name": item_name}, "plan": main, "alternatives": alts,
             "best_option": None if best["verdict"] == "NOT ADVISABLE" else best["name"], "max_affordable_price_same_terms": round(lo, -3),
             "verdict_rules": __doc__.split("Verdict rules")[1].strip(),
             "disclaimer": "Educational guidance, not a substitute for a licensed financial advisor."}
