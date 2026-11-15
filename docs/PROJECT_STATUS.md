@@ -10,8 +10,8 @@ The roadmap is the original 11-phase plan agreed on 14 Nov 2026. Phases are buil
 | 4 | Statement import, rebuilt | Merged (two independent audits, release-blocker round, closure checks) | [PHASE_4_VERIFICATION.md](PHASE_4_VERIFICATION.md) |
 | 5 | Finora Plan, the main page | Merged | [PHASE_5_VERIFICATION.md](PHASE_5_VERIFICATION.md) |
 | 6 | Models and provenance (train every model locally, record provenance) | Merged (owner-authorised, 2026-11-15) | [PHASE_6_VERIFICATION.md](PHASE_6_VERIFICATION.md), [PHASE_6_TRAINING.md](PHASE_6_TRAINING.md) |
-| 7 | Local AI CFO with Qwen | Complete with documented limitations (uncommitted, branch phase-7-cfo, awaiting review) | [PHASE_7_VERIFICATION.md](PHASE_7_VERIFICATION.md) |
-| 8 | Product shell and UI (product-wide guided experience) | Not started | - |
+| 7 | Local AI CFO with Qwen | Merged (owner-authorised, 2026-11-15); complete with documented limitations | [PHASE_7_VERIFICATION.md](PHASE_7_VERIFICATION.md) |
+| 8 | Product shell and UI redesign (Apple-inspired refinement + Stripe-inspired usability) | Planning (branch phase-8-ui-redesign); implementation awaits owner approval | - |
 | 9 | Verification and documentation | Not started | - |
 | 10 | Mac proof | Not started | - |
 | 11 | Deployment (last) | Not started | - |
