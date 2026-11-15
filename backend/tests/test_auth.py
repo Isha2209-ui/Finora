@@ -147,7 +147,8 @@ def test_login_lockout_after_repeated_failures(monkeypatch):
     assert c.post("/api/auth/login", json={"email": e, "password": PASSWORD}).status_code == 200
 
 
-def test_register_rate_limit(monkeypatch):
+def test_register_rate_limit_is_opt_in_and_works_when_enabled(monkeypatch):
+    """Off by default (presentation: many accounts from one network); a public deployment can set REGISTER_IP_MAX."""
     monkeypatch.setattr(CFG, "REGISTER_IP_MAX", 2)
     SEC.limiter.clear("register:testclient")
     c = TestClient(app)
@@ -358,3 +359,45 @@ def test_production_refuses_default_secrets():
     r = subprocess.run([sys.executable, "-c", "import app.config"], env=env, capture_output=True, text=True,
                        cwd=os.path.dirname(os.path.dirname(__file__)))
     assert r.returncode != 0 and "COOKIE_SECURE" in r.stderr
+
+
+# ---------------------------------------------------------------- Phase 8 presentation requirements
+def test_twenty_consecutive_signups_from_one_ip_with_the_default_config(monkeypatch):
+    monkeypatch.setattr(CFG, "REGISTER_IP_MAX", 0)                        # the shipped default
+    SEC.limiter.clear("register:testclient")
+    accounts = []
+    for i in range(20):
+        c = TestClient(app)
+        e = new_email(f"many{i}")
+        r = c.post("/api/auth/register", json={"email": e, "password": PASSWORD})
+        assert r.status_code == 200, (i, r.text)
+        c.headers["X-CSRF-Token"] = r.json()["csrf_token"]
+        accounts.append((e, c))
+    # duplicate e-mail is still rejected
+    assert TestClient(app).post("/api/auth/register", json={"email": accounts[0][0], "password": PASSWORD}).status_code in (400, 409, 422)
+    # each account signs in independently and gets its own isolated private profile
+    a_e, a = accounts[0]
+    b_e, b = accounts[1]
+    pa = a.post("/api/profiles", json={"name": "First Person", "age": 30}).json()["profile"]["internal_id"]
+    assert b.get(f"/api/profiles/{pa}").status_code == 404 and b.get(f"/api/profiles/{pa}/analysis").status_code == 404
+    fresh = TestClient(app)
+    assert fresh.post("/api/auth/login", json={"email": b_e, "password": PASSWORD}).status_code == 200
+    assert fresh.get(f"/api/profiles/{pa}").status_code == 404
+    # signing out invalidates the session; protected routes need sign-in again
+    tok = a.headers["X-CSRF-Token"]
+    assert a.post("/api/auth/logout", headers={"X-CSRF-Token": tok}).status_code == 200
+    assert a.get("/api/auth/me").status_code == 401 and a.get(f"/api/profiles/{pa}").status_code == 401
+
+
+def test_per_ip_signin_cap_counts_only_failed_attempts(monkeypatch):
+    monkeypatch.setattr(CFG, "LOGIN_IP_MAX_ATTEMPTS", 3)
+    SEC.limiter.clear("login-ip-fail:testclient")
+    e = new_email("ipcap")
+    TestClient(app).post("/api/auth/register", json={"email": e, "password": PASSWORD})
+    c = TestClient(app)
+    for _ in range(6):                                                    # many successful sign-ins are never blocked
+        assert c.post("/api/auth/login", json={"email": e, "password": PASSWORD}).status_code == 200
+    for k in range(3):                                                    # failures from one IP, across different e-mails
+        assert c.post("/api/auth/login", json={"email": new_email(f"spray{k}"), "password": "wrong password 123"}).status_code == 401
+    assert c.post("/api/auth/login", json={"email": e, "password": PASSWORD}).status_code == 429
+    SEC.limiter.clear("login-ip-fail:testclient")

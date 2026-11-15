@@ -126,7 +126,9 @@ def accounts(ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(ge
 def transactions(ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db), category: str | None = None,
                  source: str | None = Query(None, description="account:<id> or card:<id>"), flagged_only: bool = False,
                  month: str | None = Query(None, pattern=r"^\d{4}-\d{2}$"), search: str | None = None,
-                 limit: int = Query(100, ge=1, le=500), offset: int = Query(0, ge=0)):
+                 limit: int = Query(100, ge=1, le=500), offset: int = Query(0, ge=0),
+                 sort: str = Query("date_desc", pattern=r"^(date|amount)_(asc|desc)$", description="Phase 8: date_desc (default), date_asc, amount_desc, amount_asc"),
+                 suggested_only: bool = Query(False, description="Phase 8: only rows whose category is a categoriser suggestion awaiting your decision")):
     user = ctx.profile
     a = common.get_analysis(db, user)
     an = a["ml"].get("anomaly", {})
@@ -149,8 +151,13 @@ def transactions(ctx: ProfileCtx = Depends(profile_reader), db: Session = Depend
         q = q.where(M.Transaction.raw_description.ilike(like) | M.Transaction.merchant.ilike(like))
     if flagged_only:
         q = q.where(M.Transaction.ref.in_(list(flagged)) if flagged else M.Transaction.id == -1)
+    if suggested_only:
+        q = q.where(M.Transaction.category_source == "model")
     total = db.scalar(select(func.count()).select_from(q.subquery()))
-    rows = db.scalars(q.order_by(M.Transaction.date.desc(), M.Transaction.id.desc()).limit(limit).offset(offset)).all()
+    col, direction = sort.split("_")
+    key = M.Transaction.date if col == "date" else M.Transaction.amount
+    order = (key.asc(), M.Transaction.id.asc()) if direction == "asc" else (key.desc(), M.Transaction.id.desc())
+    rows = db.scalars(q.order_by(*order).limit(limit).offset(offset)).all()
     accts = {x.id: f"{x.bank_name} {x.account_masked}" for x in db.scalars(select(M.BankAccount).where(M.BankAccount.user_id == user.id))}
     cards = {x.id: f"{x.issuer} {x.card_name} ••{x.last4}" for x in db.scalars(select(M.CreditCard).where(M.CreditCard.user_id == user.id))}
     items = []

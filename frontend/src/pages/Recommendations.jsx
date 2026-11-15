@@ -1,59 +1,63 @@
-import { useState } from 'react'
+// Plan → Actions (rule-based recommendations, below the ranked plan steps). Accept / dismiss / reopen persist via the API.
 import { Check, RotateCcw, X } from 'lucide-react'
 import { api } from '../api'
-import { Badge, Card, Empty, ErrorBox, Loading, PageHeader, Stat, cx } from '../components/ui.jsx'
+import { AskAbout, Badge, Button, Card, Empty, ErrorBox, Loading, PageHeader, Segmented, Stat, cx, useToast, useUrlParam } from '../components/ui.jsx'
+import { present } from '../components/models.js'
 import { inr } from '../format'
 import { useAsync, useFinora } from '../store.jsx'
 
+const FILTERS = [{ id: 'open', label: 'Open' }, { id: 'accepted', label: 'Accepted' }, { id: 'dismissed', label: 'Dismissed' }, { id: 'all', label: 'All' }]
+
 export default function Recommendations() {
-  const { profileId } = useFinora()
+  const { profileId, profile } = useFinora()
+  const toast = useToast()
   const { data, loading, error, reload } = useAsync(() => api.recommendations(profileId), [profileId])
-  const [filter, setFilter] = useState('open')
-  if (loading && !data) return <Loading full />
+  const [filter, setFilter] = useUrlParam('status', FILTERS.map((f) => f.id))
+  if (loading && !data) return <Loading />
   if (error) return <ErrorBox message={error} onRetry={reload} />
+  const readOnly = profile?.kind === 'template'
   const open = data.filter((r) => r.status === 'open')
   const shown = data.filter((r) => filter === 'all' || r.status === filter)
-  const set = async (r, status) => { await api.setRecStatus(profileId, r.id, status); reload() }
+  const set = async (r, status) => {
+    try { await api.setRecStatus(profileId, r.id, status); await reload(); toast(status === 'open' ? 'Recommendation reopened' : `Marked as ${status}`, { tone: 'good' }) }
+    catch (e) { toast(e.message, { tone: 'bad' }) }
+  }
   const impact = open.reduce((s, r) => s + (r.impact_inr > 0 ? r.impact_inr : 0), 0)
   return (
-    <>
-      <PageHeader title="Recommendations" subtitle="Each recommendation is produced by a rule that combines model findings with your numbers. It shows its evidence, why it matters, what to do and the rupee impact when that can be calculated." />
-      <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Open" value={open.length} />
-        <Stat label="High priority" value={open.filter((r) => r.priority === 'high').length} tone="bad" />
-        <Stat label="Quantified yearly impact" value={inr(impact)} tone="good" sub="sum of open items with a calculated impact" />
+    <div className="mt-12">
+      <PageHeader title="All recommendations" subtitle="Each one comes from a rule that combines model findings with your numbers, with its evidence, why it matters, what to do and the rupee impact where it can be calculated." />
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Stat label="Open" value={open.length} sub={`${open.filter((r) => r.priority === 'high').length} high priority`} />
+        <Stat label="Quantified yearly impact" value={inr(impact)} tone="good" sub="open items with a calculated impact" />
         <Stat label="Accepted / dismissed" value={`${data.filter((r) => r.status === 'accepted').length} / ${data.filter((r) => r.status === 'dismissed').length}`} />
       </div>
-      <div className="mt-4 flex gap-2">
-        {['open', 'accepted', 'dismissed', 'all'].map((f) => <button key={f} onClick={() => setFilter(f)} className={cx('rounded-full border px-3 py-1 text-xs capitalize', filter === f ? 'border-accent/50 bg-accent/15 text-accent' : 'border-line text-muted hover:text-ink')}>{f}</button>)}
-      </div>
-      <div className="mt-3 space-y-3">
-        {shown.length === 0 && <Card><Empty title={`No ${filter} recommendations`} /></Card>}
-        {shown.map((r, i) => (
-          <article key={r.id} className={cx('rounded-2xl border bg-surface p-5', r.status !== 'open' ? 'border-line opacity-70' : r.priority === 'high' ? 'border-bad/30' : 'border-line')}>
-            <div className="flex flex-wrap items-start gap-3">
-              <span className="num grid h-7 w-7 shrink-0 place-items-center rounded-full bg-raised text-xs text-muted">{i + 1}</span>
+      <div className="mt-6"><Segmented label="Show recommendations" options={FILTERS} value={filter} onChange={setFilter} /></div>
+      <div className="mt-4 space-y-3">
+        {shown.length === 0 && <Card><Empty title={`No ${filter === 'all' ? '' : filter + ' '}recommendations`} /></Card>}
+        {shown.map((r) => (
+          <article key={r.id} className={cx('rounded-xl border bg-bg p-5 sm:p-6', r.status !== 'open' ? 'border-line' : r.priority === 'high' ? 'border-bad/25' : 'border-line')}>
+            <div className="flex flex-wrap items-start gap-4">
               <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2"><h3 className="text-[15px] font-semibold">{r.finding}</h3><Badge tone={r.priority}>{r.priority} priority</Badge>
+                <div className="flex flex-wrap items-center gap-2"><h3 className="text-[15px] font-semibold text-ink">{r.finding}</h3><Badge tone={r.priority}>{r.priority} priority</Badge>
                   {r.status !== 'open' && <Badge tone={r.status === 'accepted' ? 'good' : 'neutral'}>{r.status}</Badge>}</div>
-                <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm md:grid-cols-[110px_1fr]">
-                  <dt className="text-faint">Evidence</dt><dd className="num text-ink/90">{r.evidence}</dd>
-                  <dt className="text-faint">Why it matters</dt><dd className="text-muted">{r.explanation}</dd>
-                  <dt className="text-faint">What to do</dt><dd className="font-medium text-accent">{r.action}</dd>
+                <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[120px_1fr]">
+                  <dt className="text-faint">Evidence</dt><dd className="num text-ink-2">{r.evidence}</dd>
+                  <dt className="text-faint">Why it matters</dt><dd className="text-muted">{present(r.explanation)}</dd>
+                  <dt className="text-faint">What to do</dt><dd className="font-medium text-ink">{r.action}</dd>
                   {r.impact_text && <><dt className="text-faint">Impact</dt><dd className="num text-good">{r.impact_text}</dd></>}
                 </dl>
-                <div className="mt-3 text-[11px] text-faint">Source: {r.source}</div>
+                <div className="mt-3 flex flex-wrap items-center gap-4 text-micro text-faint"><span>Source: {present(r.source)}</span><AskAbout q={`Explain this recommendation: ${r.finding}`} /></div>
               </div>
-              <div className="flex gap-2">
+              {!readOnly && <div className="flex gap-2">
                 {r.status === 'open' ? (<>
-                  <button onClick={() => set(r, 'accepted')} title="I'll do this" className="flex items-center gap-1 rounded-lg border border-good/40 bg-good/10 px-2.5 py-1.5 text-xs text-good hover:bg-good/20"><Check size={13} /> Accept</button>
-                  <button onClick={() => set(r, 'dismissed')} title="Not relevant" className="flex items-center gap-1 rounded-lg border border-line bg-raised px-2.5 py-1.5 text-xs text-muted hover:text-ink"><X size={13} /> Dismiss</button>
-                </>) : <button onClick={() => set(r, 'open')} className="flex items-center gap-1 rounded-lg border border-line bg-raised px-2.5 py-1.5 text-xs text-muted hover:text-ink"><RotateCcw size={13} /> Reopen</button>}
-              </div>
+                  <Button size="sm" variant="secondary" icon={Check} onClick={() => set(r, 'accepted')}>Accept</Button>
+                  <Button size="sm" variant="quiet" icon={X} onClick={() => set(r, 'dismissed')}>Dismiss</Button>
+                </>) : <Button size="sm" variant="secondary" icon={RotateCcw} onClick={() => set(r, 'open')}>Reopen</Button>}
+              </div>}
             </div>
           </article>
         ))}
       </div>
-    </>
+    </div>
   )
 }

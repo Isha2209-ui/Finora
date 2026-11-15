@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Check, ChevronDown, ChevronRight, Trash2 } from 'lucide-react'
 import { api } from '../api'
-import { Badge, Button, Card, Empty, ErrorBox, Loading, Note, PageHeader, Select, Table, cx } from '../components/ui.jsx'
+import { ButtonLink, Badge, Button, Card, Empty, ErrorBox, Loading, Note, PageHeader, Select, Table, cx, useConfirm } from '../components/ui.jsx'
 import { dateLabel, inr, num } from '../format'
 import { useAsync, useFinora } from '../store.jsx'
 
@@ -22,13 +22,13 @@ export default function Review() {
   return (
     <>
       <PageHeader title="Review & Corrections" subtitle="Rows Finora is not sure about, grouped by who the money went to or came from. One decision fixes the whole group; tick “remember” and the next statement from the same counterparty is classified your way.">
-        <Link to="/statements"><Button variant="ghost">Import statements</Button></Link>
-        <Link to="/insights"><Button variant="ghost">Statement Intelligence</Button></Link>
+        <ButtonLink to="/data?tab=import" variant="ghost">Import statements</ButtonLink>
+        <ButtonLink to="/money?tab=spending" variant="ghost">See spending</ButtonLink>
       </PageHeader>
       {err && <div className="mb-4"><ErrorBox message={err} /></div>}
-      {importId && <div className="mb-3"><Note>Showing rows from one import. <Link className="underline" to="/review">Show everything that needs review</Link>.</Note></div>}
+      {importId && <div className="mb-3"><Note>Showing rows from one import. <Link className="underline" to="/data?tab=review">Show everything that needs review</Link>.</Note></div>}
       {q.loading && !q.data ? <Loading /> : q.error ? <ErrorBox message={q.error} onRetry={q.reload} /> : !q.data.groups.length ? (
-        <Card><Empty title="Nothing to review">Every imported row was classified confidently, or you have already reviewed it. Corrections are still possible from <Link className="text-accent underline" to="/transactions">Transaction Intelligence</Link>.</Empty></Card>
+        <Card><Empty title="Nothing to review">Every imported row was classified confidently, or you have already reviewed it. Corrections are still possible from <Link className="text-accent underline" to="/money?tab=transactions">Transaction Intelligence</Link>.</Empty></Card>
       ) : (
         <>
           <p className="mb-3 text-sm text-muted"><b className="text-ink num">{num(q.data.total)}</b> rows need a decision, in {num(q.data.groups.length)} groups.</p>
@@ -52,13 +52,14 @@ function Group({ g, profileId, readOnly, incomeTypes, onDone, onError }) {
   const [choice, setChoice] = useState('')
   const [remember, setRemember] = useState(true)
   const [busy, setBusy] = useState(false)
+  const ask = useConfirm()
   const credit = g.type === 'credit'
   const items = g.refs || g.items.map((i) => ({ kind: i.kind, id: i.id }))   // refs = every row in the group, not just those shown
   const run = async (fn) => { setBusy(true); onError(null); try { await fn(); onDone() } catch (e) { onError(e.message) } finally { setBusy(false) } }
-  const apply = () => {
+  const apply = async () => {
     const [kind, value] = choice.split(':')
     if (g.classified_as.startsWith('Income') && kind === 'cat' && !['Transfer', 'Card Payment', 'Investment'].includes(value) &&
-      !window.confirm(`These ${g.count} rows are counted as income now. As a refund of ${value} they stop being income and reduce your ${value} spending instead. Continue?`)) return
+      !await ask({ title: `Reclassify ${g.count} income rows as refunds?`, body: `These rows are counted as income now. As a refund of ${value} they stop being income and reduce your ${value} spending instead.`, confirm: 'Reclassify' })) return
     // exactly the rows in this group (the count on the button); 'remember' handles future imports
     return run(() => api.reviewClassify(profileId, { items, remember, apply_to_similar: false, ...(kind === 'income' ? { income_type: value } : { category: value }) }))
   }

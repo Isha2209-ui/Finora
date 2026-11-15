@@ -22,7 +22,7 @@ QUESTIONS = [
 def test_cfo_answers_use_the_right_tool_and_only_real_numbers(client, uid, q, tool):
     r = client.post(f"/api/profiles/{uid}/chat", json={"message": q, "use_llm": False}).json()
     assert tool in r["tools_used"], r
-    assert "licensed financial advisor" in r["answer"]
+    assert "licensed financial advisor" not in r["answer"]      # Phase 8: no boilerplate disclaimer in answers
     check = guard.verify(r["answer"], r["facts"], q)
     assert check["ok"], check                                # every number in the answer exists in the tool output
 

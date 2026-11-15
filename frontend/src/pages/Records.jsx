@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ArrowDown, ArrowUp, CheckCircle2, CircleDashed, Pencil, Plus, Save, Trash2, X } from 'lucide-react'
 import { api } from '../api'
-import { Badge, Button, Card, Empty, ErrorBox, Field, Input, Loading, Note, PageHeader, Select, cx } from '../components/ui.jsx'
+import { Badge, Button, Card, Drawer, Empty, ErrorBox, Field, IconButton, Input, Loading, Note, PageHeader, Select, cx, useConfirm, useToast } from '../components/ui.jsx'
+import { useSearchParams } from 'react-router-dom'
 import { inr, pct } from '../format'
 import { useFinora } from '../store.jsx'
 
@@ -57,7 +58,7 @@ function RecordForm({ schema, initial, refs, onSave, onCancel, busy }) {
     onSave(body)
   }
   return (
-    <form onSubmit={submit} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
       {schema.fields.map((f) => {
         const r = f.rules || {}
         const common = { value: v[f.name] ?? '', onChange: (e) => set(f.name, e.target.value), required: f.required && !initial }
@@ -79,8 +80,8 @@ function RecordForm({ schema, initial, refs, onSave, onCancel, busy }) {
         }
         return <Field key={f.name} label={`${label(f.name)}${f.required ? '' : ' (optional)'}`} hint={f.help}>{input}</Field>
       })}
-      <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-3">
-        <Button icon={Save} loading={busy}>{initial ? 'Save changes' : 'Add'}</Button>
+      <div className="flex items-end gap-2 pt-2 sm:col-span-2">
+        <Button icon={Save} loading={busy}>{initial ? 'Save changes' : 'Save'}</Button>
         <Button type="button" variant="ghost" icon={X} onClick={onCancel}>Cancel</Button>
       </div>
     </form>
@@ -117,12 +118,16 @@ function display(f, val) {
   return String(val).replace(/_/g, ' ')
 }
 
-export default function Records() {
+export default function Records({ only, title, subtitle }) {
   const { profileId, profile, analysis, refresh } = useFinora()
+  const confirm = useConfirm()
+  const toast = useToast()
+  const [sp, setSp] = useSearchParams()
   const readOnly = !!profile?.read_only
   const [schema, setSchema] = useState(null)
   const [counts, setCounts] = useState({})
-  const [type, setType] = useState('bank_accounts')
+  const type = only || sp.get('type') || 'bank_accounts'
+  const setType = (t) => setSp((prev) => { const n = new URLSearchParams(prev); n.set('type', t); return n })
   const [items, setItems] = useState(null)
   const [refs, setRefs] = useState({})
   const [mode, setMode] = useState(null)         // null | 'add' | record being edited
@@ -155,14 +160,15 @@ export default function Records() {
       const a = await refresh({ rerun: true })
       await Promise.all([loadType(), loadRefs()])
       if (a) setImpact({ before, after: snapshot(a), what: t.label })
-    } catch (e) { setErr(e.message) } finally { setBusy(false) }
+      toast(`${t.label}: saved and analysis updated`, { tone: 'good' })
+    } catch (e) { if (e.message !== 'Cancelled.') setErr(e.message) } finally { setBusy(false) }
   }
   const save = (body) => change(() => (mode === 'add' ? api.createRecord(profileId, type, body) : api.updateRecord(profileId, type, mode.id, body)))
   const remove = (r) => change(async () => {
-    if (!window.confirm(`Delete "${r._title}"?`)) throw new Error('Cancelled.')
+    if (!await confirm({ title: `Delete “${r._title}”?`, body: 'This record is removed from your profile and the analysis is re-run.', confirm: 'Delete', danger: true })) throw new Error('Cancelled.')
     try { await api.deleteRecord(profileId, type, r.id) } catch (e) {
       if (e.status !== 409) throw e
-      if (!window.confirm(`${e.message}\n\nDelete those as well?`)) throw new Error('Cancelled - nothing was deleted.')
+      if (!await confirm({ title: 'Delete linked records too?', body: e.message, confirm: 'Delete all', danger: true })) throw new Error('Cancelled.')
       await api.deleteRecord(profileId, type, r.id, true)
     }
   })
@@ -174,9 +180,9 @@ export default function Records() {
 
   return (
     <>
-      <PageHeader title="My financial identity" subtitle="Add, correct or remove anything Finora knows about you. Every change re-runs the full analysis - nothing is estimated or filled in for you." />
+      <PageHeader title={title || 'Your records'} subtitle={subtitle || 'Add, correct or remove anything Finora knows about you. Every change re-runs the full analysis — nothing is estimated or filled in for you.'} />
       {readOnly && <div className="mb-4"><Note tone="warn">This demo template is read-only. Use “Explore demo identity” to get your own editable copy.</Note></div>}
-      {comp && (
+      {comp && !only && (
         <Card className="mb-4" title={`Data completeness ${comp.score_pct}%`} subtitle={comp.note}>
           <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
             {comp.items.map((i) => (
@@ -191,26 +197,26 @@ export default function Records() {
       {impact && <div className="mb-4"><Impact before={impact.before} after={impact.after} /></div>}
       {err && <div className="mb-4"><ErrorBox message={err} /></div>}
 
-      <div className="grid gap-4 lg:grid-cols-[230px_1fr]">
-        <nav className="space-y-3">
+      <div className={cx('grid gap-6', !only && 'lg:grid-cols-[220px_1fr]')}>
+        {!only && <nav aria-label="Record types" className="space-y-4">
           {groups.map((g) => (
             <div key={g}>
               <div className="px-2 pb-1 text-[10px] font-medium uppercase tracking-[0.14em] text-faint">{g}</div>
               {schema.filter((s) => s.group === g).map((s) => (
-                <button key={s.type} onClick={() => setType(s.type)}
-                  className={cx('flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[13px]', s.type === type ? 'bg-accent/12 text-accent' : 'text-muted hover:bg-raised hover:text-ink')}>
+                <button key={s.type} type="button" onClick={() => setType(s.type)} aria-current={s.type === type ? 'true' : undefined}
+                  className={cx('flex h-9 w-full items-center justify-between rounded-md px-2.5 text-left text-sm', s.type === type ? 'bg-accent-soft font-medium text-accent' : 'text-ink-2 hover:bg-subtle hover:text-ink')}>
                   <span>{s.label}</span><span className="num text-[11px] text-faint">{counts[s.type] ?? ''}</span>
                 </button>
               ))}
             </div>
           ))}
-        </nav>
+        </nav>}
 
         <Card title={t.label} subtitle={`Feeds: ${t.affects}`}
           action={!readOnly && !mode && <Button icon={Plus} onClick={() => setMode('add')}>Add</Button>}>
-          {mode && <div className="mb-4 rounded-xl border border-accent/30 bg-accent/5 p-4">
-            <RecordForm key={mode === 'add' ? 'add' : mode.id} schema={t} initial={mode === 'add' ? null : mode} refs={refs} busy={busy} onSave={save} onCancel={() => setMode(null)} />
-          </div>}
+          <Drawer open={!!mode} onClose={() => setMode(null)} title={mode === 'add' ? `Add ${t.label.toLowerCase().replace(/s$/, '')}` : `Edit ${mode?._title || ''}`} subtitle={`Feeds: ${t.affects}`}>
+            {mode && <RecordForm key={mode === 'add' ? 'add' : mode.id} schema={t} initial={mode === 'add' ? null : mode} refs={refs} busy={busy} onSave={save} onCancel={() => setMode(null)} />}
+          </Drawer>
           {items === null ? <Loading /> : items.length === 0 ? (
             <Empty title={`No ${t.label.toLowerCase()} yet`}>{readOnly ? null : 'If you have none, leave this empty - Finora will not assume any.'}</Empty>
           ) : (
@@ -227,8 +233,8 @@ export default function Records() {
                       <td className="px-3 py-2 font-medium">{r._title}{r.category_source === 'model' && <Badge tone="info" className="ml-2">ML category</Badge>}</td>
                       {visible.map((f) => <td key={f.name} className="num px-3 py-2 text-muted">{display(f, r[f.name])}</td>)}
                       {!readOnly && <td className="whitespace-nowrap px-3 py-2 text-right">
-                        <button title="Edit" onClick={() => setMode(r)} className="rounded-md p-1.5 text-muted hover:bg-raised hover:text-ink"><Pencil size={14} /></button>
-                        <button title="Delete" onClick={() => remove(r)} className="rounded-md p-1.5 text-muted hover:bg-bad/10 hover:text-bad"><Trash2 size={14} /></button>
+                        <IconButton icon={Pencil} label={`Edit ${r._title}`} size={15} onClick={() => setMode(r)} className="h-9 w-9" />
+                        <IconButton icon={Trash2} label={`Delete ${r._title}`} size={15} onClick={() => remove(r)} className="h-9 w-9 hover:bg-bad-soft hover:text-bad" />
                       </td>}
                     </tr>
                   ))}

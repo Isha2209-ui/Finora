@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Check, ChevronDown, Info, Pencil, ShieldCheck, Sparkles, Trash2, X } from 'lucide-react'
 import { api } from '../api'
-import { ErrorBox, Loading, cx } from '../components/ui.jsx'
+import { AskAbout, ErrorBox, Loading, cx } from '../components/ui.jsx'
+import { present } from '../components/models.js'
 import { inr, num } from '../format'
 import { useFinora } from '../store.jsx'
 
@@ -80,7 +81,39 @@ export default function Plan() {
       </div>
 
       <p className="mt-10 flex items-start gap-2 text-xs leading-relaxed text-faint"><ShieldCheck size={14} className="mt-0.5 shrink-0" />
-        {plan.method.history} {plan.picture.data_notice} Guidance for education, not licensed financial advice.</p>
+        {plan.method.history} {plan.picture.data_notice}</p>
+      {detail && <Detail code={detail} profileId={profileId} onClose={() => setDetail(null)} />}
+    </div>
+  )
+}
+
+// ------------------------------------------------------------------ Phase 8: one plan step per Plan tab (Priorities / Actions / Your plan)
+export function usePlan() {
+  const { profileId } = useFinora()
+  const [plan, setPlan] = useState(null)
+  const [err, setErr] = useState(null)
+  const load = async () => { try { setPlan(await api.plan(profileId)); setErr(null) } catch (e) { setErr(e.message) } }
+  useEffect(() => { setPlan(null); load() }, [profileId]) // eslint-disable-line react-hooks/exhaustive-deps
+  return { plan, setPlan, err, load }
+}
+
+export function PlanSection({ section, goTo, extra }) {
+  const { profileId, refresh } = useFinora()
+  const { plan, setPlan, err, load } = usePlan()
+  const [detail, setDetail] = useState(null)
+  if (err) return <ErrorBox message={err} onRetry={load} />
+  if (!plan) return <Loading label="Putting your plan together…" />
+  const apply = (p) => { setPlan(p); refresh?.({ rerun: false }) }
+  return (
+    <div className="pb-6">
+      {section === 'priorities' && <Findings items={plan.diagnosis} onNext={() => goTo('actions')} />}
+      {section === 'actions' && (plan.available
+        ? <Actions plan={plan} profileId={profileId} onPlan={apply} onDetail={setDetail} onDone={() => goTo('plan')} />
+        : <NeedsData />)}
+      {section === 'actions' && extra}
+      {section === 'plan' && <YourPlan plan={plan} profileId={profileId} onPlan={apply} onBack={() => goTo('actions')} />}
+      <p className="mt-10 flex items-start gap-2 text-micro leading-4 text-faint"><ShieldCheck size={14} className="mt-0.5 shrink-0" aria-hidden />
+        {plan.method.history} {plan.picture.data_notice}</p>
       {detail && <Detail code={detail} profileId={profileId} onClose={() => setDetail(null)} />}
     </div>
   )
@@ -127,7 +160,7 @@ function Picture({ p }) {
         <ChevronDown size={14} className={cx('transition', more && 'rotate-180')} /> {more ? 'Hide the full picture' : 'Show the full picture'}
       </button>
       {more && (
-        <dl className="mt-3 grid gap-x-10 gap-y-3 rounded-2xl border border-line bg-surface/60 px-6 py-5 text-sm sm:grid-cols-2">
+        <dl className="mt-3 grid gap-x-10 gap-y-3 rounded-xl border border-line bg-bg/60 px-6 py-5 text-sm sm:grid-cols-2">
           {rest.map(([k, v]) => <div key={k} className="flex justify-between gap-4 border-b border-line/50 pb-2"><dt className="text-muted">{k}</dt><dd className="num text-right">{v}</dd></div>)}
         </dl>
       )}
@@ -158,10 +191,10 @@ function Findings({ items, onNext }) {
   return (
     <section>
       <p className="mb-4 text-sm text-muted">Each finding comes from your own numbers. Open one to see the evidence and where it comes from.</p>
-      <ol className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
+      <ol className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-bg">
         {items.map((d, i) => (
           <li key={d.code}>
-            <button onClick={() => setOpen(open === i ? -1 : i)} className="flex w-full items-center gap-4 px-6 py-4 text-left hover:bg-raised/40">
+            <button onClick={() => setOpen(open === i ? -1 : i)} className="flex w-full items-center gap-4 px-6 py-4 text-left hover:bg-subtle/70">
               <span className={cx('h-2 w-2 shrink-0 rounded-full', SEV[d.severity] || 'bg-faint')} />
               <span className="flex-1 text-[15px]">{d.finding}</span>
               <ChevronDown size={16} className={cx('text-faint transition', open === i && 'rotate-180')} />
@@ -169,10 +202,13 @@ function Findings({ items, onNext }) {
             {open === i && (
               <div className="grid gap-4 px-6 pb-5 pl-12 text-sm sm:grid-cols-2">
                 <Fact label="Evidence">{d.evidence}</Fact>
-                <Fact label="Why it matters">{d.why}</Fact>
-                <Fact label="Source">{d.source}</Fact>
-                <Fact label="How sure">{d.confidence}</Fact>
-                <Link to={d.detail_link} className="text-xs text-accent hover:underline sm:col-span-2">See the details →</Link>
+                <Fact label="Why it matters">{present(d.why)}</Fact>
+                <Fact label="Source">{present(d.source)}</Fact>
+                <Fact label="How sure">{present(d.confidence)}</Fact>
+                <div className="flex flex-wrap gap-4 sm:col-span-2">
+                  <Link to={d.detail_link} className="text-[13px] font-medium text-accent hover:underline">See the details →</Link>
+                  <AskAbout q={`Explain this finding: ${d.finding}`} />
+                </div>
               </div>
             )}
           </li>
@@ -184,16 +220,16 @@ function Findings({ items, onNext }) {
 }
 
 const Fact = ({ label, children }) => <div><div className="text-[11px] uppercase tracking-wider text-faint">{label}</div><div className="mt-1 leading-relaxed text-ink/90">{children}</div></div>
-const Primary = ({ children, className = '', ...p }) => <button {...p} className={cx('inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-bg transition hover:bg-accent/90 disabled:opacity-50', className)}>{children}</button>
-const Quiet = ({ children, className = '', ...p }) => <button {...p} className={cx('inline-flex items-center gap-2 rounded-full border border-line px-4 py-2.5 text-sm text-ink transition hover:border-faint disabled:opacity-50', className)}>{children}</button>
+const Primary = ({ children, className = '', ...p }) => <button type="button" {...p} className={cx('inline-flex h-10 items-center gap-2 rounded-md bg-accent px-4 text-sm font-medium text-white shadow-xs transition-colors hover:bg-accent-hover disabled:opacity-50', className)}>{children}</button>
+const Quiet = ({ children, className = '', ...p }) => <button type="button" {...p} className={cx('inline-flex h-10 items-center gap-2 rounded-md border border-control/60 bg-bg px-4 text-sm font-medium text-ink shadow-xs transition-colors hover:bg-subtle disabled:opacity-50', className)}>{children}</button>
 
 function NeedsData() {
   return (
-    <section className="rounded-2xl border border-line bg-surface px-6 py-8 text-center">
+    <section className="rounded-xl border border-line bg-bg px-6 py-8 text-center">
       <Sparkles className="mx-auto text-accent" size={22} />
       <h2 className="mt-3 text-lg font-semibold">Your plan needs a little more to work with</h2>
       <p className="mx-auto mt-2 max-w-md text-sm text-muted">Add your income and some spending (or import a bank statement). Finora never guesses these numbers, so it waits until it knows them.</p>
-      <div className="mt-5 flex justify-center gap-2"><Link to="/statements"><Primary>Import a statement</Primary></Link><Link to="/records"><Quiet>Add it by hand</Quiet></Link></div>
+      <div className="mt-5 flex justify-center gap-2"><Link to="/data?tab=import"><Primary>Import a statement</Primary></Link><Link to="/data?tab=records"><Quiet>Add it by hand</Quiet></Link></div>
     </section>
   )
 }
@@ -210,7 +246,7 @@ function Actions({ plan, profileId, onPlan, onDetail, onDone }) {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
   const acts = plan.actions
-  if (!acts.length) return <section className="rounded-2xl border border-line bg-surface px-6 py-8 text-center text-sm text-muted">No step would improve your numbers right now. Finora will suggest some when your data changes.</section>
+  if (!acts.length) return <section className="rounded-xl border border-line bg-bg px-6 py-8 text-center text-sm text-muted">No step would improve your numbers right now. Finora will suggest some when your data changes.</section>
   const a = acts[Math.min(i, acts.length - 1)]
   const readOnly = plan.read_only
   const run = async (fn, advance = true) => {
@@ -272,7 +308,7 @@ function ActionCard({ a, profileId, readOnly, busy, err, onAccept, onDismiss, on
           {FIELD[a.kind].map(([f, label, step]) => (
             <label key={f} className="block text-xs text-muted">{label}
               <input type="number" min={step} step={step} value={params[f] ?? ''} onChange={(e) => setParams({ ...params, [f]: Number(e.target.value) })}
-                className="num mt-1.5 w-full rounded-xl border border-line bg-surface px-3 py-2 text-base text-ink outline-none focus:border-accent" />
+                className="num mt-1.5 h-10 w-full rounded-md border border-control/70 bg-bg px-3 text-base text-ink shadow-xs focus:border-accent focus:ring-2 focus:ring-accent/20 focus-visible:outline-none" />
             </label>
           ))}
           {live?.error && <p className="mt-2 text-xs text-warn">{live.error}</p>}
@@ -354,7 +390,7 @@ function YourPlan({ plan, profileId, onPlan, onBack }) {
 
       <div>
         <h3 className="mb-3 text-sm font-medium text-muted">Steps in your plan</h3>
-        <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
+        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-bg">
           {plan.assumptions.map((x) => (
             <li key={x.id} className="flex items-center gap-4 px-6 py-4">
               <Check size={16} className="shrink-0 text-good" />

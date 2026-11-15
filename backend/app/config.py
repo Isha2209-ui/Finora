@@ -52,9 +52,10 @@ SESSION_TTL_HOURS = _int("SESSION_TTL_HOURS", 168)  # 7 days
 COOKIE_SECURE = _bool("COOKIE_SECURE", IS_PRODUCTION)
 SANDBOX_TTL_HOURS = _int("SANDBOX_TTL_HOURS", 24)
 LOGIN_MAX_FAILURES = _int("LOGIN_MAX_FAILURES", 5)        # per email, per window
-LOGIN_IP_MAX_ATTEMPTS = _int("LOGIN_IP_MAX_ATTEMPTS", 30)  # per IP, per window
+LOGIN_IP_MAX_ATTEMPTS = _int("LOGIN_IP_MAX_ATTEMPTS", 30)  # FAILED sign-ins per IP, per window (successful sign-ins are not counted)
 LOGIN_WINDOW_SECONDS = _int("LOGIN_WINDOW_SECONDS", 900)
-REGISTER_IP_MAX = _int("REGISTER_IP_MAX", 10)              # per IP, per hour
+REGISTER_IP_MAX = _int("REGISTER_IP_MAX", 0)               # sign-ups per IP per hour; 0 = no limit (default, so many accounts can be
+                                                           # created from one network). Set a positive value to re-enable for a public deployment.
 UPLOAD_MAX_BYTES = _int("UPLOAD_MAX_BYTES", 25_000_000)   # statement CSVs: one or two years of history
 STATEMENT_MAX_ROWS = _int("STATEMENT_MAX_ROWS", 150_000)
 IMPORT_TMP_DIR = Path(os.getenv("IMPORT_TMP_DIR", BASE_DIR / "uploads" / "pending"))  # files awaiting confirmation; deleted after import

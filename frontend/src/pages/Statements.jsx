@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertTriangle, CheckCircle2, Circle, FileSpreadsheet, Loader2, RotateCcw, ShieldCheck, Upload, X } from 'lucide-react'
 import { api } from '../api'
-import { Badge, Button, Card, ErrorBox, Field, Input, KV, Note, PageHeader, Select, Table, cx } from '../components/ui.jsx'
+import { ButtonLink, Badge, Button, Card, ErrorBox, Field, Input, KV, Note, PageHeader, Select, Table, cx, useConfirm } from '../components/ui.jsx'
 import { dateLabel, inr, num } from '../format'
 import { useFinora } from '../store.jsx'
 
@@ -60,10 +60,10 @@ export default function Statements() {
 
   return (
     <>
-      <PageHeader title="Import Statements" subtitle="Bring in one or two years of bank or credit-card statements (CSV, up to 25 MB / 150,000 rows). Finora detects the layout, categorises every line with its ML model, finds salary, transfers, refunds and card payments, and feeds everything into the same analysis as the rest of your data.">
-        <Link to="/insights"><Button variant="ghost">Statement Intelligence</Button></Link>
-        <Link to="/review"><Button variant="ghost">Review & corrections</Button></Link>
+      <PageHeader title="Import" subtitle="Bring in one or two years of bank or card statements (CSV, up to 25 MB). Finora detects the layout, categorises every line and finds salary, transfers, refunds and card payments. Nothing is saved until you confirm.">
+        <ButtonLink to="/data?tab=review" variant="secondary">Review uncertain rows</ButtonLink>
       </PageHeader>
+      {!readOnly && <Stepper phase={phase} />}
       {err && <div className="mb-4"><ErrorBox message={err} /></div>}
       {readOnly && <div className="mb-4"><Note tone="warn">This is a read-only demo template. Open your demo copy (sandbox) or your own profile to import statements.</Note></div>}
       {phase === 'pick' && !readOnly && <Picker onFile={upload} busy={busy} />}
@@ -77,6 +77,21 @@ export default function Statements() {
   )
 }
 
+const STEPS = [['pick', 'Choose a file'], ['preview', 'Check what Finora found'], ['running', 'Import'], ['result', 'Review and finish']]
+function Stepper({ phase }) {
+  const at = STEPS.findIndex(([k]) => k === phase)
+  return (
+    <ol aria-label="Import steps" className="mb-6 grid gap-2 sm:grid-cols-4">
+      {STEPS.map(([k, label], i) => (
+        <li key={k} aria-current={i === at ? 'step' : undefined}
+          className={cx('flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-[13px] font-medium', i === at ? 'border-accent bg-accent-soft text-accent' : i < at ? 'border-line bg-bg text-good' : 'border-line bg-bg text-muted')}>
+          <span className={cx('num grid h-6 w-6 shrink-0 place-items-center rounded-full text-micro font-semibold', i === at ? 'bg-accent text-white' : i < at ? 'bg-good-soft text-good' : 'bg-subtle text-muted')}>{i < at ? '✓' : i + 1}</span>{label}
+        </li>
+      ))}
+    </ol>
+  )
+}
+
 function Picker({ onFile, busy }) {
   const ref = useRef(null)
   const [over, setOver] = useState(false)
@@ -84,13 +99,13 @@ function Picker({ onFile, busy }) {
     <Card>
       <div onDragOver={(e) => { e.preventDefault(); setOver(true) }} onDragLeave={() => setOver(false)}
         onDrop={(e) => { e.preventDefault(); setOver(false); onFile(e.dataTransfer.files[0]) }}
-        className={cx('flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed px-6 py-10 text-center transition', over ? 'border-accent bg-accent/5' : 'border-line')}>
+        className={cx('flex flex-col items-center gap-3 rounded-xl border-2 border-dashed px-6 py-12 text-center transition-colors', over ? 'border-accent bg-accent-soft' : 'border-line-strong')}>
         {busy ? <Loader2 className="animate-spin text-accent" size={28} /> : <FileSpreadsheet className="text-accent" size={28} />}
-        <div className="text-sm font-medium">{busy ? 'Reading the file and detecting its layout…' : 'Drop a statement CSV here'}</div>
+        <div className="text-[15px] font-semibold text-ink" role="status">{busy ? 'Reading the file and detecting its layout…' : 'Drop a statement CSV here, or choose one'}</div>
         <div className="max-w-xl text-xs text-muted">Most Indian bank and card exports work as they are: header lines above the table and summaries below it are skipped, any column order, comma / semicolon / tab separated, newest-first or oldest-first. Nothing is saved until you confirm.</div>
         <input ref={ref} type="file" accept=".csv,.txt,text/csv" hidden onChange={(e) => onFile(e.target.files[0])} />
         <div className="flex gap-2"><Button icon={Upload} loading={busy} onClick={() => ref.current.click()}>Choose file</Button>
-          <Button variant="ghost" disabled={busy} onClick={() => onFile(sampleStatement())}>Try a synthetic sample</Button></div>
+          <Button variant="secondary" disabled={busy} onClick={() => onFile(sampleStatement())}>Try a synthetic sample</Button></div>
       </div>
       <div className="mt-3 grid gap-2 text-xs text-muted md:grid-cols-3">
         <div className="flex gap-2"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-accent" /> Finora never connects to your bank. Only the file you choose is read, and it is deleted once the import finishes or is cancelled (a preview you never confirm is deleted after 24 hours).</div>
@@ -189,7 +204,7 @@ function Preview({ imp, profileId, onCancel, onStarted, onError }) {
               <button key={k} onClick={() => setKind(k)} className={cx('rounded-xl border px-3 py-2 text-sm', kind === k ? 'border-accent bg-accent/10 text-accent' : 'border-line text-muted')}>{l}</button>))}</div>
           </Field>
           {options.length ? <Field label={kind === 'card' ? 'Card' : 'Account'}><Select value={target} onChange={(e) => setTarget(e.target.value)}>{options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></Field>
-            : <Note tone="warn">Add this card under <Link className="underline" to="/records">My Data</Link> first, then import its statement.</Note>}
+            : <Note tone="warn">Add this card under <Link className="underline" to="/data?tab=records">Data → Records</Link> first, then import its statement.</Note>}
           {target === 'new' && (
             <div className="grid grid-cols-2 gap-2">
               <div className="col-span-2"><Field label="Bank name"><Input value={newAcc.bank_name} onChange={(e) => setNewAcc({ ...newAcc, bank_name: e.target.value })} placeholder="HDFC Bank" /></Field></div>
@@ -260,6 +275,7 @@ function Progress({ profileId, imp, onDone }) {
 
 function Result({ imp, profileId, onAgain, onUndone }) {
   const [busy, setBusy] = useState(false)
+  const ask = useConfirm()
   if (imp.status !== 'done') {
     return <Card><div className="flex items-start gap-3 text-sm"><AlertTriangle className="text-warn" size={18} /><div><div className="font-medium">{imp.status === 'cancelled' ? 'Import cancelled' : 'Import failed'}</div>
       <div className="mt-1 text-muted">{imp.error}</div><Button className="mt-3" variant="ghost" onClick={onAgain}>Import another file</Button></div></div></Card>
@@ -267,7 +283,7 @@ function Result({ imp, profileId, onAgain, onUndone }) {
   const s = imp.summary
   const bal = s.balance || {}
   const decided = s.decided_by || {}
-  const undo = async () => { if (!window.confirm('Remove every row this import added and restore the previous balance?')) return; setBusy(true); try { await api.importUndo(profileId, imp.id); onUndone() } finally { setBusy(false) } }
+  const undo = async () => { if (!await ask({ title: 'Undo this import?', body: 'Every row this import added is removed and the previous balance is restored.', confirm: 'Undo import', danger: true })) return; setBusy(true); try { await api.importUndo(profileId, imp.id); onUndone() } finally { setBusy(false) } }
   return (
     <div className="grid gap-4 xl:grid-cols-3">
       <Card className="xl:col-span-2" title={`${imp.filename} imported`} subtitle={`${dateLabel(s.date_from)} – ${dateLabel(s.date_to)} · ${s.months_covered} months · ${num(s.rows_per_second)} rows/s · ${s.seconds}s`}
@@ -300,8 +316,8 @@ function Result({ imp, profileId, onAgain, onUndone }) {
           <div className="mt-1 text-xs">{bal.reason}</div>
         </div>
         <div className="mt-4 flex flex-col gap-2">
-          {s.needs_review > 0 && <Link to={`/review?import=${imp.id}`}><Button className="w-full">Review {num(s.needs_review)} uncertain rows</Button></Link>}
-          <Link to="/insights"><Button variant="ghost" className="w-full">Open Statement Intelligence</Button></Link>
+          {s.needs_review > 0 && <ButtonLink to={`/data?tab=review&import=${imp.id}`} variant="primary" className="w-full">Review {num(s.needs_review)} uncertain rows</ButtonLink>}
+          <ButtonLink to="/money?tab=spending" variant="ghost" className="w-full">See your spending</ButtonLink>
           <Button variant="ghost" onClick={onAgain}>Import another statement</Button>
           <Button variant="danger" icon={RotateCcw} loading={busy} onClick={undo}>Undo this import</Button>
         </div>
@@ -312,10 +328,11 @@ function Result({ imp, profileId, onAgain, onUndone }) {
 
 function History({ history, profileId, readOnly, onChange }) {
   const [busy, setBusy] = useState(null)
+  const ask = useConfirm()
   if (!history?.items?.length) return null
   const label = (r) => r.card_id ? history.cards.find((c) => c.id === r.card_id)?.label : history.accounts.find((a) => a.id === r.account_id)?.label
   const tone = { done: 'good', failed: 'bad', cancelled: 'neutral', undone: 'neutral', running: 'accent', queued: 'accent', preview: 'warn' }
-  const undo = async (r) => { if (!window.confirm(`Undo the import of ${r.filename}?`)) return; setBusy(r.id); try { await api.importUndo(profileId, r.id); onChange() } finally { setBusy(null) } }
+  const undo = async (r) => { if (!await ask({ title: `Undo the import of ${r.filename}?`, body: 'Every row it added is removed and the previous balance is restored.', confirm: 'Undo import', danger: true })) return; setBusy(r.id); try { await api.importUndo(profileId, r.id); onChange() } finally { setBusy(null) } }
   return (
     <Card className="mt-4" title="Import history" pad={false}>
       <Table dense rows={history.items} columns={[

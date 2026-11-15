@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { TrendingDown, TrendingUp } from 'lucide-react'
-import { Badge, Card, Empty, KV, Note, PageHeader, Stat, Table, chartTooltip } from '../components/ui.jsx'
+import { Answer, Badge, Card, Empty, Facts, KV, Note, PageHeader, Section, Table, Trust, chartAxis, chartTooltip } from '../components/ui.jsx'
+import { present } from '../components/models.js'
 import { axisInr, inr, monthLabel, pct } from '../format'
 import { useFinora } from '../store.jsx'
 
@@ -9,70 +9,72 @@ export default function Forecast() {
   const { analysis: a } = useFinora()
   const fc = a.ml.forecast
   const cf = a.cash_flow
-  if (!fc?.available) return (<><PageHeader title="Cash-Flow Forecast" /><Card><Empty title={fc?.model_status === 'awaiting_approved_model' ? 'No approved forecasting model yet' : 'Not enough history'}>{fc?.model_status === 'awaiting_approved_model'
-    ? (fc.note || 'No forecasting model is switched on.') + ' Model Lab shows its status. Your past spending is on the Transaction Intelligence page.'
+  if (!fc?.available) return (<><PageHeader title="Cash flow" /><Card><Empty title={fc?.model_status === 'awaiting_approved_model' ? 'No approved forecasting model yet' : 'Not enough history'}>{fc?.model_status === 'awaiting_approved_model'
+    ? (fc.note || 'No forecasting model is switched on.') + ' Model Lab shows its status. Your past spending is on Money → Transactions.'
     : fc?.note || a.ml_errors?.forecast || 'At least 6 months of transactions are needed.'}</Empty></Card></>)
   const series = [...cf.monthly_series.map((m) => ({ month: m.month, actual: m.expenses, income: m.income })),
     { month: fc.prediction_month, predicted: fc.predicted_total_expense, low: fc.range.low, high: fc.range.high, income: fc.expected_income }]
   fc.actual_vs_predicted.forEach((p) => { const r = series.find((s) => s.month === p.month); if (r) r.backtest = p.predicted })
+  const ev = fc.model_info?.evaluation
   return (
     <>
-      <PageHeader title="Cash-Flow Forecast" subtitle="An XGBoost model predicts next month's spending from your recent pattern. It is shown next to a simple 3-month average; it was trained on one real person's history and has never seen this profile's data." />
-      <div className="grid gap-4 md:grid-cols-4">
-        <Stat label={`Predicted spend · ${monthLabel(fc.prediction_month)}`} value={inr(fc.predicted_total_expense)} tone="accent"
-          sub={`likely ${inr(fc.range.low)} – ${inr(fc.range.high)}`} hint={fc.range.confidence} />
-        <Stat label="Versus last month" value={`${fc.change_vs_last_month >= 0 ? '+' : ''}${pct(fc.change_vs_last_month_pct)}`} tone={fc.change_vs_last_month > 0 ? 'warn' : 'good'}
-          icon={fc.change_vs_last_month > 0 ? TrendingUp : TrendingDown} sub={`last month ${inr(fc.last_month_actual)} · 3-mo avg ${inr(fc.three_month_avg)}`} />
-        <Stat label={`Projected ${fc.projected_status}`} value={inr(Math.abs(fc.projected_surplus))} tone={fc.projected_status === 'surplus' ? 'good' : 'bad'} sub={`expected income ${inr(fc.expected_income)}`} />
-        <Stat label="Bank balance at month end" value={inr(fc.projected_bank_balance_end_of_month)} tone={fc.cash_crunch_warning ? 'bad' : 'ink'}
-          sub={`now ${inr(fc.current_bank_balance)} · after ${inr(fc.planned_investments)} of SIPs`} />
-      </div>
-      {fc.model_info?.evaluation && (() => { const ev = fc.model_info.evaluation; return (
-        <Card title="How much to trust this forecast" className="mt-4">
-          <div className="grid gap-4 md:grid-cols-3">
-            <Stat label="XGBoost forecast (this model)" value={inr(fc.predicted_total_expense)} tone="accent" sub={`for ${monthLabel(fc.prediction_month)}`} />
-            <Stat label="Simple 3-month average (baseline)" value={inr(fc.three_month_avg)} sub="not a model: your last three months averaged" />
-            <Stat label="Measured error on test data" value={`£${ev.xgboost_mae.toLocaleString()} vs £${ev.baseline_3m_average_mae.toLocaleString()}`} tone={ev.beats_baseline ? 'good' : 'bad'}
-              sub={`XGBoost vs 3-month average, mean absolute error over ${ev.test_months} months`} />
-          </div>
-          <div className="mt-3"><Note tone="warn"><b>Experimental.</b> {ev.beats_baseline ? '' : 'On its test, this model was less accurate than simply averaging the last three months, so treat its number as one estimate next to the baseline, not as the better one. '}
-            {ev.note} {fc.model_note} <Link to="/models" className="underline">Model Lab</Link> has the full comparison.</Note></div>
-        </Card>) })()}
-      {!fc.model_info?.evaluation && fc.model_note && <div className="mt-3"><Note tone="warn">{fc.model_note}</Note></div>}
-      {fc.festive_month && fc.model_scope !== 'single-person' && <div className="mt-3"><Note tone="info">{monthLabel(fc.prediction_month)} is flagged as a festive-season month in the model's calendar, which usually lifts shopping.</Note></div>}
+      <PageHeader title="Cash flow" />
+      <Answer eyebrow={`Forecast for ${monthLabel(fc.prediction_month)} · not yet happened`}
+        sub={`Likely between ${inr(fc.range.low)} and ${inr(fc.range.high)}. Last month you spent ${inr(fc.last_month_actual)}.`}>
+        Next month you are likely to spend about <b>{inr(fc.predicted_total_expense)}</b>, {fc.projected_status === 'surplus'
+          ? <>leaving <b className="text-good">{inr(fc.projected_surplus)}</b> of your expected {inr(fc.expected_income)} income.</>
+          : <>which is <b className="text-bad">{inr(Math.abs(fc.projected_surplus))}</b> more than your expected {inr(fc.expected_income)} income.</>}
+      </Answer>
+      <Trust model="forecast" className="mb-6" />
+      <Facts items={[
+        ['Simple 3-month average', inr(fc.three_month_avg), 'the baseline to compare with'],
+        ['Bank balance at month end', inr(fc.projected_bank_balance_end_of_month), `projected · now ${inr(fc.current_bank_balance)}, after ${inr(fc.planned_investments)} of SIPs`, fc.cash_crunch_warning ? 'bad' : undefined],
+        fc.top_increase_drivers?.length > 0 && ['Pushing it up', fc.top_increase_drivers.slice(0, 2).join(', '), 'categories rising', 'warn'],
+      ]} />
+      {fc.festive_month && fc.model_scope !== 'single-person' && <div className="mt-4"><Note tone="info">{monthLabel(fc.prediction_month)} is a festive-season month in the model's calendar, which usually lifts shopping.</Note></div>}
 
-      <Card title="Spending: actual, back-tested predictions and next month" subtitle="Dashed line = what the model would have predicted for past months (out-of-sample)" className="mt-4">
-        <div className="h-72"><ResponsiveContainer>
-          <ComposedChart data={series} margin={{ left: 0, right: 8, top: 8 }}><CartesianGrid vertical={false} />
-            <XAxis dataKey="month" tickFormatter={monthLabel} tickLine={false} axisLine={false} /><YAxis tickFormatter={axisInr} tickLine={false} axisLine={false} width={52} />
-            <Tooltip {...chartTooltip} labelFormatter={monthLabel} formatter={(v, n) => [inr(v), n]} /><Legend wrapperStyle={{ fontSize: 12 }} />
-            <Bar dataKey="actual" name="Actual spend" fill="#334155" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="predicted" name="Forecast" fill="#2dd4bf" radius={[4, 4, 0, 0]} />
-            <Line dataKey="backtest" name="Model back-test" stroke="#2dd4bf" strokeDasharray="5 4" strokeWidth={2} dot={{ r: 3 }} connectNulls />
-            <Line dataKey="income" name="Income" stroke="#60a5fa" strokeWidth={1.5} dot={false} />
-          </ComposedChart></ResponsiveContainer></div>
-      </Card>
+      <Section title="Your spending, month by month" description="Bars are what you actually spent; the blue bar is the forecast. The dashed line is what the model would have predicted for past months." className="mt-10">
+        <div className="h-72" role="img" aria-label={`Monthly spending with a forecast of ${inr(fc.predicted_total_expense)} for ${monthLabel(fc.prediction_month)}`}>
+          <ResponsiveContainer>
+            <ComposedChart data={series} margin={{ left: 0, right: 8, top: 8 }}><CartesianGrid vertical={false} />
+              <XAxis dataKey="month" tickFormatter={monthLabel} {...chartAxis} /><YAxis tickFormatter={axisInr} {...chartAxis} width={52} />
+              <Tooltip {...chartTooltip} labelFormatter={monthLabel} formatter={(v, n) => [inr(v), n]} /><Legend wrapperStyle={{ fontSize: 12 }} />
+              <Bar dataKey="actual" name="Actual spend" fill="#c9cfd8" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="predicted" name="Forecast" fill="#3157c8" radius={[4, 4, 0, 0]} />
+              <Line dataKey="backtest" name="Model back-test" stroke="#3157c8" strokeDasharray="5 4" strokeWidth={2} dot={{ r: 3 }} connectNulls />
+              <Line dataKey="income" name="Income" stroke="#0e8074" strokeWidth={1.5} dot={false} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      </Section>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-3">
-        {fc.category_forecast_available === false ? <Card title="Category forecast" className="xl:col-span-2"><Empty title="Not available">Per-category forecasts need a model trained on real category spending, and none is approved yet. Your actual category spending is on the Transaction Intelligence page.</Empty></Card> :
-        <Card title="Category forecast and suggested budgets" className="xl:col-span-2" pad={false}>
-          <Table dense rows={fc.category_predictions} columns={[
-            { key: 'category', label: 'Category', render: (c) => <span className="font-medium">{c.category}</span> },
-            { key: 'last_month', label: 'Last month', right: true, render: (c) => inr(c.last_month) },
-            { key: 'three_month_avg', label: '3-mo avg', right: true, render: (c) => inr(c.three_month_avg) },
-            { key: 'predicted', label: 'Predicted', right: true, render: (c) => <span className="font-medium text-accent">{inr(c.predicted)}</span> },
-            { key: 'trend', label: 'Trend', render: (c) => <Badge tone={c.trend === 'rising' ? 'warn' : c.trend === 'falling' ? 'good' : 'neutral'}>{c.trend} {c.change_vs_3m_avg_pct != null && `${c.change_vs_3m_avg_pct > 0 ? '+' : ''}${c.change_vs_3m_avg_pct}%`}</Badge> },
-            { key: 'suggested_budget', label: 'Suggested budget', right: true, render: (c) => inr(c.suggested_budget) },
-          ]} />
-        </Card>}
-        <Card title="How reliable is this?">
-          <KV rows={[['Back-test on this profile', `${fc.backtest_on_this_person.months} months`], ['Average error', inr(fc.backtest_on_this_person.mae)],
-            ['As share of typical spend', pct((fc.backtest_on_this_person.mae / cf.avg_monthly_expenses) * 100)], ['Range shown', '≈ 80% interval']]} />
-          <div className="mt-3 space-y-2"><Note>{fc.backtest_on_this_person.note}</Note>
-            <Note>Personal spending is noisy from month to month, so a 10–15% error is normal. See Model Lab for the comparison with a simple 3-month average.</Note></div>
-          {fc.top_increase_drivers.length > 0 && <p className="mt-3 text-sm">Pushing next month up: <span className="font-medium text-warn">{fc.top_increase_drivers.join(', ')}</span></p>}
-        </Card>
-      </div>
+      <Section title="Accuracy and detail" className="mt-10">
+        <div className="space-y-3">
+          {ev && <details open className="rounded-xl border border-line bg-bg px-5 py-4"><summary className="cursor-pointer text-[15px] font-medium text-ink">Test results against a simple average</summary>
+            <div className="mt-4"><KV rows={[['XGBoost forecast (this model)', inr(fc.predicted_total_expense)], ['Simple 3-month average (not a model)', inr(fc.three_month_avg)],
+              ['Average error on test data (XGBoost vs average)', `£${ev.xgboost_mae.toLocaleString()} vs £${ev.baseline_3m_average_mae.toLocaleString()}`],
+              ['Test months', ev.test_months]]} />
+              {present(`${ev.note || ''} ${fc.model_note || ''}`) && <p className="mt-3 text-[13px] leading-5 text-muted">{present(`${ev.note || ''} ${fc.model_note || ''}`)} Errors are in pounds because the test account was British.</p>}</div>
+          </details>}
+          {!ev && present(fc.model_note) && <p className="text-[13px] text-muted">{present(fc.model_note)}</p>}
+          <details className="rounded-xl border border-line bg-bg px-5 py-4"><summary className="cursor-pointer text-[15px] font-medium text-ink">Back-test on your own history</summary>
+            <div className="mt-4"><KV rows={[['Months tested', fc.backtest_on_this_person.months], ['Average error', inr(fc.backtest_on_this_person.mae)],
+              ['As a share of typical spending', pct((fc.backtest_on_this_person.mae / cf.avg_monthly_expenses) * 100)], ['Range shown', 'about 80% of outcomes']]} />
+              <div className="mt-3"><Note>{fc.backtest_on_this_person.note} Personal spending is noisy month to month, so a 10–15% error is normal.</Note></div></div>
+          </details>
+          <details className="rounded-xl border border-line bg-bg px-5 py-4"><summary className="cursor-pointer text-[15px] font-medium text-ink">By category</summary>
+            <div className="mt-4">{fc.category_forecast_available === false
+              ? <p className="text-sm text-muted">Per-category forecasts need a model trained on real category spending, and none is approved yet. Your actual category spending is under Money → Spending.</p>
+              : <Table dense rows={fc.category_predictions.map((c) => ({ id: c.category, ...c }))} columns={[
+                { key: 'category', label: 'Category', render: (c) => <span className="font-medium">{c.category}</span> },
+                { key: 'three_month_avg', label: '3-month avg', right: true, render: (c) => inr(c.three_month_avg) },
+                { key: 'predicted', label: 'Forecast', right: true, render: (c) => <span className="font-medium text-accent">{inr(c.predicted)}</span> },
+                { key: 'trend', label: 'Trend', render: (c) => <Badge tone={c.trend === 'rising' ? 'warn' : c.trend === 'falling' ? 'good' : 'neutral'}>{c.trend}</Badge> },
+                { key: 'suggested_budget', label: 'Suggested budget', right: true, render: (c) => inr(c.suggested_budget) }]} />}</div>
+          </details>
+        </div>
+        <p className="mt-4 text-[13px] text-muted"><Link to="/models?tab=lab&model=forecast" className="font-medium text-accent hover:underline">Full model comparison in Model Lab</Link></p>
+      </Section>
     </>
   )
 }

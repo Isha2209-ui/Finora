@@ -11,7 +11,7 @@ The roadmap is the original 11-phase plan agreed on 14 Nov 2026. Phases are buil
 | 5 | Finora Plan, the main page | Merged | [PHASE_5_VERIFICATION.md](PHASE_5_VERIFICATION.md) |
 | 6 | Models and provenance (train every model locally, record provenance) | Merged (owner-authorised, 2026-11-15) | [PHASE_6_VERIFICATION.md](PHASE_6_VERIFICATION.md), [PHASE_6_TRAINING.md](PHASE_6_TRAINING.md) |
 | 7 | Local AI CFO with Qwen | Merged (owner-authorised, 2026-11-15); complete with documented limitations | [PHASE_7_VERIFICATION.md](PHASE_7_VERIFICATION.md) |
-| 8 | Product shell and UI redesign (Apple-inspired refinement + Stripe-inspired usability) | Planning (branch phase-8-ui-redesign); implementation awaits owner approval | - |
+| 8 | Product shell and UI redesign (Apple-inspired refinement + Stripe-inspired usability) | Implemented on branch `phase-8-ui-redesign`, uncommitted, awaiting owner review | [PHASE_8_VERIFICATION.md](PHASE_8_VERIFICATION.md) |
 | 9 | Verification and documentation | Not started | - |
 | 10 | Mac proof | Not started | - |
 | 11 | Deployment (last) | Not started | - |
@@ -35,7 +35,10 @@ The roadmap is the original 11-phase plan agreed on 14 Nov 2026. Phases are buil
   - FIRE does not reinvest freed EMIs after debt repayment.
   - Each action's effect is measured on its own.
   - The ranking weights are a published heuristic.
-- **Phase 8:** a responsive app shell, including the mobile sidebar.
+- **Phase 8:**
+  - Password change, preferences and password recovery have no backend endpoints and are listed as unavailable in Settings.
+  - Charts inside AI answers were not built (the stream does not carry tool results).
+  - The sign-up rate limit is off by default (`REGISTER_IP_MAX=0`); a public deployment should set it.
 
 ## Working rules
 - **Database:** tests run on a temporary copy of the development database and never touch it. The development database is never reset or replaced, and a backup is taken before each phase (`backend/backups/`).
