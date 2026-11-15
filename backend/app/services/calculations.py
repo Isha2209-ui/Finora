@@ -311,10 +311,14 @@ def debt_analysis(ident: Identity, avg_income: float) -> dict:
     wavg = sum(d["balance"] * d["rate"] for d in debts) / total_bal if total_bal else 0.0
     loans = []
     for l in sorted(ident.loans, key=lambda x: -x["interest_rate"]):
-        remaining_interest = l["emi"] * l["remaining_months"] - l["balance"]
+        # EMI x months left - balance only holds when the EMI actually clears the loan; one that does not even cover the
+        # monthly interest never does, so there is no "interest still to pay" figure to state (None)
+        never = l["balance"] > 0 and l["emi"] <= l["balance"] * l["interest_rate"] / 1200
+        remaining_interest = None if never else l["emi"] * l["remaining_months"] - l["balance"]
         loans.append({"loan_type": l["loan_type"], "lender": l["lender"], "principal": r(l["principal"]),
                       "balance": r(l["balance"]), "emi": r(l["emi"]), "interest_rate": l["interest_rate"],
-                      "remaining_months": l["remaining_months"], "remaining_interest": r(max(0.0, remaining_interest)),
+                      "remaining_months": l["remaining_months"], "remaining_interest": None if remaining_interest is None else r(max(0.0, remaining_interest)),
+                      "never_paid_off": never,
                       "emi_share_of_income_pct": pct(l["emi"], avg_income),
                       "secured_by_property": l.get("property_id") is not None})
     return {
@@ -358,14 +362,19 @@ def simulate_payoff(debts: list[dict], extra: float, order: str, max_months: int
                 d["_done"] = True
                 freed += d["payment"]
                 payoff_order.append({"debt": d["name"], "paid_off_in_month": month})
-    return {"months_to_debt_free": month, "total_interest": round(total_interest, 0), "payoff_order": payoff_order}
+    # A debt whose payment does not cover its interest is never cleared: the loop stops at max_months with balances left.
+    # Say so explicitly instead of letting the cap read as a real "debt-free in 600 months".
+    never = [d["name"] for d in ds if d["balance"] > 0.5]
+    return {"months_to_debt_free": month, "total_interest": round(total_interest, 0), "payoff_order": payoff_order,
+            "paid_off": not never, "never_paid_off": never}
 
 
 def payoff_strategies(debts: list[dict], extra: float = 0.0) -> dict:
     av = simulate_payoff(debts, extra, "avalanche")
     sb = simulate_payoff(debts, extra, "snowball")
+    both = av["paid_off"] and sb["paid_off"]
     return {"extra_monthly_payment": extra, "avalanche": av, "snowball": sb,
-            "interest_saved_by_avalanche": round(sb["total_interest"] - av["total_interest"], 0)}
+            "interest_saved_by_avalanche": round(sb["total_interest"] - av["total_interest"], 0) if both else None}
 
 
 # ================================================================ protection
@@ -483,7 +492,10 @@ def goals_progress(ident: Identity) -> list[dict]:
         out.append({"name": g["name"], "target": r(g["target_amount"]), "current": r(g["current_amount"]),
                     "progress_pct": pct(g["current_amount"], g["target_amount"]), "target_date": g["target_date"].isoformat(),
                     "months_left": months, "monthly_needed": r(gap / months),
-                    "monthly_needed_at_7pct": r(_pmt_needed(gap, 0.07, months))})
+                    "monthly_needed_at_7pct": r(_pmt_needed(gap, 0.07, months)),
+                    # flags for display: a reached goal needs nothing more; a goal whose date has passed still needs its whole gap
+                    # (months_left stays at its floor of 1 for the arithmetic)
+                    "reached": gap == 0, "overdue": gap > 0 and g["target_date"] < AS_OF})
     return out
 
 

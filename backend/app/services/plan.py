@@ -115,7 +115,7 @@ def evaluate(b: Base, assumptions: list[dict]) -> dict:
         capped = p["months_to_debt_free"] >= 600
         out["debt_free_months"] = None if capped else p["months_to_debt_free"]
         out["debt_free_date"] = None if capped else _months_after(b.as_of, p["months_to_debt_free"]).isoformat()
-        out["debt_interest"] = p["total_interest"]
+        out["debt_interest"] = None if capped else p["total_interest"]   # a never-cleared debt has no meaningful interest total
     else:
         out["debt_free_months"], out["debt_free_date"], out["debt_interest"] = 0, None, 0.0
     out["has_debt"] = bool(b.debts)
@@ -261,7 +261,9 @@ def _inr(x) -> str:
 def headline_impact(kind: str, params: dict, delta: dict) -> dict:
     """The one rupee figure shown on an action, derived from the scenario (never typed in)."""
     if kind == "extra_debt_repayment":
-        return {"inr": -(delta["debt_interest"] or 0), "label": "interest saved"}
+        if delta["debt_interest"] is None:     # at current payments a debt is never cleared, so there is no saving to compare
+            return {"inr": None, "label": "a debt that is otherwise never paid off gets a payoff date"}
+        return {"inr": -delta["debt_interest"], "label": "interest saved"}
     if kind == "spending_cap":
         return {"inr": (delta["surplus"] or 0) * 12, "label": "freed per year"}
     if kind in ("emergency_fund_contribution", "delayed_purchase"):

@@ -19,3 +19,9 @@ backend/uploads/
 # Phase 6: downloaded real datasets (kept unchanged) and processed versions - reproducible from app/ml/data/
 backend/datasets/raw/
 backend/datasets/processed/
+
+# Playwright CLI session output
+.playwright-cli/
+
+# Local Claude Code settings (never committed)
+.claude/

@@ -805,12 +805,36 @@ def check(text: str, results: list[dict], question: str, steps: list[dict]) -> d
         problems.append("echoes internal instructions or field names instead of answering")
     if ACTION_CLAIM.search(text):
         problems.append("claims to have changed data; the AI CFO cannot change anything")
+    if PICK_CLAIM.search(text):
+        problems.append("recommends buying or selling a specific stock or fund; the AI CFO never names investments to buy or sell")
+    for r in results:                                              # the total of several accounts must not be attributed to one of them
+        d = r.get("derived") or {}
+        accts, total = d.get("bank_accounts_highest_first") or [], d.get("total_bank_balance")
+        if r["step"]["op"] == "balances" and len(accts) > 1 and total:
+            for a in accts:
+                bank = (a.get("bank") or "").split()
+                if not bank or abs((a.get("balance") or 0) - total) <= 1:
+                    continue
+                for m in re.finditer(r"₹\s?([\d,]+(?:\.\d+)?)\s*(L|lakh|lakhs|Cr|crore|crores)?\s*(?:(?:is\s+)?(?:held\s+)?(?:in|at|with)\s+(?:your\s+)?|\(\s*|[-–:]\s*)"
+                                     + re.escape(bank[0]), text, re.I):
+                    v = float(m.group(1).replace(",", "")) * {"l": 1e5, "lakh": 1e5, "lakhs": 1e5, "cr": 1e7, "crore": 1e7,
+                                                               "crores": 1e7}.get((m.group(2) or "").lower(), 1)
+                    if abs(v - total) <= max(1, total * 0.005):
+                        problems.append(f"attributes the total of all accounts to {a.get('bank')} alone")
     return {"ok": not problems and not missing, "unsupported": problems, "missing": missing, "checked": num["checked"]}
 
 
 ACTION_CLAIM = re.compile(r"\b(I|I've|I have|we have|we've)\s+(now\s+|just\s+)?(deleted|removed|transferred|moved|cancel+ed|updated|changed|paid|"
                           r"sent|erased|recategori[sz]ed|edited)\b|\b(have|has) (now )?been (deleted|removed|erased|cancel+ed|updated|changed|"
                           r"recategori[sz]ed|transferred|wiped)\b", re.I)
+# Naming a specific stock/fund/ETF to buy, add to, switch to or sell (Finora explains holdings and asset mix; it never picks securities).
+PICK_CLAIM = re.compile(r"\b(?i:buy|buying|invest(ing)? in|add(ing)? to|top up|switch(ing)? to|purchas(e|ing)|sell(ing)?|exit(ing)?)\s+"
+                        r"(more\s+)?(of\s+|units of\s+|shares of\s+|in\s+)?(the\s+)?[A-Z][\w&.'-]*(\s+[A-Z0-9][\w&.'-]*){0,7}\s+"
+                        r"(Fund|Funds|Ltd|Limited|ETF|ETFs|Stock|Shares|Bank|Industries|Motors|Technologies|Infotech|Growth|Plan)\b")
+# Asking Finora to pick securities: answered by a fixed reply, before any planning.
+PICK_REQUEST = re.compile(r"\b(which|what|name|names|recommend|suggest|best|top|good|tell me)\b[^?.!]{0,40}\b(stocks?|shares?|mutual funds?|"
+                          r"funds?|etfs?|schemes?|crypto(currency|currencies)?|coins?|ipos?)\b[^?.!]{0,40}\b(buy|invest|pick|choose|purchase|"
+                          r"get into|put (my )?money)", re.I)
 ACTION_REQUEST = re.compile(r"^\s*(please\s+|can you\s+|could you\s+|go ahead and\s+)?(delete|remove|erase|wipe|clear|transfer|send|move|cancel|"
                             r"close|edit|update|rename|recategori[sz]e|change|reset|undo)\s+(my|all|the|this|that|these|those|it|them|every|₹|rs\.?|\d)", re.I)
 

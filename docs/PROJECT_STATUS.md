@@ -11,15 +11,15 @@ The roadmap is the original 11-phase plan agreed on 14 Nov 2026. Phases are buil
 | 5 | Finora Plan, the main page | Merged | [PHASE_5_VERIFICATION.md](PHASE_5_VERIFICATION.md) |
 | 6 | Models and provenance (train every model locally, record provenance) | Merged (owner-authorised, 2026-11-15) | [PHASE_6_VERIFICATION.md](PHASE_6_VERIFICATION.md), [PHASE_6_TRAINING.md](PHASE_6_TRAINING.md) |
 | 7 | Local AI CFO with Qwen | Merged (owner-authorised, 2026-11-15); complete with documented limitations | [PHASE_7_VERIFICATION.md](PHASE_7_VERIFICATION.md) |
-| 8 | Product shell and UI redesign (Apple-inspired refinement + Stripe-inspired usability) | Implemented on branch `phase-8-ui-redesign`, uncommitted, awaiting owner review | [PHASE_8_VERIFICATION.md](PHASE_8_VERIFICATION.md) |
-| 9 | Verification and documentation | Not started | - |
-| 10 | Mac proof | Not started | - |
-| 11 | Deployment (last) | Not started | - |
+| 8 | Product shell and UI redesign (Apple-inspired refinement + Stripe-inspired usability) | Merged locally (owner-authorised, 2026-11-15): commit `b73e9e4` on `phase-8-ui-redesign` (kept), merge `a0fae1d` on `master`. Re-verified on `master`: backend 487, browser 5/60/43/55/12, build OK | [PHASE_8_VERIFICATION.md](PHASE_8_VERIFICATION.md) |
+| 9 | Verification and evidence | Complete (2026-11-15); changes uncommitted on `master`, awaiting owner review. Backend 523/523; browser suites 5/5, 60/60, 43/43, 55/55, 12/12, walkthrough 25/25, debt edge 4/4; live AI CFO 16/16; fresh-copy setup passes. 9 defects found and fixed, each with a regression test | [PHASE_9_VERIFICATION.md](PHASE_9_VERIFICATION.md), [SETUP.md](SETUP.md), [ML_PROVENANCE.md](ML_PROVENANCE.md), [DEMO_SCRIPT.md](DEMO_SCRIPT.md), [VIVA_QA.md](VIVA_QA.md), [SCREENSHOTS.md](SCREENSHOTS.md) |
+| 10 | Verification on the owner's MacBook Air M2 | Not started (waits for owner instruction) | - |
+| 11 | Public GitHub release and local installation (no cloud hosting) | Not started (waits for owner instruction) | - |
 
 ## Carried-forward limitations
 - **Phase 6:**
-  - The forecast (MoneyVis, one UK person) is experimental: it is less accurate than a 3-month average in testing. Waiting on multi-person data; Berka needs permission.
-  - The Anomaly Detection Scanner is experimental until the blinded human review (300 items, two or more reviewers) is completed.
+  - The forecast (MoneyVis, one UK person) does not meet its acceptance criterion: it is less accurate than a 3-month average in testing, so it is always shown beside that average. Waiting on multi-person data; Berka needs permission.
+  - The Anomaly Detection Scanner is not human-validated until the blinded review (300 items, two or more reviewers) is completed.
   - The categoriser is suggestion-only: it is not validated on Indian narrations.
   - Peer groups are US households.
   - Credit risk is a Taiwan 2005 benchmark.
@@ -39,6 +39,10 @@ The roadmap is the original 11-phase plan agreed on 14 Nov 2026. Phases are buil
   - Password change, preferences and password recovery have no backend endpoints and are listed as unavailable in Settings.
   - Charts inside AI answers were not built (the stream does not carry tool results).
   - The sign-up rate limit is off by default (`REGISTER_IP_MAX=0`); a public deployment should set it.
+- **Phase 9:**
+  - Not executed: a real screen reader, Safari and Firefox, and tablet/mobile screenshots of the Phase 9 fixes.
+  - The record form accepts a loan whose EMI never clears it; this is now reported as "never paid off", not refused.
+  - 3B-model wording can still vary; deterministic checks catch wrong numbers and unsupported claims, not every awkward phrase.
 
 ## Working rules
 - **Database:** tests run on a temporary copy of the development database and never touch it. The development database is never reset or replaced, and a backup is taken before each phase (`backend/backups/`).

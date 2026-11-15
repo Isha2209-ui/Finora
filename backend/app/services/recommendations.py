@@ -113,7 +113,7 @@ def build(snap: dict, ml: dict) -> list[dict]:
             f"Total EMIs {_inr(debt['total_emi'])}/month on {len(debt['loans'])} loans; total debt {_inr(debt['total_debt'])}.",
             "Lenders treat 40% as the comfortable ceiling. Above it, one bad month can cause a missed payment.",
             f"Do not take new loans; direct any bonus to {debt['highest_rate_debt']} (your costliest debt).")
-    if debt["has_debt"] and debt.get("payoff") and debt["payoff"]["interest_saved_by_avalanche"] > 1000:
+    if debt["has_debt"] and debt.get("payoff") and (debt["payoff"]["interest_saved_by_avalanche"] or 0) > 1000:
         add("PAYOFF_ORDER", "medium", "Pay debts in order of interest rate",
             f"Paying highest-rate first ('avalanche') costs {_inr(debt['payoff']['avalanche']['total_interest'])} in interest vs "
             f"{_inr(debt['payoff']['snowball']['total_interest'])} for smallest-balance first.",

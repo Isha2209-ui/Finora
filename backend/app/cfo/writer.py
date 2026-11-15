@@ -5,6 +5,8 @@ Produces a clear answer from tool results WITHOUT a language model. It is used
 """
 from __future__ import annotations
 
+import re
+
 from ..services.recommendations import _inr
 
 NOT_KNOWN = "not known yet"
@@ -16,6 +18,15 @@ def inr(x) -> str:
 
 DISCLAIMER = ""   # Phase 8: answers no longer carry a boilerplate disclaimer (owner decision)
 LEGACY_DISCLAIMER = "Educational guidance, not a substitute for a licensed financial advisor."   # stripped from older saved answers
+_BOILERPLATE = re.compile(r"(?:(?<=[.!?])\s+|^)[^.!?\n]*(?:\b(?:consult|speak (?:to|with)|talk to|seek(?: advice from)?|check with)\b[^.!?\n]*"
+                          r"\b(?:financial|tax|investment|licensed|certified|qualified)\s+(?:advis[oe]r|planner|professional|expert)s?\b"
+                          r"|\bnot (?:financial|investment) advice\b)[^.!?\n]*[.!?]?", re.I)
+
+
+def strip_boilerplate(text: str) -> str:
+    """Drop advisor-referral / "not financial advice" sentences; never return an empty answer."""
+    out = _BOILERPLATE.sub("", text).strip()
+    return out if out else text
 
 GLOSSARY = {
     "fire": "FIRE means Financial Independence, Retire Early: building a corpus large enough that its returns cover your living costs. "
@@ -148,9 +159,13 @@ def _w_debt(f):
     s = (f"You owe {inr(f['total_debt'])} in total at an average rate of {f['weighted_avg_rate_pct']}%. EMIs are {inr(f['total_emi'])} a month"
          + (f", {f['emi_to_income_pct']}% of income ({f['risk_band']}). " if f["emi_to_income_pct"] is not None
             else ("; income is not recorded, so the EMI load cannot be judged yet. " if f["total_emi"] else ". ")))
-    s += (f"Paying the highest-rate debt first (avalanche) makes you debt-free in {f['avalanche_months']} months with {inr(f['avalanche_interest'])} interest, "
-          f"versus {inr(f['snowball_interest'])} with smallest-balance-first - a saving of {inr(f['interest_saved_by_avalanche'])}. "
-          f"Start with {f['highest_rate_debt']}.")
+    if f.get("paid_off", True):
+        s += (f"Paying the highest-rate debt first (avalanche) makes you debt-free in {f['avalanche_months']} months with {inr(f['avalanche_interest'])} interest, "
+              f"versus {inr(f['snowball_interest'])} with smallest-balance-first - a saving of {inr(f['interest_saved_by_avalanche'])}. "
+              f"Start with {f['highest_rate_debt']}.")
+    else:
+        s += (f"At the current payments {', '.join(f['never_paid_off'])} is never paid off, because the monthly payment does not cover the interest. "
+              f"Raise that payment first, starting with {f['highest_rate_debt']}.")
     if f["extra_monthly_payment"]:
         s += f" This assumes an extra {inr(f['extra_monthly_payment'])} a month."
     return s

@@ -8,8 +8,10 @@ projects the path to financial independence, simulates big purchase decisions an
 AI assistant that can only state numbers the backend has computed.
 
 > All demo data is **synthetic**. A real PAN does not give access to anyone's finances; a production system would
-> use the RBI Account Aggregator framework with user consent. Finora gives educational guidance, not licensed
-> financial advice.
+> use the RBI Account Aggregator framework with user consent.
+
+**Documentation:** [setup guide](docs/SETUP.md) · [project status](docs/PROJECT_STATUS.md) · [verification](docs/PHASE_9_VERIFICATION.md) ·
+[ML provenance](docs/ML_PROVENANCE.md) · [demo script](docs/DEMO_SCRIPT.md) · [viva Q&A](docs/VIVA_QA.md) · [screenshots](docs/SCREENSHOTS.md)
 
 ## Run it (macOS)
 
@@ -31,13 +33,13 @@ After signing in you choose **Explore demo identity** or **Build my financial id
 |---|---|
 | Python 3.11+ and Node 20+ | required |
 | PostgreSQL (Postgres.app) | optional — `setup.sh` uses it if present, otherwise SQLite |
-| Ollama + `ollama pull qwen3.5:4b` | optional — powers the AI CFO's wording; without it the assistant answers in "calculator mode" |
+| Ollama + `ollama pull qwen2.5:3b` | optional — the local AI CFO (Qwen 2.5 3B); without it the assistant answers in "calculator mode" |
 
 Useful commands (inside `backend/` with the venv active):
 
 ```bash
-pytest -q                    # 217 tests
-python -m app.ml.train       # retrain all models, rewrite artifacts/metrics.json
+pytest -q                    # 523 tests
+python -m app.ml.train check # acceptance checks of the shipped models (retraining needs the raw datasets: docs/SETUP.md §7)
 python -m app.data.seed      # rebuild demo data (refuses if accounts exist; --force deletes them too)
 ```
 
@@ -53,29 +55,29 @@ backend/app/
   ml/                  credit_risk, categoriser, anomaly, forecast, peers, train.py
   cfo/                 router -> tools -> language model -> number guard -> rule-based fallback
   routes/              REST API
-backend/datasets/      UCI "Default of Credit Card Clients" (30,000 real accounts)
-backend/artifacts/     trained models (.joblib) + metrics.json
+backend/datasets/      raw public datasets for retraining (git-ignored; not needed to run)
+backend/artifacts/     trained models: real/<model>/<version>/ (model.joblib, metrics.json, provenance.json) + active.json
 backend/tests/         formulas, cleaning, models, API, AI CFO
-frontend/src/pages/    15 modules (React + Vite + Tailwind + Recharts)
+frontend/src/pages/    7 areas + Settings (React 19 + Vite 7 + Tailwind v4 + Recharts)
+frontend/e2e/          Playwright CLI browser suites
 ```
 
-## The models (all measured on held-out data, each against a simple baseline)
+## The models (trained on real public data; full details in [docs/ML_PROVENANCE.md](docs/ML_PROVENANCE.md))
 
-| Model | Data | Result | Baseline |
+| Capability | Algorithm | Data | Measured result |
 |---|---|---|---|
-| Credit risk — XGBoost + SHAP | 30,000 real card accounts (UCI) | ROC-AUC 0.786 (5-fold CV 0.779) | Logistic regression 0.761 |
-| Transaction categoriser — TF-IDF + logistic regression | 9,436 labelled narrations, 15 statement formats | Macro-F1 0.997 on 3 formats never seen | Keyword rules 0.41 |
-| Anomaly detector — Isolation Forest | 230k transactions, tested on 48 held-out users | F1 0.57 on planted cases | "Over 3× usual" rule 0.41 |
-| Cash-flow forecaster — XGBoost | 3,600 user-months, chronological split | MAE ₹8,517 (9.6%) | 3-month average ₹9,294 (10.6%) |
-| Peer groups — K-Means | 240 users, 8 behaviour features | k = 3, silhouette 0.35 | — |
-
-Exact, current figures are in `backend/artifacts/metrics.json` and on the **Model Lab** page.
+| Credit Risk | XGBoost + SHAP | UCI Default of Credit Card Clients, 30,000 accounts (Taiwan 2005) | Test ROC-AUC 0.783 (logistic regression 0.760) |
+| Peer Benchmarking | Weighted K-Means (k = 3) | Federal Reserve SCF 2022, 4,595 US families | Silhouette 0.219; cross-implicate ARI ≥ 0.867 |
+| Transaction Categoriser | TF-IDF + logistic regression | Oklahoma / DC purchase cards; MoneyVis (UK) | Macro-F1 0.600 held-out merchants (keyword rules 0.149) |
+| Anomaly Detection Scanner | Isolation Forest | Oklahoma purchase cards, 1.05 M transactions | Flag stability ≥ 0.82; accuracy not measured (human review pending) |
+| Cash-Flow Forecast | XGBoost | MoneyVis, one UK person, 2015–2022 | MAE 856.93 vs 3-month average 809.49 (does not beat it; shown beside it) |
+| Model Lab | registry, checksums, metrics | — | — |
 
 **Known limits (state these, don't hide them)**
 
-- Transaction, forecast and peer models are trained on synthetic data; the anomaly score is not a fraud probability.
-- The credit-risk data is from Taiwan (2005): it captures behaviour patterns, not Indian bureau scores. Demographic columns were dropped on purpose.
-- The categoriser gets only ~15% right on brand names it has never seen; those are returned with low confidence for review.
+- Credit risk is a Taiwan 2005 pattern, not an Indian bureau score. Demographic columns were dropped on purpose.
+- The categoriser is unmeasured on Indian UPI/NEFT narrations; suggestions under 0.5 confidence go to Review.
+- The anomaly score means "unusual for you", not fraud. Peers are US households.
 - Market prices are stored "as of" values, not a live feed. Tax follows FY 2026-27 slabs without surcharge.
 
 ## Accounts, ownership and security
@@ -83,15 +85,17 @@ Exact, current figures are in `backend/artifacts/metrics.json` and on the **Mode
 - **Accounts:** e-mail + password, hashed with argon2id (`argon2-cffi`; bcrypt is accepted as a fallback). No verification e-mail in this local version.
 - **Sessions:** random 256-bit token in an `httpOnly`, `SameSite=Lax` cookie (`Secure` in production); the database stores only its SHA-256 hash. Sign-out revokes the session server-side.
 - **CSRF:** every state-changing request must echo the session's CSRF token in `X-CSRF-Token`.
-- **Ownership:** every profile route checks the signed-in account against the profile's `kind`. Demo *templates* are readable by any account and never writable. *Private* and *sandbox* profiles are visible only to their owner (others get 404). The 240 synthetic *population* profiles are used only for model training and cannot be reached through the API.
-- **Training data:** models train only on the synthetic population and the public UCI dataset, never on account holders' profiles (there is a test for this).
-- **Limits & audit:** rate limits on sign-in (per account and per IP), sign-up, uploads and chat; uploads are capped at 5 MB. Sign-ins, profile creation and deletion, uploads, exports, reports and retraining are written to `audit_events`, which holds IDs and counts only.
+- **Ownership:** every profile route checks the signed-in account against the profile's `kind`. Demo *templates* are readable by any account and never writable. *Private* and *sandbox* profiles are visible only to their owner (others get 404). Synthetic *population* profiles cannot be reached through the API (tested).
+- **Training data:** models train only on public datasets, never on account holders' profiles (there is a test for this).
+- **Limits & audit:** rate limits on sign-in (per account and per IP), sign-up, uploads and chat; uploads are capped at 25 MB and 150,000 rows. Sign-up is not rate-limited by default (`REGISTER_IP_MAX=0`); set it for any public deployment. Sign-ins, profile creation and deletion, uploads, exports, reports and retraining are written to `audit_events`, which holds IDs and counts only.
 - **Logs:** a logging filter redacts PAN-like strings, long card or account numbers, e-mail addresses and session tokens.
 - **Config:** secrets come from the environment (`.env`, git-ignored). With `FINORA_ENV=production` the server refuses to start on a default `PAN_PEPPER` or without `COOKIE_SECURE=true`.
 
 ## How the AI CFO avoids making numbers up
 
-1. **Route** — rules recognise the question and pick a calculator/model (the language model's tool-calling is used only for open-ended questions).
-2. **Compute** — the backend runs it on the person's data.
-3. **Explain** — a local model (Qwen via Ollama; NVIDIA Nemotron via `OLLAMA_MODEL`) words the answer.
-4. **Verify** — every number in that text is checked against the computed result; any mismatch discards the text and a rule-written answer is shown.
+1. **Guards** — requests to change data, to look at another profile or to pick stocks/funds get fixed replies; no model call.
+2. **Plan** — the local model (Qwen 2.5 3B via Ollama; cloud models are refused) writes a JSON plan of read-only operations.
+3. **Compute** — read-only tools run them on the signed-in profile only.
+4. **Write and verify** — the model drafts the answer; every number is checked against the computed results, and unsupported claims are rejected. A failed draft is rewritten once, otherwise a rule-written answer is shown.
+
+Details and evaluation: [docs/PHASE_7_VERIFICATION.md](docs/PHASE_7_VERIFICATION.md), [docs/PHASE_9_VERIFICATION.md](docs/PHASE_9_VERIFICATION.md).

@@ -75,7 +75,8 @@ def payoff(body: S.PayoffIn, ctx: ProfileCtx = Depends(profile_reader), db: Sess
     plan = C.payoff_strategies(debts, body.extra_monthly)
     return {"has_debt": True, "debts": debts, **plan,
             "vs_no_extra": {"months_saved": base["avalanche"]["months_to_debt_free"] - plan["avalanche"]["months_to_debt_free"],
-                            "interest_saved": base["avalanche"]["total_interest"] - plan["avalanche"]["total_interest"]}}
+                            "interest_saved": base["avalanche"]["total_interest"] - plan["avalanche"]["total_interest"]}
+            if base["avalanche"]["paid_off"] and plan["avalanche"]["paid_off"] else None}
 
 
 # ---------------------------------------------------------------- AI CFO

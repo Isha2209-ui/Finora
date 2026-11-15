@@ -602,3 +602,46 @@ def test_browser_finding_4_out_of_4_in_dining_is_rejected():
     text = agent.normalise_amounts(f"4 out of 4 flagged transactions are in Dining, with the largest being ₹{f['amount']:,.2f} on {f['date']}.")
     assert not P.check(text, res, "Is that spending unusual for me?", steps)["ok"]
     assert P.check(P.template(res), res, "Is that spending unusual for me?", steps)["ok"]
+
+
+# ---------------------------------------------------------------- Phase 9: guards added after the live regression check
+@pytest.mark.parametrize("q,blocked", [("Which specific stocks or mutual funds should I buy right now? Give me names.", True),
+                                       ("What are the best mutual funds to invest in?", True), ("Recommend a good ETF to buy", True),
+                                       ("Tell me which shares I should pick this year", True),
+                                       ("How much do I have in mutual funds?", False), ("Which of my funds performed best?", False),
+                                       ("Should I invest more each month?", False), ("What is my asset mix?", False)])
+def test_requests_to_pick_stocks_or_funds_get_a_fixed_reply_without_planning(scripted, q, blocked):
+    m = scripted([personal({"op": "overview"})], ["ok"])
+    r = agent.answer(q, ctx_for(), [])
+    assert (r["mode"] == "no_picks") is blocked
+    if blocked:
+        assert m.seen_plan == [] and not r["tools_used"] and "don't pick individual stocks or funds" in r["answer"]
+
+
+def test_a_draft_naming_a_fund_or_stock_to_buy_is_rejected():
+    for bad in ("Consider buying more of Parag Parikh Flexi Cap Fund - Direct Growth and UTI Nifty 50 Index Fund - Direct Growth.",
+                "You could invest in HDFC Bank shares.", "I suggest you switch to Axis Bluechip Fund.", "Sell Tata Motors Ltd now."):
+        assert any("specific stock or fund" in p for p in P.check(bad, [], "q", [])["unsupported"]), bad
+    for ok in ("Your largest holding is UTI Nifty 50 Index Fund, worth ₹1,20,000.", "Equity is 65% of your investments.",
+               "You invest ₹15,000 a month through SIPs."):
+        assert not any("specific stock or fund" in p for p in P.check(ok, [], "q", [])["unsupported"]), ok
+
+
+def test_the_total_of_several_accounts_is_not_attributed_to_one_bank():
+    accts = [{"bank": "HDFC Bank", "account": "salary", "balance": 186400}, {"bank": "State Bank of India", "account": "savings", "balance": 242000}]
+    res = [{"step": {"op": "balances"}, "calls": [], "derived": {"bank_accounts_highest_first": accts, "total_bank_balance": 428400}}]
+    for bad in ("Your total bank balance is ₹4,28,400 in HDFC Bank and ₹2,42,000 in State Bank of India.",
+                "Your total bank balance is ₹4,28,400 (HDFC Bank) and ₹2,42,000 (State Bank of India).",
+                "Total: ₹4.28 L in HDFC Bank."):
+        assert any("attributes the total" in p for p in P.check(bad, res, "What is my total bank balance?", [{"op": "balances"}])["unsupported"]), bad
+    good = "Your total bank balance is ₹4,28,400: ₹1,86,400 in HDFC Bank and ₹2,42,000 in State Bank of India."
+    assert not any("attributes the total" in p for p in P.check(good, res, "What is my total bank balance?", [{"op": "balances"}])["unsupported"])
+
+
+def test_advisor_boilerplate_is_removed_from_final_answers(scripted):
+    from app.cfo import writer
+    assert writer.strip_boilerplate("I can't predict the Sensex. It's best to consult a financial advisor.") == "I can't predict the Sensex."
+    assert writer.strip_boilerplate("Your EMI is ₹15,000.") == "Your EMI is ₹15,000."
+    scripted([{"kind": "general", "follows_previous": False, "steps": []}], ["An index fund tracks a market index. Please consult a financial advisor."])
+    r = agent.answer("What is an index fund?", ctx_for(), [])
+    assert "advisor" not in r["answer"].lower()

@@ -42,7 +42,7 @@ function fieldDefault(f) {
   return f.type === 'checkbox' ? false : ''
 }
 
-function RecordForm({ schema, initial, refs, onSave, onCancel, busy }) {
+function RecordForm({ schema, initial, refs, onSave, onCancel, busy, error }) {
   const [v, setV] = useState(() => Object.fromEntries(schema.fields.map((f) => [f.name, initial?.[f.name] ?? fieldDefault(f)])))
   const set = (n, val) => setV((s) => ({ ...s, [n]: val }))
   const submit = (e) => {
@@ -80,6 +80,7 @@ function RecordForm({ schema, initial, refs, onSave, onCancel, busy }) {
         }
         return <Field key={f.name} label={`${label(f.name)}${f.required ? '' : ' (optional)'}`} hint={f.help}>{input}</Field>
       })}
+      {error && <p role="alert" className="rounded-lg border border-bad/25 bg-bad-soft px-3 py-2 text-sm text-bad sm:col-span-2">{error.replace(/^record:\s*/i, '')}</p>}
       <div className="flex items-end gap-2 pt-2 sm:col-span-2">
         <Button icon={Save} loading={busy}>{initial ? 'Save changes' : 'Save'}</Button>
         <Button type="button" variant="ghost" icon={X} onClick={onCancel}>Cancel</Button>
@@ -195,7 +196,7 @@ export default function Records({ only, title, subtitle }) {
         </Card>
       )}
       {impact && <div className="mb-4"><Impact before={impact.before} after={impact.after} /></div>}
-      {err && <div className="mb-4"><ErrorBox message={err} /></div>}
+      {err && !mode && <div className="mb-4"><ErrorBox message={err} /></div>}
 
       <div className={cx('grid gap-6', !only && 'lg:grid-cols-[220px_1fr]')}>
         {!only && <nav aria-label="Record types" className="space-y-4">
@@ -213,9 +214,9 @@ export default function Records({ only, title, subtitle }) {
         </nav>}
 
         <Card title={t.label} subtitle={`Feeds: ${t.affects}`}
-          action={!readOnly && !mode && <Button icon={Plus} onClick={() => setMode('add')}>Add</Button>}>
-          <Drawer open={!!mode} onClose={() => setMode(null)} title={mode === 'add' ? `Add ${t.label.toLowerCase().replace(/s$/, '')}` : `Edit ${mode?._title || ''}`} subtitle={`Feeds: ${t.affects}`}>
-            {mode && <RecordForm key={mode === 'add' ? 'add' : mode.id} schema={t} initial={mode === 'add' ? null : mode} refs={refs} busy={busy} onSave={save} onCancel={() => setMode(null)} />}
+          action={!readOnly && !mode && <Button icon={Plus} onClick={() => { setErr(null); setMode('add') }}>Add</Button>}>
+          <Drawer open={!!mode} onClose={() => { setMode(null); setErr(null) }} title={mode === 'add' ? `Add ${t.label.toLowerCase().replace(/s$/, '')}` : `Edit ${mode?._title || ''}`} subtitle={`Feeds: ${t.affects}`}>
+            {mode && <RecordForm key={mode === 'add' ? 'add' : mode.id} schema={t} initial={mode === 'add' ? null : mode} refs={refs} busy={busy} error={err} onSave={save} onCancel={() => { setMode(null); setErr(null) }} />}
           </Drawer>
           {items === null ? <Loading /> : items.length === 0 ? (
             <Empty title={`No ${t.label.toLowerCase()} yet`}>{readOnly ? null : 'If you have none, leave this empty - Finora will not assume any.'}</Empty>

@@ -62,7 +62,7 @@ export function DebtsSection() {
           { key: 'emi', label: 'EMI', right: true, render: (l) => inr(l.emi), sort: (l) => l.emi },
           { key: 'interest_rate', label: 'Rate', right: true, render: (l) => pct(l.interest_rate), sort: (l) => l.interest_rate },
           { key: 'remaining_months', label: 'Months left', right: true, sort: (l) => l.remaining_months },
-          { key: 'remaining_interest', label: 'Interest still to pay', right: true, render: (l) => inr(l.remaining_interest) },
+          { key: 'remaining_interest', label: 'Interest still to pay', right: true, render: (l) => l.never_paid_off ? <span className="text-bad">Never cleared at this EMI</span> : inr(l.remaining_interest) },
         ]} />
         {debt.has_debt && <div className="px-5 pb-5 sm:px-6"><Meter value={debt.emi_to_income_pct || 0} max={60} tone={bandTone[debt.risk_band]} label={<><span>EMI load</span><span className="num">{pct(debt.emi_to_income_pct, 0)} of income (comfortable limit 40%)</span></>} /></div>}
       </Card>
@@ -73,10 +73,14 @@ export function DebtsSection() {
               <label htmlFor="extra-pay" className="text-[13px] font-medium text-ink-2">Extra payment per month</label>
               <div className="num mt-1 text-2xl font-semibold text-accent" aria-live="polite">{inr(extra, { compact: false })}</div>
               <input id="extra-pay" type="range" min={0} max={50000} step={1000} value={extra} onChange={(e) => setExtra(Number(e.target.value))} className="mt-2 w-full" aria-valuetext={inr(extra, { compact: false })} />
-              {extra > 0 && <div className="mt-3 rounded-lg border border-good/25 bg-good-soft p-3 text-sm text-good">Debt-free {plan.vs_no_extra.months_saved} months sooner, saving {inr(plan.vs_no_extra.interest_saved)} in interest.</div>}
-              <div className="mt-3"><KV rows={[['Avalanche: months to debt-free', plan.avalanche.months_to_debt_free], ['Avalanche: total interest', inr(plan.avalanche.total_interest)],
+              {extra > 0 && plan.vs_no_extra && <div className="mt-3 rounded-lg border border-good/25 bg-good-soft p-3 text-sm text-good">Debt-free {plan.vs_no_extra.months_saved} months sooner, saving {inr(plan.vs_no_extra.interest_saved)} in interest.</div>}
+              {plan.avalanche.paid_off === false ? (
+                <div role="status" className="mt-3 rounded-lg border border-bad/25 bg-bad-soft p-3 text-sm text-bad">
+                  At these payments {plan.avalanche.never_paid_off.join(', ')} {plan.avalanche.never_paid_off.length > 1 ? 'are' : 'is'} never paid off: the monthly payment does not cover the interest. Add an extra payment to see a debt-free date.
+                </div>
+              ) : <div className="mt-3"><KV rows={[['Avalanche: months to debt-free', plan.avalanche.months_to_debt_free], ['Avalanche: total interest', inr(plan.avalanche.total_interest)],
                 ['Snowball: months to debt-free', plan.snowball.months_to_debt_free], ['Snowball: total interest', inr(plan.snowball.total_interest)],
-                ['Avalanche saves', inr(plan.interest_saved_by_avalanche), plan.interest_saved_by_avalanche > 0 ? 'good' : undefined]]} /></div>
+                ['Avalanche saves', inr(plan.interest_saved_by_avalanche), plan.interest_saved_by_avalanche > 0 ? 'good' : undefined]]} /></div>}
             </div>
             <div>
               <div className="mb-2 text-[13px] font-medium text-ink-2">Order in which debts are cleared (avalanche)</div>

@@ -299,7 +299,7 @@ function ActionCard({ a, profileId, readOnly, busy, err, onAccept, onDismiss, on
       <p className="mt-3 text-sm leading-relaxed text-faint"><span className="text-muted">Why: </span>{a.evidence}</p>
 
       <div className="mt-6 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <span className="num text-[34px] font-semibold tracking-tight text-good">{inr(shown.impact?.inr ?? 0)}</span>
+        {shown.impact?.inr != null && <span className="num text-[34px] font-semibold tracking-tight text-good">{inr(shown.impact.inr)}</span>}
         <span className="text-sm text-muted">{shown.impact?.label}</span>
       </div>
 
@@ -413,7 +413,7 @@ function Detail({ code, profileId, onClose }) {
   useEffect(() => { api.planAction(profileId, code).then(setD).catch((e) => setErr(e.message)) }, [code, profileId])
   const rows = useMemo(() => !d ? [] : [
     ['Monthly surplus', inr(d.baseline.surplus), inr(d.scenario.surplus)],
-    ['Debt-free (months)', d.baseline.has_debt ? d.baseline.debt_free_months : '—', d.scenario.has_debt ? d.scenario.debt_free_months : '—'],
+    ['Debt-free (months)', d.baseline.has_debt ? (d.baseline.debt_free_months ?? 'Never at these payments') : '—', d.scenario.has_debt ? (d.scenario.debt_free_months ?? 'Never at these payments') : '—'],
     ['Interest still to pay', inr(d.baseline.debt_interest), inr(d.scenario.debt_interest)],
     ['Emergency pool in 12 months', inr(d.baseline.pool_in_12m), inr(d.scenario.pool_in_12m)],
     ['Runway in 12 months', num(d.baseline.runway_months, 2), num(d.scenario.runway_months, 2)],

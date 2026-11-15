@@ -634,7 +634,15 @@ def _slim_results(results: list[dict]) -> str:
 
 
 def answer_events(question: str, ctx: dict, history: list[dict] | None = None, state: dict | None = None, use_llm: bool = True):
-    """Generator of events: {"type": status|plan|tool|draft|final|error, ...}. The final event carries the verified answer."""
+    """Generator of events: {"type": status|plan|tool|draft|final|error, ...}. The final event carries the verified answer.
+    Boilerplate the small model sometimes adds despite the prompt ("consult a financial advisor") is removed from the final text."""
+    for ev in _answer_events(question, ctx, history, state, use_llm):
+        if ev.get("type") == "final" and isinstance(ev.get("answer"), str):
+            ev = {**ev, "answer": writer.strip_boilerplate(ev["answer"])}
+        yield ev
+
+
+def _answer_events(question: str, ctx: dict, history: list[dict] | None = None, state: dict | None = None, use_llm: bool = True):
     question = (question or "").strip()
     history, state = history or [], state or {}
     t0 = _time.time()
@@ -666,6 +674,12 @@ def answer_events(question: str, ctx: dict, history: list[dict] | None = None, s
         yield {"type": "final", "answer": "I can't make changes in Finora: the AI CFO can only read your data and explain it. Changes are made "
                "by you in Finora's own pages, such as My Data (add & edit) and Review & Corrections.",
                "engine": st["model"], "mode": "read_only", "tools_used": [], "tool_calls": [], "verified": True, "state": state,
+               "trace": {"latency_ms": round((_time.time() - t0) * 1000), "calls": []}}
+        return
+    if P.PICK_REQUEST.search(question):                               # Finora never names stocks or funds to buy
+        yield {"type": "final", "answer": "I don't pick individual stocks or funds. I can show what you hold now, your asset mix, how your "
+               "investments have performed, or how much you could invest each month. Ask me about any of those.",
+               "engine": st["model"], "mode": "no_picks", "tools_used": [], "tool_calls": [], "verified": True, "state": state,
                "trace": {"latency_ms": round((_time.time() - t0) * 1000), "calls": []}}
         return
     stats: list = []

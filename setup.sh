@@ -22,8 +22,8 @@ if [ ! -f .env ]; then
 fi
 echo "== Loading demo data =="
 python -m app.data.seed
-echo "== Training models on this machine (about 1 minute) =="
-python -m app.ml.train
+echo "== Checking the trained models (shipped in backend/artifacts; retraining needs the raw datasets, see docs/SETUP.md) =="
+python -m app.ml.train check
 echo "== Running tests =="
 pytest -q || true
 cd ../frontend
@@ -31,4 +31,4 @@ echo "== Frontend: packages =="
 npm install --no-audit --no-fund
 echo
 echo "Setup complete. Start the app with:  ./run.sh   (or in VS Code: Cmd+Shift+B)"
-echo "AI CFO: run 'ollama pull qwen3.5:4b' once; without it the assistant answers in calculator mode."
+echo "AI CFO: install Ollama and run 'ollama pull qwen2.5:3b' once; without it the assistant answers in calculator mode."
