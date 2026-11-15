@@ -103,7 +103,7 @@ def build_pdf(a: dict, briefing_text: str | None = None, metrics: dict | None = 
     if comp.get("missing"):
         story.append(Paragraph(f"Data completeness {comp['score_pct']}%. Not yet provided: {_t(', '.join(comp['missing']))}. "
                                "Results that depend on missing data are shown as 'Not available' rather than estimated.", S))
-    story.append(Paragraph(_t(a["data_notice"]) + " This report is educational guidance, not a substitute for a licensed financial advisor.", S))
+    story.append(Paragraph(_t(a["data_notice"]), S))
     story.append(PageBreak())
 
     # ---------------- 1 summary

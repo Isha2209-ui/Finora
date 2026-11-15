@@ -64,7 +64,7 @@ def test_multi_round_tool_use_returns_the_profiles_own_figures(model):
     assert [c["round"] for c in r["tool_calls"]] == [1, 2]                         # the second tool was chosen after the first result
     tool_msgs = [m for m in s.seen[-1]["messages"] if m["role"] == "tool"]
     assert len(tool_msgs) == 2 and json.loads(tool_msgs[1]["content"])["called_with"]["category"] == "food"
-    assert "licensed financial advisor" in r["answer"]
+    assert "licensed financial advisor" not in r["answer"]      # Phase 8: no boilerplate disclaimer in answers
 
 
 def test_a_fabricated_figure_is_caught_corrected_or_withheld(model):
@@ -174,10 +174,13 @@ def test_the_tools_cover_every_phase6_model_and_the_plan():
     assert {"credit_risk", "anomaly_scan", "cash_flow_forecast", "peer_benchmark", "category_suggestions", "finora_plan",
             "plan_what_if", "spending", "income", "compare_months", "accounts_and_balances", "affordability"} <= names
     ctx = ctx_for("FINORA_USER_001")
-    assert "Taiwan" in tools.call("credit_risk", ctx)["limitation"]
-    assert "NOT human-validated" in tools.call("anomaly_scan", ctx)["limitation"]
+    assert "XGBoost + SHAP" in tools.call("credit_risk", ctx)["limitation"]
+    assert "Isolation Forest" in tools.call("anomaly_scan", ctx)["limitation"]
     fc = tools.call("cash_flow_forecast", ctx)
-    assert "LESS accurate" in fc["limitation"] and fc["baseline_three_month_average"] > 0
+    assert "3-month average" in fc["limitation"] and "£" in fc["limitation"] and fc["baseline_three_month_average"] > 0
+    for name in ("credit_risk", "anomaly_scan", "cash_flow_forecast", "peer_benchmark", "category_suggestions"):   # Phase 8: no development-stage wording
+        lim = tools.call(name, ctx).get("limitation", "")
+        assert not any(w in lim.lower() for w in ("experimental", "human-validated", "not validated", "less accurate")), (name, lim)
     assert "US households" in tools.call("peer_benchmark", ctx)["limitation"]
     w = tools.call("plan_what_if", ctx, {"kind": "sip", "amount": 5000})
     assert w["saved"] is False and w["effect"] and w["scenario"]["fire_age"] != w["baseline"]["fire_age"]

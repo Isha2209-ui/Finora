@@ -56,7 +56,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Finora API", version="1.0.0", lifespan=lifespan,
               description="Financial identity, ML analysis, FIRE planning, decision simulation and an AI CFO. "
-                          "All demo data is synthetic. Educational guidance, not licensed financial advice.")
+                          "All demo data is synthetic.")
 # Credentialed CORS: only explicit origins (never "*"). In development the Vite proxy makes requests same-origin anyway.
 app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS,
                    allow_origin_regex=None if IS_PRODUCTION else r"http://(localhost|127\.0\.0\.1)(:\d+)?",

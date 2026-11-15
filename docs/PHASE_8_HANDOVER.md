@@ -1,4 +1,6 @@
-# Phase 8 handover: Product shell and UI (not started)
+# Phase 8 handover: Product shell and UI (historical: written before Phase 8)
+
+> **Superseded.** Phase 8 has since been designed and implemented. See [PHASE_8_DESIGN_SPECIFICATION.md](PHASE_8_DESIGN_SPECIFICATION.md) and [PHASE_8_VERIFICATION.md](PHASE_8_VERIFICATION.md). This note is kept as the pre-Phase-8 record.
 
 Phase 8 is the owner's to implement. This note records the intended design direction and the integration points that
 Phases 6 and 7 leave behind. **Nothing in this document has been implemented.**

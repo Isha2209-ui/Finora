@@ -36,7 +36,8 @@ def account_out(u: M.AppUser, s: M.AuthSession) -> dict:
 
 @router.post("/register", summary="Create an account (e-mail + password) and sign in")
 def register(body: RegisterIn, request: Request, response: Response, db: Session = Depends(get_db)):
-    rate_limit(f"register:{client_ip(request)}", CFG.REGISTER_IP_MAX, 3600, "Too many sign-ups from this address.")
+    if CFG.REGISTER_IP_MAX > 0:                      # off by default; opt-in for a public deployment (see config.py)
+        rate_limit(f"register:{client_ip(request)}", CFG.REGISTER_IP_MAX, 3600, "Too many sign-ups from this address.")
     email = SEC.normalise_email(body.email)
     if not SEC.EMAIL_RE.match(email):
         raise HTTPException(422, "Enter a valid e-mail address.")
@@ -57,7 +58,10 @@ def register(body: RegisterIn, request: Request, response: Response, db: Session
 def login(body: LoginIn, request: Request, response: Response, db: Session = Depends(get_db)):
     ip = client_ip(request)
     email = SEC.normalise_email(body.email)
-    rate_limit(f"login-ip:{ip}", CFG.LOGIN_IP_MAX_ATTEMPTS, CFG.LOGIN_WINDOW_SECONDS, "Too many sign-in attempts.")
+    ip_key = f"login-ip-fail:{ip}"             # only FAILED attempts count against an IP: stops password spraying, never blocks real sign-ins
+    ip_blocked, ip_retry = SEC.limiter.blocked(ip_key, CFG.LOGIN_IP_MAX_ATTEMPTS, CFG.LOGIN_WINDOW_SECONDS)
+    if ip_blocked:
+        raise HTTPException(429, f"Too many sign-in attempts. (retry in {ip_retry}s)", headers={"Retry-After": str(ip_retry)})
     fail_key = f"login-fail:{SEC.token_hash(email)}"
     blocked, retry = SEC.limiter.blocked(fail_key, CFG.LOGIN_MAX_FAILURES, CFG.LOGIN_WINDOW_SECONDS)
     if blocked:
@@ -68,6 +72,7 @@ def login(body: LoginIn, request: Request, response: Response, db: Session = Dep
     ok = SEC.verify_password(u.password_hash if u else SEC.DUMMY_HASH, body.password)
     if not (u and ok):
         SEC.limiter.add(fail_key)
+        SEC.limiter.add(ip_key)
         audit(db, "account.login", request=request, app_user_id=u.id if u else None, outcome="failed")
         raise HTTPException(401, BAD_LOGIN)
     SEC.limiter.clear(fail_key)

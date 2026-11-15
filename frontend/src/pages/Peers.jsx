@@ -1,50 +1,61 @@
+// Risk & Models → Peers. K-Means groups learned from the Federal Reserve's Survey of Consumer Finances 2022 (US households,
+// survey-weighted, 5 imputations). Answer first; each measure as "better than X% of households".
 import { Link } from 'react-router-dom'
-import { Users } from 'lucide-react'
-import { Badge, Button, Card, Empty, Note, PageHeader, Stat, Table } from '../components/ui.jsx'
+import { Answer, Card, Empty, Meter, PageHeader, Section, Trust } from '../components/ui.jsx'
+import { present } from '../components/models.js'
 import { useFinora } from '../store.jsx'
 
-// Peer Benchmarking: K-Means groups learned from the Federal Reserve's Survey of Consumer Finances 2022 (US households,
-// survey-weighted, 5 imputations). Shows where this profile's ratios fall among US households.
-const fmt = (v) => (v == null ? '-' : Number(v).toLocaleString('en-IN', { maximumFractionDigits: 2 }))
+const fmt = (v) => (v == null ? '—' : Number(v).toLocaleString('en-IN', { maximumFractionDigits: 2 }))
 
 export default function Peers() {
   const { analysis: a } = useFinora()
   const p = a.ml.peers || {}
+  if (p.available === false || !p.comparison) return (
+    <><PageHeader title="Peers" />
+      <Card><Empty title="Not enough information to compare yet">{p.note || a.ml_errors?.peers || 'Add income and a few months of spending, plus your accounts and debts, under Data → Records.'}</Empty></Card></>
+  )
+  const strong = p.strengths?.length ? p.strengths.join(', ') : null
+  const weak = p.weaknesses?.length ? p.weaknesses.join(', ') : null
   return (
     <>
-      <PageHeader title="Peer Benchmarking" subtitle="How your savings, debt and assets compare with similar US households, using groups learned from a national survey." />
-      <div className="mb-4"><Note tone="warn">These are <b>US household</b> benchmarks (Federal Reserve Survey of Consumer Finances 2022), not Indian ones, and a Finora
-        profile may be one person rather than a household. The survey uses gross income while Finora sees take-home pay, so your ratios to income read higher than
-        a US household's would; card balances are measured differently.</Note></div>
-      {p.available === false || !p.comparison ? (
-        <Card><Empty title="Not enough information to compare yet">{p.note || a.ml_errors?.peers || 'Add income and a few months of spending, plus your accounts and debts, under My Data.'}</Empty></Card>
-      ) : <>
-        <div className="grid gap-4 md:grid-cols-3">
-          <Stat label="Your closest peer group" value={p.peer_group} icon={Users} />
-          <Stat label="Share of US households in it" value={`${p.peer_group_share_pct}%`} sub={`about ${p.peer_group_households_millions} million of ${p.population_households_millions} million households`} />
-          <Stat label="Model" value={p.model_info?.version || '-'} sub="K-Means, survey-weighted, stable across 5 imputations" />
-        </div>
-        <Card title="Your ratios against US households" subtitle={`Values are ${p.units || 'ratios'}; "better than" is the survey-weighted share of US households you beat on that measure`} className="mt-4" pad={false}>
-          <Table dense rows={p.comparison} columns={[
-            { key: 'metric', label: 'Measure', render: (c) => <span className="font-medium">{c.metric}</span> },
-            { key: 'you', label: 'You', right: true, render: (c) => fmt(c.you) },
-            { key: 'peer_group_median', label: 'Your group (median)', right: true, render: (c) => fmt(c.peer_group_median) },
-            { key: 'everyone_median', label: 'All US households (median)', right: true, render: (c) => fmt(c.everyone_median) },
-            { key: 'better_than_pct_of_people', label: 'Better than', right: true, render: (c) => <Badge tone={c.better_than_pct_of_people >= 70 ? 'good' : c.better_than_pct_of_people <= 30 ? 'bad' : 'neutral'}>{c.better_than_pct_of_people}% of households</Badge> },
-          ]} />
-        </Card>
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <Card title="Where you stand out">
-            <p className="text-sm"><span className="text-good">Stronger than most:</span> {p.strengths?.length ? p.strengths.join(', ') : 'no single measure stands out'}</p>
-            <p className="mt-2 text-sm"><span className="text-bad">Weaker than most:</span> {p.weaknesses?.length ? p.weaknesses.join(', ') : 'nothing notable'}</p>
-          </Card>
-          <Card title="The three US household groups">
-            <ul className="space-y-1 text-sm">{(p.all_groups || []).map((g) => <li key={g.name} className="flex justify-between"><span className={g.name === p.peer_group ? 'font-medium text-accent' : 'text-muted'}>{g.name}</span><span className="num">{g.share_pct}%</span></li>)}</ul>
-            <div className="mt-3"><Link to="/models"><Button variant="ghost">How the groups were built</Button></Link></div>
-          </Card>
-        </div>
-        {p.note && <div className="mt-4"><Note>{p.note}</Note></div>}
-      </>}
+      <PageHeader title="Peers" />
+      <Answer eyebrow="How you compare with similar households"
+        sub={[strong && `You do better than most on ${strong}.`, weak && `You trail most on ${weak}.`].filter(Boolean).join(' ') || 'No single measure stands out.'}>
+        You are closest to <b>{p.peer_group}</b>, a group that is {p.peer_group_share_pct}% of US households.
+      </Answer>
+      <Trust model="peers" className="mb-8" />
+
+      <Section title="Measure by measure" description={`Values are ${p.units || 'ratios'}. The bar shows the survey-weighted share of US households you do better than.`}>
+        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-bg">
+          {p.comparison.map((c) => (
+            <li key={c.metric} className="grid gap-3 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_260px] sm:items-center sm:px-6">
+              <div className="min-w-0">
+                <div className="text-[15px] font-medium text-ink">{c.metric}</div>
+                <div className="num mt-0.5 text-[13px] text-muted">You {fmt(c.you)} · your group {fmt(c.peer_group_median)} · all US households {fmt(c.everyone_median)} (medians)</div>
+              </div>
+              <Meter value={c.better_than_pct_of_people} tone={c.better_than_pct_of_people >= 70 ? 'good' : c.better_than_pct_of_people <= 30 ? 'bad' : 'accent'}
+                label={<><span>Better than</span><span className="num font-medium text-ink">{c.better_than_pct_of_people}% of households</span></>} />
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      <div className="mt-10 grid gap-8 lg:grid-cols-2">
+        <Section title="The US household groups">
+          <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-bg">
+            {(p.all_groups || []).map((g) => (
+              <li key={g.name} className="flex items-center justify-between gap-3 px-5 py-3.5 text-sm sm:px-6">
+                <span className={g.name === p.peer_group ? 'font-semibold text-accent' : 'text-ink-2'}>{g.name}{g.name === p.peer_group && ' · your group'}</span>
+                <span className="num text-muted">{g.share_pct}% of households</span>
+              </li>))}
+          </ul>
+          <p className="mt-3 text-[13px] text-muted">About {p.peer_group_households_millions} million of {p.population_households_millions} million US households are in your group. <Link to="/models?tab=lab&model=peers" className="font-medium text-accent hover:underline">How the groups were built</Link></p>
+        </Section>
+        <Section title="Where the benchmark comes from">
+          <p className="text-sm leading-6 text-ink-2">Groups are learned from the Federal Reserve's Survey of Consumer Finances 2022. Your ratios are computed from your Finora data and matched to the nearest group.</p>
+          {p.note && <p className="mt-2 text-sm leading-6 text-muted">{present(p.note)}</p>}
+        </Section>
+      </div>
     </>
   )
 }

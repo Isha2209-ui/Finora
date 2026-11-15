@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import { api } from '../api'
-import { Badge, Button, Card, ErrorBox, Input, KV, Loading, Note, PageHeader } from '../components/ui.jsx'
+import { ButtonLink, Badge, Button, Card, ErrorBox, Input, KV, Loading, Note, PageHeader } from '../components/ui.jsx'
 import { useAsync } from '../store.jsx'
 
 // Blinded review of the unusual-spending model. The server sends each transaction WITHOUT the model's score, flag or the
@@ -36,9 +36,9 @@ export default function AnomalyReview() {
   return (
     <>
       <PageHeader title="Review: is this transaction unusual?" subtitle={data.instructions}>
-        <Link to="/models"><Button variant="ghost" icon={ArrowLeft}>Model Lab</Button></Link>
+        <ButtonLink to="/models?tab=lab&model=anomaly" variant="ghost" icon={ArrowLeft}>Model Lab</ButtonLink>
       </PageHeader>
-      <div className="mb-4"><Note>Real, de-identified US government purchase-card transactions (Oklahoma, FY2024). Cardholder names are removed. You are judging unusualness, not fraud. Your labels are stored under your account and are never filled in automatically.</Note></div>
+      <div className="mb-4"><Note>Real, de-identified US government purchase-card transactions (Oklahoma, FY2024). Cardholder names are removed. You are judging whether each transaction is unusual for its cardholder. Your labels are stored under your account and are never filled in automatically.</Note></div>
       <div className="mb-3 flex items-center justify-between text-sm"><span className="text-muted">{done} of {items.length} reviewed</span>
         <div className="h-2 w-48 overflow-hidden rounded-full bg-raised"><div className="h-full bg-accent" style={{ width: `${(done / Math.max(1, items.length)) * 100}%` }} /></div></div>
       {it && <Card title={`${it.merchant}`} subtitle={`${it.merchant_category} · ${it.date}`} action={<Badge>{it.item_id}</Badge>}>

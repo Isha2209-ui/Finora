@@ -1,85 +1,92 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowDownRight, ArrowUpRight, CalendarClock, Plus, Repeat, Sparkles, TrendingUp, Wallet } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, CalendarClock, Plus } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { api } from '../api'
-import { Badge, Button, Card, Empty, ErrorBox, Loading, Note, PageHeader, Select, Stat, Table, chartTooltip, cx } from '../components/ui.jsx'
+import { Badge, Card, Empty, ErrorBox, Field, Loading, Note, Segmented, Select, Stat, Table, chartTooltip, cx, useUrlParam } from '../components/ui.jsx'
+import { BudgetSection } from './Budget.jsx'
 import { PALETTE, axisInr, dateLabel, inr, monthLabel, num, pct } from '../format'
 import { useAsync, useFinora } from '../store.jsx'
 
 const KIND_TONE = { bill: 'info', subscription: 'accent', loan: 'warn', investment: 'good', 'regular spend': 'neutral' }
 const FREQ = { monthly: 'monthly', quarterly: 'quarterly', yearly: 'yearly' }
 
-export default function Insights() {
+const VIEWS = [
+  { id: 'where', label: 'Where it goes' }, { id: 'changed', label: 'What changed' }, { id: 'repeats', label: 'What repeats' },
+  { id: 'merchants', label: 'Who I pay' }, { id: 'income', label: 'Income' }, { id: 'investing', label: 'Investing' },
+  { id: 'unusual', label: 'Unusual spending' }, { id: 'budget', label: 'Budget' },
+]
+
+/** Money → Spending (was "Statement Intelligence"): one question at a time, real data from /insights, filters in the URL. */
+export function SpendingSection() {
   const { profileId, profile } = useFinora()
-  const [months, setMonths] = useState('')
-  const [source, setSource] = useState('')
+  const [view, setView] = useUrlParam('view', VIEWS.map((v) => v.id))
+  const [months, setMonths] = useUrlParam('months', null, '')
+  const [source, setSource] = useUrlParam('source', null, '')
   const params = { months, ...(source.startsWith('account:') ? { account_id: source.split(':')[1] } : source.startsWith('card:') ? { card_id: source.split(':')[1] } : {}) }
   const q = useAsync(() => api.insights(profileId, params), [profileId, months, source])
   const i = q.data
+  const readOnly = profile?.kind === 'template'
   return (
     <>
-      <PageHeader title="Statement Intelligence" subtitle="Where your money goes, how it changes, who it goes to, what repeats, what you invest and where income comes from. Built from every transaction on this profile - imported, typed in or demo - with the same cleaning rules as the rest of Finora.">
-        {i?.filters && <div className="w-60"><Select value={source} onChange={(e) => setSource(e.target.value)}>
+      <div className="mb-5 flex flex-wrap items-end gap-3">
+        <div className="w-full sm:w-60"><Field label="Account or card"><Select value={source} onChange={(e) => setSource(e.target.value || null)}>
           <option value="">All accounts & cards</option>
-          {i.filters.accounts.map((a) => <option key={a.id} value={`account:${a.id}`}>{a.label}</option>)}
-          {i.filters.cards.map((c) => <option key={c.id} value={`card:${c.id}`}>{c.label}</option>)}
-        </Select></div>}
-        <div className="w-44"><Select value={months} onChange={(e) => setMonths(e.target.value)}>
+          {i?.filters?.accounts.map((a) => <option key={a.id} value={`account:${a.id}`}>{a.label}</option>)}
+          {i?.filters?.cards.map((c) => <option key={c.id} value={`card:${c.id}`}>{c.label}</option>)}
+        </Select></Field></div>
+        <div className="w-full sm:w-44"><Field label="Period"><Select value={months} onChange={(e) => setMonths(e.target.value || null)}>
           <option value="">Whole history</option><option value="24">Last 24 months</option><option value="12">Last 12 months</option><option value="6">Last 6 months</option><option value="3">Last 3 months</option>
-        </Select></div>
-        {profile?.kind !== 'template' && <Link to="/statements"><Button>Import statements</Button></Link>}
-      </PageHeader>
+        </Select></Field></div>
+        <div className="flex-1" />
+        {!readOnly && <Link to="/data?tab=import" className="inline-flex h-10 items-center rounded-md border border-control/60 bg-bg px-4 text-sm font-medium text-ink shadow-xs hover:bg-subtle">Import statements</Link>}
+      </div>
       {q.loading && !i ? <Loading label="Reading every transaction…" /> : q.error ? <ErrorBox message={q.error} onRetry={q.reload} />
-        : !i.available ? <Card><Empty title="No transactions yet">{i.reason} <Link className="text-accent underline" to="/statements">Import a statement</Link>.</Empty></Card>
-          : <Body i={i} profileId={profileId} readOnly={profile?.kind === 'template'} loading={q.loading} />}
+        : !i.available ? <Card><Empty title="No transactions yet" action={!readOnly && <Link className="text-sm font-medium text-accent hover:underline" to="/data?tab=import">Import a statement</Link>}>{i.reason}</Empty></Card>
+          : (
+            <div className={cx('transition-opacity', q.loading && 'opacity-60')} aria-busy={q.loading}>
+              <Coverage i={i} />
+              <Kpis i={i} />
+              <div className="mt-8 mb-5"><Segmented label="Spending question" options={VIEWS} value={view} onChange={setView} /></div>
+              {view === 'where' && <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]"><Where w={i.where} /><Trend t={i.trend} /></div>}
+              {view === 'changed' && <Changes c={i.changes} />}
+              {view === 'repeats' && <Recurring r={i.recurring} profileId={profileId} readOnly={readOnly} />}
+              {view === 'merchants' && <Merchants m={i.merchants} />}
+              {view === 'income' && <Income inc={i.income} />}
+              {view === 'investing' && <Investments inv={i.investments} />}
+              {view === 'unusual' && <Unusual u={i.unusual} />}
+              {view === 'budget' && <BudgetSection />}
+              {i.notes.length > 0 && <div className="mt-6 space-y-2">{i.notes.map((n) => <Note key={n}>{n}</Note>)}</div>}
+            </div>
+          )}
     </>
   )
 }
+export default SpendingSection
 
-function Body({ i, profileId, readOnly, loading }) {
+function Coverage({ i }) {
   const cov = i.coverage
   return (
-    <div className={cx('space-y-4 transition-opacity', loading && 'opacity-60')}>
-      <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
-        <Badge tone="neutral">{dateLabel(cov.from)} – {dateLabel(cov.to)}</Badge><Badge tone="neutral">{cov.months} months</Badge>
-        <Badge tone="neutral">{num(cov.transactions)} transactions</Badge>
-        {cov.imported_transactions > 0 && <Badge tone="accent">{num(cov.imported_transactions)} imported</Badge>}
-        <Badge tone="accent">{num(cov.categorised_by_model)} categorised by the ML model</Badge>
-        {cov.corrected_by_you > 0 && <Badge tone="good">{num(cov.corrected_by_you)} corrected by you</Badge>}
-        {i.review.needs_review > 0 && <Link to="/review"><Badge tone="warn">{num(i.review.needs_review)} need review →</Badge></Link>}
-        {cov.partial_months.length > 0 && <span className="text-faint">Partial months: {cov.partial_months.map(monthLabel).join(', ')} (statements start or end mid-month)</span>}
-      </div>
-      <Kpis i={i} />
-      <div className="grid gap-4 xl:grid-cols-3">
-        <Where w={i.where} />
-        <Trend t={i.trend} className="xl:col-span-2" />
-      </div>
-      <div className="grid gap-4 xl:grid-cols-2">
-        <Changes c={i.changes} />
-        <Merchants m={i.merchants} />
-      </div>
-      <Recurring r={i.recurring} profileId={profileId} readOnly={readOnly} />
-      <div className="grid gap-4 xl:grid-cols-2">
-        <Income inc={i.income} />
-        <Investments inv={i.investments} />
-      </div>
-      <Unusual u={i.unusual} />
-      <div className="space-y-1">{i.notes.map((n) => <Note key={n}>{n}</Note>)}</div>
+    <div className="mb-5 flex flex-wrap items-center gap-2 text-[13px] text-muted">
+      <Badge>{dateLabel(cov.from)} – {dateLabel(cov.to)}</Badge><Badge>{cov.months} months</Badge>
+      <Badge>{num(cov.transactions)} transactions</Badge>
+      {cov.imported_transactions > 0 && <Badge tone="accent">{num(cov.imported_transactions)} imported</Badge>}
+      <Badge tone="accent">{num(cov.categorised_by_model)} categorised by the ML model</Badge>
+      {cov.corrected_by_you > 0 && <Badge tone="good">{num(cov.corrected_by_you)} corrected by you</Badge>}
+      {i.review.needs_review > 0 && <Link to="/data?tab=review"><Badge tone="warn">{num(i.review.needs_review)} need review →</Badge></Link>}
+      {cov.partial_months.length > 0 && <span className="text-faint">Partial months: {cov.partial_months.map(monthLabel).join(', ')}</span>}
     </div>
   )
 }
 
 function Kpis({ i }) {
-  const w = i.where, inc = i.income, r = i.recurring
+  const w = i.where, inc = i.income
   const saved = inc && w ? inc.avg_monthly - w.avg_monthly_spend : null
   return (
-    <div className="grid gap-4 md:grid-cols-5">
-      <Stat label="Spent per month" value={inr(w?.avg_monthly_spend)} sub={w ? `${inr(w.total_spend)} in total · ${inr(w.refunds)} refunded` : 'no spending data'} icon={Wallet} />
-      <Stat label="Income per month" value={inr(inc?.avg_monthly)} sub={inc ? `${inc.sources.length} source${inc.sources.length === 1 ? '' : 's'} · salary ${pct(inc.salary_share_pct, 0)}` : 'no income records here'} icon={TrendingUp} tone="info" />
+    <div className="grid gap-4 sm:grid-cols-3">
+      <Stat label="Spent per month" value={inr(w?.avg_monthly_spend)} sub={w ? `${inr(w.total_spend)} in total · ${inr(w.refunds)} refunded` : 'no spending data'} />
+      <Stat label="Income per month" value={inr(inc?.avg_monthly)} sub={inc ? `${inc.sources.length} source${inc.sources.length === 1 ? '' : 's'} · salary ${pct(inc.salary_share_pct, 0)}` : 'no income records here'} />
       <Stat label="Kept per month" value={saved == null ? '—' : inr(saved)} tone={saved == null ? 'ink' : saved >= 0 ? 'good' : 'bad'} sub={saved == null ? 'needs income and spending' : `${pct(saved / inc.avg_monthly * 100, 0)} of income`} />
-      <Stat label="Recurring commitments" value={inr(r.monthly_total)} sub={`${r.active_count} active, per month`} icon={Repeat} tone="warn" />
-      <Stat label="Invested per month" value={inr(i.investments?.avg_monthly_invested)} sub={i.investments ? `${i.investments.months_with_investing} of ${i.coverage.months} months` : '—'} icon={Sparkles} tone="good" />
     </div>
   )
 }
@@ -111,7 +118,7 @@ function Trend({ t, className }) {
         <Tooltip {...chartTooltip} labelFormatter={monthLabel} formatter={(v, n) => [inr(v), n]} />
         <Legend wrapperStyle={{ fontSize: 11 }} />
         {t.series.map((s, k) => <Bar key={s} dataKey={s} stackId="s" fill={PALETTE[k % PALETTE.length]} />)}
-        {hasIncome && <Line dataKey="income" name="Income" stroke="#e6edf7" strokeWidth={2} dot={false} strokeDasharray="4 3" />}
+        {hasIncome && <Line dataKey="income" name="Income" stroke="#1d2433" strokeWidth={2} dot={false} strokeDasharray="4 3" />}
       </ComposedChart></ResponsiveContainer></div>
     </Card>
   )
@@ -174,15 +181,15 @@ function Recurring({ r, profileId, readOnly }) {
         { key: 'monthly_equivalent', label: 'Per month', right: true, render: (x) => inr(x.monthly_equivalent) },
         { key: 'occurrences', label: 'Seen', right: true, render: (x) => `${x.occurrences}×` },
         { key: 'next', label: 'Next expected', render: (x) => x.status === 'active' ? <span className="flex items-center gap-1"><CalendarClock size={12} className="text-faint" />{dateLabel(x.next_expected)}</span> : <span className="text-faint">stopped {dateLabel(x.last_date)}</span> },
-        { key: 'x', label: '', render: (x) => x.already_recorded || added[x.merchant] ? <span className="text-[11px] text-good">in My Data</span>
-          : !readOnly && x.status === 'active' && <button onClick={() => add(x)} className="flex items-center gap-1 text-[11px] text-accent hover:underline"><Plus size={11} />Add to My Data</button> }]} />
+        { key: 'x', label: '', render: (x) => x.already_recorded || added[x.merchant] ? <span className="text-[13px] text-good">In your records</span>
+          : !readOnly && x.status === 'active' && <button type="button" onClick={() => add(x)} className="flex items-center gap-1 text-[13px] text-accent hover:underline"><Plus size={13} aria-hidden />Add to my records</button> }]} />
         : <p className="px-5 pb-4 text-sm text-muted">No repeating payments found yet. They need at least three occurrences at a steady interval.</p>}
     </Card>
   )
 }
 
 function Income({ inc }) {
-  if (!inc) return <Card title="Income patterns"><Empty title="No income records">Income comes from salary and other credits Finora recognises in statements, or from income you add under My Data.</Empty></Card>
+  if (!inc) return <Card title="Income patterns"><Empty title="No income records">Income comes from salary and other credits Finora recognises in statements, or from income you add under Data → Records.</Empty></Card>
   const s = inc.salary
   return (
     <Card title="Income patterns" subtitle={`${inr(inc.total)} received · ${inr(inc.avg_monthly)} a month on average`}>
@@ -217,7 +224,7 @@ function Investments({ inv }) {
       {any ? <div className="h-40"><ResponsiveContainer><BarChart data={inv.months} margin={{ left: 0, right: 8 }}>
         <CartesianGrid vertical={false} /><XAxis dataKey="month" tickFormatter={monthLabel} tickLine={false} axisLine={false} minTickGap={16} />
         <YAxis tickFormatter={axisInr} tickLine={false} axisLine={false} width={52} /><Tooltip {...chartTooltip} labelFormatter={monthLabel} formatter={(v, n) => [inr(v), n]} />
-        <Bar dataKey="invested" name="Invested" fill="#34d399" /><Bar dataKey="withdrawn" name="Withdrawn" fill="#60a5fa" />
+        <Bar dataKey="invested" name="Invested" fill="#13794a" /><Bar dataKey="withdrawn" name="Withdrawn" fill="#0e8074" />
       </BarChart></ResponsiveContainer></div> : <p className="text-sm text-muted">No investment transactions in this period.</p>}
       {inv.destinations.length > 0 && <ul className="mt-2 space-y-1 text-[13px]">{inv.destinations.map((d) => <li key={d.name} className="flex justify-between"><span>{d.name}</span><span className="num">{inr(d.total)} <span className="text-faint">· {d.count}×</span></span></li>)}</ul>}
       <div className="mt-3"><Note>{inv.note} {inv.recorded_sips ? `You have ${inv.recorded_sips} SIP(s) recorded (${inr(inv.recorded_sip_monthly)} a month).` : ''}</Note></div>
@@ -229,7 +236,7 @@ function Unusual({ u }) {
   if (!u) return null
   const none = !u.months.length && !u.category_spikes.length && !u.large_one_offs.length
   return (
-    <Card title="Unusual spending" subtitle="Statistically unusual for you. This is not fraud detection." action={<Link to="/transactions" className="text-xs text-accent hover:underline">Anomaly model by transaction →</Link>}>
+    <Card title="Unusual spending" subtitle="Statistically unusual for you, compared with your own history." action={<Link to="/money?tab=transactions" className="text-xs text-accent hover:underline">Anomaly model by transaction →</Link>}>
       {none ? <p className="text-sm text-good">Nothing stands out in this period.</p> : (
         <div className="grid gap-4 md:grid-cols-3">
           <div><div className="mb-1 text-xs font-medium text-muted">Expensive months</div>{u.months.length ? u.months.map((m) => <div key={m.month} className="text-[13px]">{monthLabel(m.month)}: <b className="num">{inr(m.spend)}</b> <span className="text-faint">vs typical {inr(m.typical)}</span></div>) : <p className="text-xs text-faint">None</p>}</div>

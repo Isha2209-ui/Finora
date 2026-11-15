@@ -169,7 +169,8 @@ def test_limitations_of_model_outputs_are_always_stated(scripted):
     an = tools.call("anomaly_scan", ctx)
     scripted([personal({"op": "anomalies"})], [f"{an['flagged_count']} transactions were flagged."])
     r = agent.answer("Any unusual transactions?", ctx, [], state={})
-    assert "NOT human-validated" in r["answer"]
+    assert "Isolation Forest" in r["answer"] and "own history" in r["answer"]       # the model and its basis are stated
+    assert "experimental" not in r["answer"].lower() and "human-validated" not in r["answer"].lower()
 
 
 def test_general_questions_use_no_personal_data_and_cannot_state_personal_figures(scripted):

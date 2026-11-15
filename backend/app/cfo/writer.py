@@ -14,7 +14,8 @@ def inr(x) -> str:
     """Rupees - and an unknown amount is said to be unknown, never shown as Rs 0."""
     return NOT_KNOWN if x is None else _inr(x)
 
-DISCLAIMER = "Educational guidance, not a substitute for a licensed financial advisor."
+DISCLAIMER = ""   # Phase 8: answers no longer carry a boilerplate disclaimer (owner decision)
+LEGACY_DISCLAIMER = "Educational guidance, not a substitute for a licensed financial advisor."   # stripped from older saved answers
 
 GLOSSARY = {
     "fire": "FIRE means Financial Independence, Retire Early: building a corpus large enough that its returns cover your living costs. "

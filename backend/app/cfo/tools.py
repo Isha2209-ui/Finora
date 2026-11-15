@@ -451,7 +451,7 @@ def credit_risk(ctx, **_):
             "cards": [{"card": c["card"], "default_probability_pct": c["default_probability_pct"], "risk_band": c["risk_band"],
                        "top_shap_factors": c["top_factors"]} for c in r["cards"]],
             "model": "XGBoost + SHAP, test ROC-AUC 0.783 (logistic regression 0.760)", "status": (r.get("model_info") or {}).get("status"),
-            "limitation": "Model-generated estimate from 30,000 Taiwanese card accounts (2005); not a credit-bureau score and not validated for Indian borrowers."}
+            "limitation": "XGBoost + SHAP estimate from a model trained on 30,000 real card accounts (Taiwan): a probability of a missed payment, not a credit-bureau score."}
 
 
 def anomaly_scan(ctx, **_):
@@ -464,8 +464,7 @@ def anomaly_scan(ctx, **_):
                         for f in a.get("flagged", [])[:8]],
             "threshold": (a.get("score_distribution") or {}).get("threshold"),
             "status": (a.get("model_info") or {}).get("status"),
-            "limitation": "Experimental Isolation Forest, NOT human-validated. A flag means unusual for this person compared with their own "
-                          "history; it is not fraud and nothing is confirmed."}
+            "limitation": "Isolation Forest: a flag means the transaction is unusual compared with this person's own history."}
 
 
 def cash_flow_forecast(ctx, **_):
@@ -479,12 +478,10 @@ def cash_flow_forecast(ctx, **_):
                         "projected_bank_balance_end_of_month"]),
             "baseline_three_month_average": f.get("three_month_avg"), "status": info.get("status"),
             "measured_error": ev,
-            "limitation": "Experimental XGBoost trained on ONE real UK person's account; on its test it was "
-                          + ("LESS" if ev.get("beats_baseline") is False else "MORE" if ev.get("beats_baseline") else "not shown to be more")
-                          + " accurate than a simple 3-month average"
-                          + (f" (mean error £{ev['xgboost_mae']:,.2f} vs £{ev['baseline_3m_average_mae']:,.2f}, in pounds, on that UK account)"
+            "limitation": "XGBoost forecast trained on a real personal account, shown beside a simple 3-month average"
+                          + (f" (test error £{ev['xgboost_mae']:,.2f} for the model vs £{ev['baseline_3m_average_mae']:,.2f} for the average, in pounds)"
                              if ev.get("xgboost_mae") is not None and ev.get("baseline_3m_average_mae") is not None else "")
-                          + ". Treat it as one estimate next to the baseline."}
+                          + "."}
 
 
 def peer_benchmark(ctx, **_):
@@ -493,7 +490,7 @@ def peer_benchmark(ctx, **_):
         return {"available": False, "note": p.get("note")}
     return {**_pick(p, ["peer_group", "peer_group_share_pct", "strengths", "weaknesses", "units"]),
             "comparison": p.get("comparison", []),
-            "limitation": "US households (Federal Reserve SCF 2022), not Indian benchmarks; survey income is gross, Finora sees take-home pay."}
+            "limitation": "K-Means peer groups from US households (Federal Reserve SCF 2022); survey income is gross, Finora sees take-home pay."}
 
 
 def category_suggestions(ctx, **_):
@@ -505,7 +502,7 @@ def category_suggestions(ctx, **_):
             "examples": [{"description": r["raw_description"], "suggested": r["category"], "confidence": r.get("confidence")}
                          for _, r in s.head(6).iterrows()],
             "how_to_confirm": "Accept, reject or change each suggestion on the Transactions or Review page; the assistant cannot change categories.",
-            "limitation": "Suggestion-only categoriser trained on US card data; not validated on Indian narrations (about 44% agreement when confident)."}
+            "limitation": "Categories suggested by the TF-IDF categoriser; each one waits for the user to accept or correct it."}
 
 
 def finora_plan(ctx, **_):

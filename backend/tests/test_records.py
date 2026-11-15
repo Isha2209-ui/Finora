@@ -411,3 +411,20 @@ def test_profile_details_validation(erin):
     r = erin.patch(f"/api/profiles/{pid}", json={"name": "Renamed Person", "employment_type": "self_employed"})
     assert r.status_code == 200 and r.json()["name"] == "Renamed Person"
     assert analysis(erin, pid)["profile"]["employment_type"] == "self_employed"
+
+
+def test_phase8_transactions_sort_and_suggested_filter_are_optional_and_correct(client):
+    """Phase 8 adds optional ?sort= and ?suggested_only= to the transaction list; the defaults keep the old behaviour."""
+    from .conftest import signed_in_client
+    c = signed_in_client("p8sort")
+    pid = c.post("/api/demo/explore", json={"template_id": c.get("/api/demo/templates").json()[0]["template_id"]}).json()["profile"]["internal_id"]
+    base = c.get(f"/api/profiles/{pid}/transactions?limit=50").json()
+    dates = [x["date"] for x in base["items"]]
+    assert dates == sorted(dates, reverse=True)                                   # default unchanged: newest first
+    amt = [x["amount"] for x in c.get(f"/api/profiles/{pid}/transactions?limit=50&sort=amount_desc").json()["items"]]
+    assert amt == sorted(amt, reverse=True)
+    asc = [x["date"] for x in c.get(f"/api/profiles/{pid}/transactions?limit=50&sort=date_asc").json()["items"]]
+    assert asc == sorted(asc)
+    sug = c.get(f"/api/profiles/{pid}/transactions?limit=50&suggested_only=true").json()
+    assert all(x["category_source"] == "model" for x in sug["items"]) and sug["total"] <= base["total"]
+    assert c.get(f"/api/profiles/{pid}/transactions?sort=drop_table").status_code == 422

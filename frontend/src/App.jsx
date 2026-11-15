@@ -1,33 +1,37 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Suspense, lazy } from 'react'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import Layout from './components/Layout.jsx'
 import { ErrorBox, Loading } from './components/ui.jsx'
-import Accounts from './pages/Accounts.jsx'
-import Budget from './pages/Budget.jsx'
-import Cfo from './pages/Cfo.jsx'
-import Credit from './pages/Credit.jsx'
-import DataManagement from './pages/DataManagement.jsx'
-import Decision from './pages/Decision.jsx'
-import Fire from './pages/Fire.jsx'
-import Forecast from './pages/Forecast.jsx'
-import Identity from './pages/Identity.jsx'
-import Insights from './pages/Insights.jsx'
-import Investments from './pages/Investments.jsx'
-import Lookup from './pages/Lookup.jsx'
-import Plan from './pages/Plan.jsx'
-import ModelLab from './pages/ModelLab.jsx'
-import AnomalyReview from './pages/AnomalyReview.jsx'
-import Scanner from './pages/Scanner.jsx'
-import Peers from './pages/Peers.jsx'
-import Recommendations from './pages/Recommendations.jsx'
-import Records from './pages/Records.jsx'
-import Reports from './pages/Reports.jsx'
-import Review from './pages/Review.jsx'
-import Statements from './pages/Statements.jsx'
-import Transactions from './pages/Transactions.jsx'
 import { useAuth } from './auth.jsx'
+import Lookup from './pages/Lookup.jsx'
 import SignIn from './pages/SignIn.jsx'
 import { useFinora } from './store.jsx'
+
+const Home = lazy(() => import('./pages/Home.jsx'))
+const Ask = lazy(() => import('./pages/Cfo.jsx'))
+const Settings = lazy(() => import('./pages/Settings.jsx'))
+const AnomalyReview = lazy(() => import('./pages/AnomalyReview.jsx'))
+const PlanArea = lazy(() => import('./pages/Areas.jsx').then((m) => ({ default: m.PlanArea })))
+const MoneyArea = lazy(() => import('./pages/Areas.jsx').then((m) => ({ default: m.MoneyArea })))
+const FutureArea = lazy(() => import('./pages/Areas.jsx').then((m) => ({ default: m.FutureArea })))
+const ModelsArea = lazy(() => import('./pages/Areas.jsx').then((m) => ({ default: m.ModelsArea })))
+const DataArea = lazy(() => import('./pages/Areas.jsx').then((m) => ({ default: m.DataArea })))
+
+// Old routes → new area + tab (spec §4.1 redirect table). Any query on the old URL is kept (e.g. /review?import=12).
+const REDIRECTS = {
+  '/identity': '/money?tab=overview', '/insights': '/money?tab=spending', '/budget': '/money?tab=spending&view=budget',
+  '/credit': '/models?tab=credit-risk', '/forecast': '/future?tab=cash-flow', '/fire': '/future?tab=retirement', '/decision': '/future?tab=what-if',
+  '/cfo': '/ask', '/recommendations': '/plan?tab=actions', '/statements': '/data?tab=import', '/review': '/data?tab=review',
+  '/records': '/data?tab=records', '/reports': '/data?tab=reports', '/accounts': '/money?tab=accounts', '/investments': '/money?tab=investments',
+  '/transactions': '/money?tab=transactions', '/scanner': '/models?tab=unusual', '/peers': '/models?tab=peers',
+}
+function Redirect({ to }) {
+  const { search } = useLocation()
+  const extra = search.replace(/^\?/, '')
+  return <Navigate replace to={extra ? `${to}${to.includes('?') ? '&' : '?'}${extra}` : to} />
+}
+// Old "/data" (Profile & Data) with no tab is the new Data area's default tab, so it needs no redirect.
 
 export default function App() {
   const { account } = useAuth()
@@ -41,32 +45,21 @@ export default function App() {
         : !analysis || loading && !analysis ? <Loading full label="Running models and calculations…" />
           : (
             <ErrorBoundary>
-            <Routes>
-              <Route path="/" element={<Navigate to="/plan" replace />} />
-              <Route path="/plan" element={<Plan />} />
-              <Route path="/identity" element={<Identity />} />
-              <Route path="/records" element={<Records />} />
-              <Route path="/accounts" element={<Accounts />} />
-              <Route path="/investments" element={<Investments />} />
-              <Route path="/statements" element={<Statements />} />
-              <Route path="/insights" element={<Insights />} />
-              <Route path="/review" element={<Review />} />
-              <Route path="/transactions" element={<Transactions />} />
-              <Route path="/forecast" element={<Forecast />} />
-              <Route path="/credit" element={<Credit />} />
-              <Route path="/budget" element={<Budget />} />
-              <Route path="/fire" element={<Fire />} />
-              <Route path="/decision" element={<Decision />} />
-              <Route path="/cfo" element={<Cfo />} />
-              <Route path="/recommendations" element={<Recommendations />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/models" element={<ModelLab />} />
-              <Route path="/models/review" element={<AnomalyReview />} />
-              <Route path="/scanner" element={<Scanner />} />
-              <Route path="/peers" element={<Peers />} />
-              <Route path="/data" element={<DataManagement />} />
-              <Route path="*" element={<Navigate to="/plan" replace />} />
-            </Routes>
+              <Suspense fallback={<Loading />}>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/plan" element={<PlanArea />} />
+                  <Route path="/money" element={<MoneyArea />} />
+                  <Route path="/future" element={<FutureArea />} />
+                  <Route path="/models" element={<ModelsArea />} />
+                  <Route path="/models/review" element={<AnomalyReview />} />
+                  <Route path="/ask" element={<Ask />} />
+                  <Route path="/data" element={<DataArea />} />
+                  <Route path="/settings" element={<Settings />} />
+                  {Object.entries(REDIRECTS).map(([from, to]) => <Route key={from} path={from} element={<Redirect to={to} />} />)}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Suspense>
             </ErrorBoundary>
           )}
     </Layout>

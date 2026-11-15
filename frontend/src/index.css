@@ -1,36 +1,105 @@
 @import "tailwindcss";
 
+/* Finora Daylight (docs/PHASE_8_THEME.md). Every text/control pair is WCAG AA-checked there.
+   Legacy names (surface, raised, info) are kept so existing pages render on the new palette during the migration. */
 @theme {
-  --color-bg: #070b14;
-  --color-surface: #0e1524;
-  --color-raised: #141d30;
-  --color-line: #1f2a40;
-  --color-ink: #e6edf7;
-  --color-muted: #8695ad;
-  --color-faint: #5b6a84;
-  --color-accent: #2dd4bf;
-  --color-accent-dim: #134e4a;
-  --color-good: #34d399;
-  --color-warn: #fbbf24;
-  --color-bad: #f87171;
-  --color-info: #60a5fa;
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-bg: #ffffff;
+  --color-canvas: #f7f8fa;
+  --color-subtle: #f1f3f6;
+  --color-surface: #ffffff;
+  --color-raised: #f1f3f6;
+  --color-line: #e4e7ec;
+  --color-line-strong: #c9cfd8;
+  --color-control: #868e9e;
+  --color-ink: #1d2433;
+  --color-ink-2: #3d4656;
+  --color-muted: #5b6475;
+  --color-faint: #656d7f;
+  --color-accent: #3157c8;
+  --color-accent-hover: #2745a3;
+  --color-accent-soft: #eef2fc;
+  --color-accent-dim: #eef2fc;
+  --color-good: #13794a;
+  --color-good-soft: #ecf8f1;
+  --color-warn: #a15c07;
+  --color-warn-soft: #fef6e7;
+  --color-bad: #c4320a;
+  --color-bad-soft: #fef1ec;
+  --color-info: #226aa8;
+  --color-chart-1: #3157c8;
+  --color-chart-2: #0e8074;
+  --color-chart-3: #6e52d9;
+  --color-chart-4: #b8640a;
+  --color-chart-5: #c0396b;
+  --color-chart-other: #667085;
+  --color-chart-baseline: #8a92a2;
+
+  --font-sans: "Inter", -apple-system, "SF Pro Text", "Segoe UI", Roboto, ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --text-display: 2rem;      --text-display--line-height: 2.5rem;
+  --text-title: 1.5rem;      --text-title--line-height: 2rem;
+  --text-heading: 1.125rem;  --text-heading--line-height: 1.625rem;
+  --text-body: 0.9375rem;    --text-body--line-height: 1.5rem;
+  --text-small: 0.8125rem;   --text-small--line-height: 1.25rem;
+  --text-micro: 0.75rem;     --text-micro--line-height: 1rem;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  --shadow-xs: 0 1px 2px rgba(16, 24, 40, .05);
+  --shadow-sm: 0 1px 3px rgba(16, 24, 40, .08), 0 1px 2px rgba(16, 24, 40, .04);
+  --shadow-overlay: 0 12px 32px rgba(16, 24, 40, .12), 0 4px 8px rgba(16, 24, 40, .04);
+
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
 }
 
+html { color-scheme: light; -webkit-tap-highlight-color: transparent; }
 html, body, #root { height: 100%; }
-body { background: var(--color-bg); color: var(--color-ink); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-sans); font-size: 15px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; touch-action: manipulation; }
+@media (pointer: fine) { html { overscroll-behavior: none; } }
+h1, h2, h3 { text-wrap: balance; }
+p { text-wrap: pretty; }
 .num { font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
-::selection { background: #2dd4bf44; }
+::selection { background: #3157c833; }
+
+/* Visible focus for keyboard users only (guidelines §6). */
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: 6px; }
+
+.skip-link { position: absolute; left: 12px; top: -48px; z-index: 100; padding: 8px 14px; border-radius: 8px;
+  background: var(--color-ink); color: #fff; font-size: 14px; transition: top .15s var(--ease-out); }
+.skip-link:focus { top: 12px; }
+
 *::-webkit-scrollbar { width: 10px; height: 10px; }
-*::-webkit-scrollbar-thumb { background: #1f2a40; border-radius: 8px; border: 2px solid #070b14; }
-*::-webkit-scrollbar-thumb:hover { background: #2b3a57; }
-input[type=range] { accent-color: #2dd4bf; }
-input, select, textarea { color-scheme: dark; }
-.recharts-default-tooltip { background: #0e1524 !important; border: 1px solid #1f2a40 !important; border-radius: 10px; }
-.recharts-cartesian-grid line { stroke: #1a2438; }
-.recharts-text { fill: #8695ad; font-size: 11px; }
-@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-.rise { animation: rise .28s ease-out both; }
-@media (prefers-reduced-motion: reduce) { .rise { animation: none; } }
-@media print { aside, .no-print { display: none !important; } body { background: #fff; color: #000; } }
+*::-webkit-scrollbar-thumb { background: #d0d5dd; border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+*::-webkit-scrollbar-thumb:hover { background: #b0b7c3; background-clip: padding-box; border: 2px solid transparent; }
+input[type=range] { accent-color: var(--color-accent); }
+input, select, textarea { color-scheme: light; }
+select { background-color: #fff; color: var(--color-ink); }
+
+/* Charts (recharts) on the light theme */
+.recharts-default-tooltip { background: #fff !important; border: 1px solid var(--color-line) !important; border-radius: 10px;
+  box-shadow: var(--shadow-sm); }
+.recharts-cartesian-grid line { stroke: var(--color-line); }
+.recharts-text { fill: var(--color-faint); font-size: 12px; }
+.recharts-legend-item-text { color: var(--color-muted) !important; font-size: 12px; }
+
+@keyframes rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise .2s var(--ease-out) both; }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slide-in { from { transform: translateX(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+.fade-in { animation: fade-in .15s var(--ease-out) both; }
+.slide-in { animation: slide-in .2s var(--ease-out) both; }
+@media (prefers-reduced-motion: reduce) {
+  .rise, .fade-in, .slide-in { animation: none; }
+  *, *::before, *::after { transition-duration: 0s !important; scroll-behavior: auto !important; }
+}
+
+@media print {
+  aside, .no-print { display: none !important; }
+  body { background: #fff; color: #000; }
+}
