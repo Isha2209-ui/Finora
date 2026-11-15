@@ -13,7 +13,7 @@ The roadmap is the original 11-phase plan agreed on 14 Nov 2026. Phases are buil
 | 7 | Local AI CFO with Qwen | Merged (owner-authorised, 2026-11-15); complete with documented limitations | [PHASE_7_VERIFICATION.md](PHASE_7_VERIFICATION.md) |
 | 8 | Product shell and UI redesign (Apple-inspired refinement + Stripe-inspired usability) | Merged locally (owner-authorised, 2026-11-15): commit `b73e9e4` on `phase-8-ui-redesign` (kept), merge `a0fae1d` on `master`. Re-verified on `master`: backend 487, browser 5/60/43/55/12, build OK | [PHASE_8_VERIFICATION.md](PHASE_8_VERIFICATION.md) |
 | 9 | Verification and evidence | Complete (2026-11-15); changes uncommitted on `master`, awaiting owner review. Backend 523/523; browser suites 5/5, 60/60, 43/43, 55/55, 12/12, walkthrough 25/25, debt edge 4/4; live AI CFO 16/16; fresh-copy setup passes. 9 defects found and fixed, each with a regression test | [PHASE_9_VERIFICATION.md](PHASE_9_VERIFICATION.md), [SETUP.md](SETUP.md), [ML_PROVENANCE.md](ML_PROVENANCE.md), [DEMO_SCRIPT.md](DEMO_SCRIPT.md), [VIVA_QA.md](VIVA_QA.md), [SCREENSHOTS.md](SCREENSHOTS.md) |
-| 10 | Verification on the owner's MacBook Air M2 | Not started (waits for owner instruction) | - |
+| 10 | Verification on the owner's MacBook Air M2 | Complete (2026-11-15) on the owner's MacBook Air M2 (8 GB): `./run.sh` up in 3–4 s; 5/5 models loaded and checksum-verified; qwen2.5:3b local AI CFO 16/16 live (median 4.6 s); browser walkthrough 25/25; persistence across restart confirmed. Risk: memory pressure from other apps (close them before presenting) | [PHASE_10_MAC_PROOF.md](PHASE_10_MAC_PROOF.md) |
 | 11 | Public GitHub release and local installation (no cloud hosting) | Not started (waits for owner instruction) | - |
 
 ## Carried-forward limitations
