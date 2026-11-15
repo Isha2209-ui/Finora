@@ -1,7 +1,10 @@
 """FIRE planner, Decision Simulator, tax, debt payoff and the AI CFO."""
 from __future__ import annotations
 
+import json
+
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
@@ -86,18 +89,67 @@ def _mine(profile_id: int, account_id: int):
     return select(M.ChatMessage).where(M.ChatMessage.user_id == profile_id, M.ChatMessage.app_user_id == account_id)
 
 
+def _conversation(db: Session, profile_id: int, account_id: int) -> tuple[list[dict], dict]:
+    """This account's own conversation on this profile: the last few messages (for wording) and the structured state
+    (topic, filters, periods discussed, factual log of earlier turns) saved with the latest assistant message."""
+    rows = db.scalars(_mine(profile_id, account_id).order_by(M.ChatMessage.id.desc()).limit(agent.HISTORY_MESSAGES)).all()[::-1]
+    hist = [{"role": m.role, "content": m.content} for m in rows]
+    last = next((m for m in reversed(rows) if m.role == "assistant" and isinstance(m.meta, dict)), None)
+    return hist, (last.meta.get("state") or {}) if last else {}
+
+
+def _meta(res: dict) -> dict:
+    tr = res.get("trace") or {}
+    return {"engine": res.get("engine"), "tools_used": res.get("tools_used", []), "tool_calls": res.get("tool_calls", []),
+            "verified": res.get("verified"), "verified_by": res.get("verified_by"), "mode": res.get("mode"), "notice": res.get("notice"),
+            "interpretation": res.get("interpretation"), "limitations": res.get("limitations"), "state": res.get("state"),
+            "seconds": round(tr.get("latency_ms", 0) / 1000, 1) or None,
+            "timings": {k: tr.get(k) for k in ("plan_ms", "tools_ms", "write_ms", "rewrite_ms") if tr.get(k) is not None}}
+
+
+def _save(db: Session, profile_id: int, account_id: int, question: str, res: dict) -> None:
+    db.add(M.ChatMessage(user_id=profile_id, app_user_id=account_id, role="user", content=question))
+    db.add(M.ChatMessage(user_id=profile_id, app_user_id=account_id, role="assistant", content=res["answer"], meta=_meta(res)))
+    db.commit()
+
+
 @router.post("/profiles/{internal_id}/chat", summary="Ask the AI CFO a question")
 def chat(body: S.ChatIn, ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db)):
     user, me = ctx.profile, ctx.account.id
     rate_limit(f"chat:{me}", CHAT_MAX_PER_MINUTE, 60, "You are asking questions very quickly.")
-    hist = [{"role": m.role, "content": m.content} for m in db.scalars(
-        _mine(user.id, me).order_by(M.ChatMessage.id.desc()).limit(6)).all()][::-1]
-    res = agent.answer(body.message, common.cfo_context(db, user), hist, use_llm=body.use_llm)
-    db.add(M.ChatMessage(user_id=user.id, app_user_id=me, role="user", content=body.message))
-    db.add(M.ChatMessage(user_id=user.id, app_user_id=me, role="assistant", content=res["answer"],
-                         meta={"engine": res["engine"], "tools_used": res.get("tools_used", [])}))
-    db.commit()
+    hist, state = _conversation(db, user.id, me)          # financial data itself is fetched FRESH by the tools
+    res = agent.answer(body.message, common.cfo_context(db, user), hist, use_llm=body.use_llm, state=state)
+    _save(db, user.id, me, body.message, res)
     return res
+
+
+@router.post("/profiles/{internal_id}/chat/stream", summary="Ask the AI CFO, streamed as NDJSON events")
+def chat_stream(body: S.ChatIn, ctx: ProfileCtx = Depends(profile_reader), db: Session = Depends(get_db)):
+    """Events: status (what is happening), plan (how the question was understood), tool (data fetched), draft (the answer as it
+    is written: NOT yet checked), final (the checked answer, saved to history). Only `final` is an answer; if the client
+    disconnects before it, nothing is saved."""
+    from ..database import SessionLocal
+    user, me = ctx.profile, ctx.account.id
+    rate_limit(f"chat:{me}", CHAT_MAX_PER_MINUTE, 60, "You are asking questions very quickly.")
+    hist, state = _conversation(db, user.id, me)
+    cfo_ctx = common.cfo_context(db, user)
+    profile_id, question = user.id, body.message
+
+    def events():
+        try:
+            for ev in agent.answer_events(question, cfo_ctx, hist, state, body.use_llm):
+                if ev.get("type") == "final":
+                    res = {k: v for k, v in ev.items() if k != "type"}
+                    with SessionLocal() as s2:
+                        _save(s2, profile_id, me, question, res)
+                    out = {k: v for k, v in ev.items() if k not in ("facts", "state")}
+                    yield json.dumps(out, ensure_ascii=False, default=str) + "\n"
+                else:
+                    yield json.dumps(ev, ensure_ascii=False, default=str) + "\n"
+        except Exception as e:  # never leave the client waiting on a broken stream
+            yield json.dumps({"type": "error", "message": f"The assistant failed ({type(e).__name__}). Nothing was saved."}) + "\n"
+
+    return StreamingResponse(events(), media_type="application/x-ndjson", headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
 
 
 @router.get("/profiles/{internal_id}/chat", summary="Chat history")

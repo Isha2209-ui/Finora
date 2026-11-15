@@ -24,7 +24,12 @@ def invalidate(uid: int | None = None):
 
 
 def cfo_context(db: Session, user: M.User) -> dict:
-    return {"analysis": get_analysis(db, user), "identity": load_identity(db, user.id)}
+    """Everything the AI CFO's tools may read, built FRESH for each message from the signed-in account's selected profile
+    (the route has already checked access). Tools only ever see this dict, never the database."""
+    from .plan import _accepted, _goals
+    acc, dismissed = _accepted(db, user.id)
+    return {"analysis": get_analysis(db, user), "identity": load_identity(db, user.id), "goals": _goals(db, user.id),
+            "accepted": acc, "dismissed": dismissed}
 
 
 def public_profile(u: M.User) -> dict:

@@ -61,6 +61,27 @@ export const api = {
   payoff: (id, extra) => request(`/profiles/${id}/payoff`, { method: 'POST', body: { extra_monthly: extra } }),
   tax: (body) => request('/tax/compare', { method: 'POST', body }),
   chat: (id, message) => request(`/profiles/${id}/chat`, { method: 'POST', body: { message } }),
+  // Streams NDJSON events (status, plan, tool, draft, final, error) to onEvent. Only `final` is a checked answer.
+  chatStream: async (id, message, onEvent, signal) => {
+    const res = await fetch(`${BASE}/api/profiles/${id}/chat/stream`, {
+      method: 'POST', credentials: 'include', signal,
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': decodeURIComponent(csrfToken()) }, body: JSON.stringify({ message }),
+    })
+    if (!res.ok) {
+      let msg = `Request failed (${res.status})`
+      try { const j = await res.json(); if (typeof j.detail === 'string') msg = j.detail } catch { /* keep default */ }
+      if (res.status === 401) onUnauthorized()
+      throw new Error(msg)
+    }
+    const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = ''
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buf += dec.decode(value, { stream: true })
+      let i
+      while ((i = buf.indexOf('\n')) >= 0) { const line = buf.slice(0, i); buf = buf.slice(i + 1); if (line.trim()) onEvent(JSON.parse(line)) }
+    }
+  },
   chatHistory: (id) => request(`/profiles/${id}/chat`),
   clearChat: (id) => request(`/profiles/${id}/chat`, { method: 'DELETE' }),
   briefing: (id) => request(`/profiles/${id}/briefing`),

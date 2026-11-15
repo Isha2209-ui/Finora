@@ -30,6 +30,9 @@ os.environ.setdefault("REGISTER_IP_MAX", "10000")
 os.environ.setdefault("LOGIN_IP_MAX_ATTEMPTS", "10000")
 os.environ.setdefault("CHAT_MAX_PER_MINUTE", "10000")
 os.environ.setdefault("UPLOAD_MAX_PER_HOUR", "10000")
+# Hermetic suite: no real language-model calls (the agent tests script the model; the live model is measured by
+# `python -m app.cfo.evaluate`, which sets LLM_PROVIDER=ollama before importing this file)
+os.environ.setdefault("LLM_PROVIDER", "none")
 
 # The app is imported only AFTER every environment setting above (paths and limits) is in place.
 from app import migrate as _migrate  # noqa: E402  (after the environment points at the copy)

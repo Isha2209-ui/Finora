@@ -20,8 +20,8 @@ PAN_PEPPER = os.getenv("PAN_PEPPER", "finora-local-pepper-change-me")
 # AI CFO / LLM
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama")  # ollama | none
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3.5:4b")
-OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY", "")  # only for Ollama cloud models (e.g. nemotron-3-super:cloud)
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
+OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY", "")  # unused since Phase 7: remote/cloud models are refused (app/cfo/llm.py)
 LLM_TIMEOUT = float(os.getenv("LLM_TIMEOUT", "90"))
 
 # "Today" for the demo data. Fixed so that results are reproducible.

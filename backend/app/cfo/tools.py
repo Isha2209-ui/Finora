@@ -93,7 +93,10 @@ def debts_and_payoff(ctx, extra_monthly: float = 0.0, **_):
             "avalanche_months": plan["avalanche"]["months_to_debt_free"], "avalanche_interest": plan["avalanche"]["total_interest"],
             "snowball_months": plan["snowball"]["months_to_debt_free"], "snowball_interest": plan["snowball"]["total_interest"],
             "interest_saved_by_avalanche": plan["interest_saved_by_avalanche"],
-            "first_to_clear": plan["avalanche"]["payoff_order"][0]["debt"] if plan["avalanche"]["payoff_order"] else None}
+            "first_to_clear": plan["avalanche"]["payoff_order"][0]["debt"] if plan["avalanche"]["payoff_order"] else None,
+            "loans": [{"loan": l.get("loan_type"), "lender": l.get("lender"), "original_principal": l.get("principal"),
+                       "outstanding_balance": l.get("balance"), "emi": l.get("emi"), "remaining_months": l.get("remaining_months")}
+                      for l in ctx["identity"].loans]}
 
 
 def runway(ctx, **_):
@@ -219,13 +222,14 @@ REGISTRY = {
     "credit_cards": (credit_cards, "Card balances, utilisation, interest and default risk.", {}),
     "debts_and_payoff": (debts_and_payoff, "All debts and the fastest/cheapest payoff plan.",
                          {"extra_monthly": ("number", "Extra rupees per month to put toward debt")}),
-    "runway": (runway, "How long savings last if income stops; emergency fund status.", {}),
+    "runway": (runway, "ALWAYS use for 'how long would my savings last', 'if I lost my job', emergency fund: months of runway.", {}),
     "fire_forecast": (fire_forecast, "Financial independence / retirement projection, optionally with what-if changes.",
                       {"monthly_investment": ("number", "What-if monthly investment in rupees"),
                        "retirement_age": ("integer", "What-if target retirement age"),
                        "annual_expenses": ("number", "What-if annual expenses in retirement"),
                        "nominal_return_pct": ("number", "What-if expected annual return in percent")}),
-    "affordability": (affordability, "Whether a purchase is affordable, with EMI and impact on finances.",
+    "affordability": (affordability, "ALWAYS use for 'can I afford <item>' (car, bike, home, phone, holiday/trip, wedding, education): "
+                                     "EMI, impact on surplus, savings and investments, verdict and cheaper alternatives.",
                       {"price": ("number", "Price in rupees"), "down_payment": ("number", "Down payment in rupees"),
                        "interest_rate": ("number", "Loan interest rate percent"), "tenure_months": ("integer", "Loan tenure in months"),
                        "item_type": ("string", "car, bike, home, phone, gadget, trip, education, wedding or other"),
@@ -233,7 +237,7 @@ REGISTRY = {
     "emi_calculator": (emi_calculator, "EMI for any loan amount, rate and tenure.",
                        {"principal": ("number", "Loan amount in rupees"), "interest_rate": ("number", "Annual rate percent"),
                         "tenure_months": ("integer", "Tenure in months")}),
-    "tax_comparison": (tax_comparison, "Old vs new income-tax regime for FY 2026-27.",
+    "tax_comparison": (tax_comparison, "ALWAYS use for income tax and 'which tax regime' (old vs new regime, FY 2026-27).",
                        {"gross_income": ("number", "Annual gross income in rupees (optional)")}),
     "spending_forecast": (spending_forecast, "ML forecast of next month's spending and cash position.", {}),
     "unusual_transactions": (unusual_transactions, "Transactions flagged as unusual by the anomaly model.", {}),
@@ -247,9 +251,11 @@ REGISTRY = {
 def ollama_schema() -> list[dict]:
     out = []
     for name, (_, desc, params) in REGISTRY.items():
+        if name in HIDDEN_FROM_LLM:
+            continue
         out.append({"type": "function", "function": {"name": name, "description": desc, "parameters": {
             "type": "object", "properties": {k: {"type": t, "description": d} for k, (t, d) in params.items()},
-            "required": ["price"] if name == "affordability" else ["principal"] if name == "emi_calculator" else []}}})
+            "required": REQUIRED.get(name, [])}}})
     return out
 
 
@@ -268,3 +274,399 @@ def call(name: str, ctx: dict, args: dict | None = None) -> dict:
         return fn(ctx, **clean)
     except Exception as e:
         return {"error": f"{type(e).__name__}: {e}"}
+
+
+# ================================================================ Phase 7 tools (read-only, bound to the signed-in profile)
+# Every tool receives `ctx` built by the server for the AUTHENTICATED account's selected profile. No tool accepts a user,
+# profile, file, SQL or URL argument, so the model cannot reach another person's data or anything outside Finora's services.
+import re
+from datetime import date as _date
+
+import pandas as _pd
+
+from ..services.cleaning import ALL_CATEGORIES as _ALL_CATS, NON_EXPENSE as _NON_EXPENSE, clean_transactions as _clean, \
+    standardise_category as _std_cat
+
+PERIODS = ["this_month", "last_month", "last_3_months", "last_6_months", "last_12_months", "all"]
+
+
+def _today() -> _date:
+    return _date.today()
+
+
+def _months_back(ym: str, n: int) -> str:
+    y, m = int(ym[:4]), int(ym[5:7])
+    m -= n
+    while m <= 0:
+        m += 12
+        y -= 1
+    return f"{y:04d}-{m:02d}"
+
+
+def _period_months(period: str | None, available: list[str]) -> tuple[list[str], str]:
+    """Calendar months for a period, relative to TODAY (not to the data). Returns (months, description)."""
+    cur = _today().strftime("%Y-%m")
+    p = (period or "last_month").strip().lower().replace(" ", "_")
+    if len(p) == 7 and p[4] == "-" and p[:4].isdigit() and p[5:].isdigit():
+        return [p], p
+    if len(p) == 4 and p.isdigit() and 1900 < int(p) <= int(cur[:4]):          # a calendar year
+        return [f"{p}-{m:02d}" for m in range(1, 13) if f"{p}-{m:02d}" <= cur], f"calendar year {p}"
+    if p == "this_month":
+        return [cur], f"{cur} (month to date)"
+    if p == "last_month":
+        m = _months_back(cur, 1)
+        return [m], m
+    n = {"last_3_months": 3, "last_6_months": 6, "last_12_months": 12}.get(p)
+    if n:
+        ms = [_months_back(cur, i) for i in range(n, 0, -1)]
+        return ms, f"{ms[0]} to {ms[-1]}"
+    if p in ("all", "all_time", "everything", "history"):
+        return sorted(available), "all recorded history"
+    raise ValueError(f"unknown period '{str(period)[:40]}': use {', '.join(PERIODS)}, YYYY-MM or YYYY")
+
+
+def _tx(ctx) -> _pd.DataFrame:
+    tx = ctx["identity"].transactions
+    if tx is None or len(tx) == 0:
+        return _pd.DataFrame(columns=["date", "month", "amount", "type", "category", "spend", "merchant", "raw_description"])
+    t, _ = _clean(tx)
+    return t
+
+
+def spending(ctx, period: str | None = None, category: str | None = None, merchant: str | None = None, **_):
+    t = _tx(ctx)
+    avail = sorted(t["month"].unique().tolist()) if len(t) else []
+    try:
+        months, desc = _period_months(period, avail)
+    except ValueError as e:
+        return {"error": str(e), "periods": PERIODS}
+    out = {"period": desc, "months": months, "data_covers": f"{avail[0]} to {avail[-1]}" if avail else "no transactions recorded"}
+    if not len(t):
+        return {**out, "available": False, "note": "No transactions are recorded for this profile."}
+    s = t[t["month"].isin(months) & (t["spend"] != 0)]
+    if category and str(category).strip().lower() in ("all", "any", "total", "everything", "none", "*"):
+        category = None
+    if category:
+        cat = _std_cat(category)
+        if cat in _NON_EXPENSE:                  # investments, own transfers, card bills: money moved, not spending
+            mv = t[t["month"].isin(months) & (t["category"] == cat) & (t["type"] == "debit")]
+            return {**out, "category": cat, "money_moved_not_spending": round(float(mv["amount"].sum()), 2),
+                    "transactions": int(len(mv)), "note": f"{cat} is money moved, not spending, so it is excluded from spending totals."}
+        if cat in _ALL_CATS or cat == "Uncategorised":
+            s = s[s["category"] == cat]
+            out["category"] = cat
+        elif not merchant:                       # not a category: search merchants and descriptions for the words instead
+            merchant = str(category)
+            out["note_category"] = f"'{category}' is not a Finora category, so merchants and descriptions were searched for it. " \
+                                   f"Categories: {', '.join(_ALL_CATS)}"
+    if merchant:
+        words = [w for w in re.split(r"[^A-Z0-9]+", str(merchant).upper()) if len(w) >= 3 and w not in ("SHOP", "SHOPS", "STORE", "STORES")]
+        text_ = s["merchant"].fillna("").str.upper() + " " + s["raw_description"].fillna("").str.upper()
+        hit = _pd.Series(False, index=s.index)
+        for w in words or [str(merchant).upper()]:
+            hit |= text_.str.contains(w.rstrip("S"), regex=False)
+        s = s[hit]
+        out["merchant"] = merchant
+    out.update({"total_spent": round(float(s["spend"].sum()), 2), "transactions": int((s["type"] == "debit").sum()),
+                "refunds_netted": round(float(-s.loc[s["spend"] < 0, "spend"].sum()), 2)})
+    if not category:
+        by = s.groupby("category")["spend"].sum().sort_values(ascending=False)
+        out["by_category"] = [{"category": k, "amount": round(float(v), 2)} for k, v in by.head(10).items()]
+    names = s["merchant"].fillna(s["raw_description"])
+    top = s.assign(n=names).groupby("n")["spend"].sum().sort_values(ascending=False).head(5)
+    out["top_merchants"] = [{"merchant": k, "amount": round(float(v), 2)} for k, v in top.items()]
+    if len(months) == 1:
+        out["month_name"] = _date(int(months[0][:4]), int(months[0][5:]), 1).strftime("%B %Y")
+        per = t[t["month"] == months[0]]
+        out["months_without_data"] = [] if len(per) else months
+    else:
+        out["months_without_data"] = [m for m in months if m not in avail]
+    out["note"] = "Spending excludes money moved (card bill payments, own transfers, investments); refunds reduce spending."
+    return out
+
+
+def income(ctx, period: str | None = None, **_):
+    inc = ctx["identity"].income
+    if inc is None or len(inc) == 0:
+        return {"available": False, "note": "No income is recorded for this profile."}
+    i = inc.assign(month=_pd.to_datetime(inc["date"]).dt.strftime("%Y-%m"))
+    avail = sorted(i["month"].unique().tolist())
+    try:
+        months, desc = _period_months(period, avail)
+    except ValueError as e:
+        return {"error": str(e), "periods": PERIODS}
+    s = i[i["month"].isin(months)]
+    by = s.groupby("source")["amount"].sum().sort_values(ascending=False)
+    return {"period": desc, "total_income": round(float(s["amount"].sum()), 2), "by_source": [{"source": k, "amount": round(float(v), 2)} for k, v in by.items()],
+            "data_covers": f"{avail[0]} to {avail[-1]}", "months_without_data": [m for m in months if m not in avail]}
+
+
+def compare_months(ctx, month: str | None = None, previous: str | None = None, **_):
+    t = _tx(ctx)
+    inc = ctx["identity"].income
+    cur = month or _months_back(_today().strftime("%Y-%m"), 1)
+    prev = previous or _months_back(cur, 1)
+
+    def one(m):
+        s = t[(t["month"] == m) & (t["spend"] != 0)] if len(t) else t
+        inc_m = 0.0
+        if inc is not None and len(inc):
+            inc_m = float(inc[_pd.to_datetime(inc["date"]).dt.strftime("%Y-%m") == m]["amount"].sum())
+        by = s.groupby("category")["spend"].sum() if len(s) else _pd.Series(dtype=float)
+        return {"month": m, "spent": round(float(s["spend"].sum()) if len(s) else 0.0, 2), "income": round(inc_m, 2),
+                "saved": round(inc_m - (float(s["spend"].sum()) if len(s) else 0.0), 2), "by_category": {k: round(float(v), 2) for k, v in by.items()}}
+    a, b = one(cur), one(prev)
+    avail = sorted(t["month"].unique().tolist()) if len(t) else []
+    missing = [m for m in (cur, prev) if m not in avail]
+    if missing:
+        return {"error": f"no transactions recorded for {', '.join(missing)}", "data_covers": f"{avail[0]} to {avail[-1]}" if avail else "none",
+                "hint": "compare months inside data_covers, e.g. the latest two"}
+    cats = sorted(set(a["by_category"]) | set(b["by_category"]))
+    changes = sorted(({"category": c, "change": round(a["by_category"].get(c, 0) - b["by_category"].get(c, 0), 2)} for c in cats),
+                     key=lambda x: -abs(x["change"]))
+    return {"month": {k: a[k] for k in ("month", "spent", "income", "saved")}, "previous": {k: b[k] for k in ("month", "spent", "income", "saved")},
+            "spending_change": round(a["spent"] - b["spent"], 2), "biggest_category_changes": changes[:6],
+            "rising": [x for x in changes if x["change"] > 0][:5], "falling": [x for x in changes if x["change"] < 0][:5],
+            "data_covers": f"{avail[0]} to {avail[-1]}"}
+
+
+def accounts_and_balances(ctx, **_):
+    ident = ctx["identity"]
+    return {"bank_accounts": [{"bank": a.get("bank_name"), "account": a.get("account_masked"), "type": a.get("account_type"),
+                               "balance": a.get("balance")} for a in ident.accounts],
+            "total_bank_balance": round(sum((a.get("balance") or 0) for a in ident.accounts), 2),
+            "credit_cards": [{"card": f"{c.get('issuer')} {c.get('card_name')}", "last4": c.get("last4"), "outstanding": c.get("outstanding"),
+                              "limit": c.get("credit_limit")} for c in ident.cards],
+            "loans": [{"loan": l.get("loan_type"), "lender": l.get("lender"), "original_principal": l.get("principal"),
+                       "outstanding_balance": l.get("balance"), "emi": l.get("emi"), "rate_pct": l.get("interest_rate"),
+                       "remaining_months": l.get("remaining_months")} for l in ident.loans]}
+
+
+def credit_risk(ctx, **_):
+    r = ctx["analysis"]["ml"].get("credit_risk", {})
+    if not r.get("cards"):
+        return {"available": False, "note": r.get("note") or "No card history to score."}
+    return {"overall_default_probability_pct": r["overall_default_probability_pct"], "overall_risk_band": r["overall_risk_band"],
+            "driven_by_card": r.get("driven_by_card"), "population_base_rate_pct": r.get("population_base_rate_pct"),
+            "cards": [{"card": c["card"], "default_probability_pct": c["default_probability_pct"], "risk_band": c["risk_band"],
+                       "top_shap_factors": c["top_factors"]} for c in r["cards"]],
+            "model": "XGBoost + SHAP, test ROC-AUC 0.783 (logistic regression 0.760)", "status": (r.get("model_info") or {}).get("status"),
+            "limitation": "Model-generated estimate from 30,000 Taiwanese card accounts (2005); not a credit-bureau score and not validated for Indian borrowers."}
+
+
+def anomaly_scan(ctx, **_):
+    a = ctx["analysis"]["ml"].get("anomaly", {})
+    if a.get("available") is False:
+        return {"available": False, "note": a.get("note")}
+    return {"transactions_scanned": a.get("transactions_scored", 0), "flagged_count": a.get("flagged_count", 0),
+            "flagged_amount_total": a.get("flagged_amount_total", 0),
+            "flagged": [_pick(f, ["date", "merchant", "category", "amount", "typical_amount", "times_typical", "severity", "anomaly_score", "reasons"])
+                        for f in a.get("flagged", [])[:8]],
+            "threshold": (a.get("score_distribution") or {}).get("threshold"),
+            "status": (a.get("model_info") or {}).get("status"),
+            "limitation": "Experimental Isolation Forest, NOT human-validated. A flag means unusual for this person compared with their own "
+                          "history; it is not fraud and nothing is confirmed."}
+
+
+def cash_flow_forecast(ctx, **_):
+    f = ctx["analysis"]["ml"].get("forecast", {})
+    if not f.get("available"):
+        return {"available": False, "note": f.get("note")}
+    info = f.get("model_info") or {}
+    ev = info.get("evaluation") or {}
+    return {**_pick(f, ["prediction_month", "predicted_total_expense", "range", "last_month_actual", "three_month_avg",
+                        "change_vs_last_month_pct", "expected_income", "projected_surplus", "projected_status",
+                        "projected_bank_balance_end_of_month"]),
+            "baseline_three_month_average": f.get("three_month_avg"), "status": info.get("status"),
+            "measured_error": ev,
+            "limitation": "Experimental XGBoost trained on ONE real UK person's account; on its test it was "
+                          + ("LESS" if ev.get("beats_baseline") is False else "MORE" if ev.get("beats_baseline") else "not shown to be more")
+                          + " accurate than a simple 3-month average"
+                          + (f" (mean error £{ev['xgboost_mae']:,.2f} vs £{ev['baseline_3m_average_mae']:,.2f}, in pounds, on that UK account)"
+                             if ev.get("xgboost_mae") is not None and ev.get("baseline_3m_average_mae") is not None else "")
+                          + ". Treat it as one estimate next to the baseline."}
+
+
+def peer_benchmark(ctx, **_):
+    p = ctx["analysis"]["ml"].get("peers", {})
+    if not p.get("available", True) or not p.get("peer_group"):
+        return {"available": False, "note": p.get("note")}
+    return {**_pick(p, ["peer_group", "peer_group_share_pct", "strengths", "weaknesses", "units"]),
+            "comparison": p.get("comparison", []),
+            "limitation": "US households (Federal Reserve SCF 2022), not Indian benchmarks; survey income is gross, Finora sees take-home pay."}
+
+
+def category_suggestions(ctx, **_):
+    tx = ctx["identity"].transactions
+    if tx is None or len(tx) == 0 or "category_source" not in tx:
+        return {"pending_suggestions": 0}
+    s = tx[(tx["category_source"] == "model") & (tx["needs_review"].fillna(False).astype(bool))]
+    return {"pending_suggestions": int(len(s)),
+            "examples": [{"description": r["raw_description"], "suggested": r["category"], "confidence": r.get("confidence")}
+                         for _, r in s.head(6).iterrows()],
+            "how_to_confirm": "Accept, reject or change each suggestion on the Transactions or Review page; the assistant cannot change categories.",
+            "limitation": "Suggestion-only categoriser trained on US card data; not validated on Indian narrations (about 44% agreement when confident)."}
+
+
+def finora_plan(ctx, **_):
+    from ..services import plan as PL
+    p = PL.build(ctx["analysis"], ctx.get("goals", []), ctx.get("accepted", []), ctx.get("dismissed", set()))
+    if not p.get("available"):
+        return {"available": False, "reason": p.get("reason")}
+    return {"diagnosis": [{k: d.get(k) for k in ("finding", "evidence", "why", "why_it_matters") if d.get(k) is not None}
+                          for d in p.get("diagnosis", [])[:6]],
+            "ranked_actions": [_pick(x, ["title", "kind_label", "params", "impact", "effect", "status"]) for x in p.get("actions", [])[:5]],
+            "accepted_assumptions": [_pick(x, ["title", "kind", "params"]) for x in ctx.get("accepted", [])],
+            "with_plan": p.get("with_plan"), "baseline": p.get("baseline"), "method": p.get("method", {}).get("ranking")}
+
+
+def plan_what_if(ctx, kind: str, amount: float | None = None, category: str | None = None, months_delay: int | None = None,
+                 goal_name: str | None = None, **_):
+    """The Finora Plan scenario engine (nothing is saved)."""
+    from ..services import plan as PL
+    if kind not in PL.KINDS:
+        return {"error": f"kind must be one of {list(PL.KINDS)}"}
+    params: dict = {}
+    if kind == "delayed_purchase":
+        g = next((g for g in ctx.get("goals", []) if not goal_name or g["name"].lower() == str(goal_name).lower()), None)
+        if g is None:
+            return {"error": "no matching goal", "goals": [x["name"] for x in ctx.get("goals", [])]}
+        params = {"goal_id": g["id"], "months_delay": int(months_delay or 6)}
+    else:
+        if not amount or amount <= 0 or amount > 10_000_000:
+            return {"error": "amount must be a positive monthly rupee amount up to 1 crore"}
+        params = {"amount": float(amount)}
+        if kind == "spending_cap" and category:
+            params["category"] = _std_cat(category)
+    b = PL.base_from(ctx["analysis"], ctx.get("goals", []))
+    base, scen = PL.evaluate(b, []), PL.evaluate(b, [{"kind": kind, "params": params}])
+    return {"kind": PL.KINDS[kind], "params": params, "baseline": PL._metrics(base), "scenario": PL._metrics(scen),
+            "effect": PL.compare(base, scen), "saved": False,
+            "note": "A what-if only: nothing is changed. Accepting it into the plan is done on the Finora Plan page."}
+
+
+def alerts(ctx, **_):
+    return {"alerts": ctx["analysis"].get("alerts", [])[:8]}
+
+
+REGISTRY.update({
+    "spending": (spending, "The user's actual spending from stored transactions for a period, optionally one category or merchant; "
+                           "totals, by category, top merchants.",
+                 {"period": ("string", "this_month, last_month, last_3_months, last_6_months, last_12_months, all, or a month YYYY-MM"),
+                  "category": ("string", "optional category, e.g. Dining (food), Groceries, Shopping, Travel, Fuel, Utilities"),
+                  "merchant": ("string", "optional merchant name, e.g. Swiggy")}),
+    "income": (income, "The user's recorded income for a period, by source.",
+               {"period": ("string", "this_month, last_month, last_3_months, last_6_months, last_12_months, all, or YYYY-MM")}),
+    "compare_months": (compare_months, "Compare spending, income and savings of two months, with the biggest category changes. "
+                                       "Defaults: last month vs the month before.",
+                       {"month": ("string", "YYYY-MM"), "previous": ("string", "YYYY-MM to compare against")}),
+    "accounts_and_balances": (accounts_and_balances, "Bank accounts and balances, credit cards with outstanding and limit, loans.", {}),
+    "credit_risk": (credit_risk, "ALWAYS use for 'credit risk', 'default risk', 'credit profile', 'why did the model give that': the credit-risk "
+                                 "model result per card with SHAP factors and limitations.", {}),
+    "anomaly_scan": (anomaly_scan, "ALWAYS use for unusual, suspicious, strange or fraud-like transactions: the Anomaly Detection Scanner's flags, "
+                                   "scores, reasons and experimental status.", {}),
+    "cash_flow_forecast": (cash_flow_forecast, "ALWAYS use for the forecast, next month's spending or money available next month, and how "
+                                               "reliable the forecast is: experimental XGBoost forecast, 3-month-average baseline, measured error.", {}),
+    "peer_benchmark": (peer_benchmark, "ALWAYS use for 'compare with people like me', peers, others, 'am I normal': the user's ratios vs US "
+                                       "household peer groups (SCF 2022), with limitations.", {}),
+    "category_suggestions": (category_suggestions, "Pending transaction-category suggestions from the categoriser awaiting the user's confirmation.", {}),
+    "finora_plan": (finora_plan, "The Finora Plan: diagnosis, ranked next actions and accepted plan assumptions.", {}),
+    "plan_what_if": (plan_what_if, "What-if with the Finora Plan scenario engine (nothing is saved): new SIP, extra debt repayment, "
+                                   "spending cap, emergency-fund contribution or delayed purchase. Returns baseline vs scenario.",
+                     {"kind": ("string", "sip, extra_debt_repayment, spending_cap, emergency_fund_contribution or delayed_purchase"),
+                      "amount": ("number", "monthly rupee amount"), "category": ("string", "for spending_cap"),
+                      "months_delay": ("integer", "for delayed_purchase"), "goal_name": ("string", "for delayed_purchase")}),
+    "alerts": (alerts, "Current alerts for the user's finances.", {}),
+})
+# superseded for the language model by richer versions above (the model sees one tool per job); kept for the calculator
+# fallback that answers when the local model is not running
+HIDDEN_FROM_LLM = {"spending_forecast", "unusual_transactions", "peer_comparison"}
+REQUIRED = {"affordability": ["price"], "emi_calculator": ["principal"], "plan_what_if": ["kind"]}
+
+
+# ================================================================ Phase 7 remediation tools
+TX_FIELDS = ["date", "merchant", "raw_description", "category", "amount", "type", "account_id", "card_id"]   # never internal/label columns
+
+
+def transactions(ctx, period: str | None = None, category: str | None = None, merchant: str | None = None,
+                 sort: str = "amount_desc", limit: int = 5, kind: str = "spending", **_):
+    """Individual transactions (not merchant totals), filtered and sorted. kind: spending (debits that are spending) | all."""
+    t = _tx(ctx)
+    avail = sorted(t["month"].unique().tolist()) if len(t) else []
+    try:
+        months, desc = _period_months(period, avail)
+    except ValueError as e:
+        return {"error": str(e), "periods": PERIODS}
+    out = {"period": desc, "months": months, "data_covers": f"{avail[0]} to {avail[-1]}" if avail else "no transactions recorded"}
+    if not len(t):
+        return {**out, "items": [], "count": 0}
+    s = t[t["month"].isin(months) & (t["type"] == "debit")]
+    if kind != "all":
+        s = s[~s["category"].isin(_NON_EXPENSE)]
+    if category and str(category).strip().lower() not in ("all", "any", "total", "everything", "none", "*"):
+        cat = _std_cat(category)
+        if cat in _ALL_CATS or cat == "Uncategorised":
+            s = s[s["category"] == cat]
+            out["category"] = cat
+        else:
+            merchant = merchant or str(category)
+            out["note_category"] = f"'{category}' is not a Finora category; merchants and descriptions were searched instead."
+    if merchant:
+        words = [w for w in re.split(r"[^A-Z0-9]+", str(merchant).upper()) if len(w) >= 3]
+        text_ = s["merchant"].fillna("").str.upper() + " " + s["raw_description"].fillna("").str.upper()
+        hit = _pd.Series(False, index=s.index)
+        for w in words or [str(merchant).upper()]:
+            hit |= text_.str.contains(w.rstrip("S"), regex=False)
+        s = s[hit]
+        out["merchant"] = merchant
+    limit = max(1, min(int(limit or 5), 20))
+    s = s.sort_values("amount", ascending=(sort == "amount_asc")) if sort in ("amount_desc", "amount_asc") else s.sort_values("date", ascending=False)
+    acc = {a["id"]: f"{a.get('bank_name')} {a.get('account_masked')}" for a in ctx["identity"].accounts}
+    cards = {c["id"]: f"{c.get('issuer')} {c.get('card_name')} ••{c.get('last4')}" for c in ctx["identity"].cards}
+    items = []
+    for _, r in s.head(limit).iterrows():
+        src = cards.get(r.get("card_id")) if _pd.notna(r.get("card_id")) else acc.get(r.get("account_id"))
+        items.append({"date": r["date"].date().isoformat(), "merchant": r.get("merchant") or r.get("raw_description"),
+                      "category": r["category"], "amount": round(float(r["amount"]), 2), "source": src})
+    out.update({"sort": sort, "limit": limit, "items": items, "count_matching": int(len(s)),
+                "total_matching": round(float(s["amount"].sum()), 2), "currency": "INR"})
+    return out
+
+
+def health_score(ctx, **_):
+    h = ctx["analysis"]["health_score"]
+    return {"score": h.get("score"), "band": h.get("band"), "pillars": h.get("pillars"), "not_assessed": h.get("not_assessed"),
+            "note": "Finora's overall measure is the Financial Health Score (0-100, six pillars). There is no separate "
+                    "'financial discipline score'; savings rate, missed SIPs and on-time card payments show discipline."}
+
+
+def model_info(ctx, model: str | None = None, **_):
+    """Model Lab facts (version, status, data, metrics, baseline, limitations) for one model or all. Read from the registry."""
+    from ..ml import registry
+    lab = registry.lab()
+    alias = {"credit": "credit_risk", "credit risk": "credit_risk", "categoriser": "categoriser", "categorisation": "categoriser",
+             "anomaly": "anomaly", "scanner": "anomaly", "forecast": "forecast", "peers": "peers", "peer": "peers"}
+    want = alias.get(str(model or "").strip().lower(), model)
+    out = []
+    for m in lab["models"]:
+        if want and m["name"] != want:
+            continue
+        p, met = m.get("provenance") or {}, m.get("metrics") or {}
+        out.append({"model": m["name"], "status": m["status_text"], "version": m.get("version"),
+                    "datasets": [d.get("name") for d in p.get("datasets", [])], "label": m.get("label"),
+                    "acceptance": [{"criterion": c["criterion"], "passed": c["passed"], "value": c["value"]}
+                                   for c in ((m.get("acceptance") or {}).get("checks") or [])],
+                    "limitations": p.get("limitations") or met.get("limitations"), "policy": m.get("deployment_policy")})
+    return {"models": out} if out else {"error": f"unknown model '{model}'", "models_available": [m["name"] for m in lab["models"]]}
+
+
+REGISTRY.update({
+    "transactions": (transactions, "Individual transactions (NOT merchant totals) for a period, optionally a category or merchant, "
+                                   "sorted by amount (largest first) or date: use for 'largest', 'biggest single', 'top N', 'list'.",
+                     {"period": ("string", "this_month, last_month, last_3_months, last_6_months, last_12_months, all, or YYYY-MM"),
+                      "category": ("string", "optional category"), "merchant": ("string", "optional merchant"),
+                      "sort": ("string", "amount_desc (default), amount_asc or date_desc"), "limit": ("integer", "how many, 1-20")}),
+    "health_score": (health_score, "The Financial Health Score (0-100) and its six pillars.", {}),
+    "model_info": (model_info, "Model Lab facts about Finora's models: version, status, data, acceptance checks, limitations.",
+                   {"model": ("string", "credit_risk, categoriser, anomaly, forecast or peers (omit for all)")}),
+})

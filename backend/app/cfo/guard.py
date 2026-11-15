@@ -34,12 +34,16 @@ def collect_numbers(obj, out: set | None = None) -> set:
     return out
 
 
-def _supported(value: float, facts: set, tol: float) -> bool:
+def _supported(value: float, facts: set, tol: float, abs_tol: float = 0.0) -> bool:
+    """A figure is supported if it equals a fact (to rounding), or a monthly/annual conversion or complement of a fact
+    almost exactly (0.1%): derived values get no slack, so coincidences with unrelated facts are not accepted."""
     if value == 0:
         return True
     for f in facts:
-        for cand in (f, f * 12, f / 12, 100 - f if f <= 100 else f):
-            if cand and abs(value - cand) <= tol * max(abs(cand), 1e-9):
+        if f and abs(value - f) <= max(tol * max(abs(f), 1e-9), abs_tol):
+            return True
+        for cand in (f * 12, f / 12, 100 - f if f <= 100 else None):
+            if cand and abs(value - cand) <= min(tol, 0.001) * max(abs(cand), 1e-9):
                 return True
     return False
 
@@ -68,7 +72,8 @@ def verify(answer: str, facts: dict, question: str = "") -> dict:
         checked += 1
         scaled = v * _MULT.get(unit, 1)
         # rounded figures like "₹1.2 L" are compared with a looser tolerance
-        tol = 0.06 if unit in _MULT else 0.025 if money else 0.03
-        if not (_supported(scaled, allowed, tol) or (unit == "%" and _supported(round(v), {round(a) for a in allowed if a <= 1000}, 0.0))):
+        # exact rupee figures must match to rounding (0.5%); a lakh/crore figure is rounded by design (6%); other numbers 3%
+        tol = 0.06 if unit in _MULT else 0.005 if money else 0.03
+        if not (_supported(scaled, allowed, tol, 1.0 if money and unit not in _MULT else 0.0) or (unit == "%" and _supported(round(v), {round(a) for a in allowed if a <= 1000}, 0.0))):
             unsupported.append(m.group(0).strip())
     return {"ok": not unsupported, "unsupported": unsupported[:8], "checked": checked}

@@ -298,3 +298,119 @@ def write(results: list[tuple[str, dict]]) -> str:
         except Exception:
             continue
     return "\n\n".join(parts) if parts else "I could not compute that from your data."
+
+
+# ---------------------------------------------------------------- Phase 7 tools: calculator-written fallbacks (every figure from the tool)
+def _err(f):
+    return f.get("error") or f.get("note") or "That information is not available for this profile."
+
+
+def _w_spending(f):
+    if "money_moved_not_spending" in f:
+        return f"In {f['period']} you moved {inr(f['money_moved_not_spending'])} into {f['category']} ({f['transactions']} transactions). {f['note']}"
+    if "total_spent" not in f:
+        return _err(f)
+    what = f.get("category") or (f"'{f['merchant']}'" if f.get("merchant") else "everything")
+    s = f"In {f['period']} you spent {inr(f['total_spent'])} on {what} across {f['transactions']} transactions."
+    if f.get("by_category"):
+        s += " Biggest categories: " + ", ".join(f"{c['category']} {inr(c['amount'])}" for c in f["by_category"][:4]) + "."
+    if f.get("top_merchants"):
+        s += " Top merchants: " + ", ".join(f"{m['merchant']} {inr(m['amount'])}" for m in f["top_merchants"][:3]) + "."
+    return s
+
+
+def _w_income(f):
+    if "total_income" not in f:
+        return _err(f)
+    return f"Income in {f['period']}: {inr(f['total_income'])}" + (" (" + ", ".join(f"{x['source']} {inr(x['amount'])}" for x in f["by_source"]) + ")." if f["by_source"] else ".")
+
+
+def _w_compare(f):
+    if "month" not in f:
+        return _err(f)
+    a, b = f["month"], f["previous"]
+    s = (f"{a['month']}: spent {inr(a['spent'])}, income {inr(a['income'])}. {b['month']}: spent {inr(b['spent'])}, income {inr(b['income'])}. "
+         f"Spending changed by {inr(f['spending_change'])}.")
+    if f.get("rising"):
+        s += " Rising: " + ", ".join(f"{x['category']} (+{inr(x['change'])})" for x in f["rising"][:3]) + "."
+    if f.get("falling"):
+        s += " Falling: " + ", ".join(f"{x['category']} ({inr(x['change'])})" for x in f["falling"][:3]) + "."
+    return s
+
+
+def _w_accounts(f):
+    s = f"Your bank balances total {inr(f['total_bank_balance'])}: " + ", ".join(f"{a['bank']} {a['account']} {inr(a['balance'])}" for a in f["bank_accounts"]) + "."
+    if f["credit_cards"]:
+        s += " Cards: " + ", ".join(f"{c['card']} ••{c['last4']} {inr(c['outstanding'])} of {inr(c['limit'])}" for c in f["credit_cards"]) + "."
+    if f["loans"]:
+        s += " Loans: " + ", ".join(f"{l['loan']} {inr(l['outstanding_balance'])} outstanding (EMI {inr(l['emi'])})" for l in f["loans"]) + "."
+    return s
+
+
+def _w_credit_risk(f):
+    if f.get("available") is False:
+        return _err(f)
+    s = f"The credit-risk model puts your chance of missing a card payment at {f['overall_default_probability_pct']}% ({f['overall_risk_band']})."
+    for c in f["cards"][:2]:
+        s += f" {c['card']}: " + "; ".join(f"{x['factor']} {x['effect']}" for x in c["top_shap_factors"][:3]) + "."
+    return s + " " + f["limitation"]
+
+
+def _w_anomaly_scan(f):
+    if f.get("available") is False:
+        return _err(f)
+    if not f["flagged_count"]:
+        return f"The scanner checked {f['transactions_scanned']} transactions and flagged none. " + f["limitation"]
+    items = "; ".join(f"{t['date']} {t['merchant'] or t['category']} {inr(t['amount'])} ({t['times_typical']}× typical)" for t in f["flagged"][:4])
+    return f"The scanner flagged {f['flagged_count']} of {f['transactions_scanned']} transactions: {items}. " + f["limitation"]
+
+
+def _w_cff(f):
+    if f.get("available") is False:
+        return _err(f)
+    left = (f" With expected income of {inr(f['expected_income'])}, that leaves a projected {f.get('projected_status') or 'balance'} of "
+            f"{inr(f['projected_surplus'])}." if f.get("expected_income") is not None and f.get("projected_surplus") is not None else "")
+    return (f"The experimental model forecasts {inr(f['predicted_total_expense'])} of spending in {f['prediction_month']}; a simple 3-month average "
+            f"gives {inr(f['baseline_three_month_average'])}.{left} " + f["limitation"])
+
+
+def _w_peer(f):
+    if f.get("available") is False:
+        return _err(f)
+    return (f"You are closest to the '{f['peer_group']}' group ({f['peer_group_share_pct']}% of US households). Stronger than most on: "
+            f"{', '.join(f['strengths']) or 'no single measure'}; weaker on: {', '.join(f['weaknesses']) or 'nothing notable'}. " + f["limitation"])
+
+
+def _w_cat_sugg(f):
+    return (f"{f['pending_suggestions']} category suggestions are waiting for your confirmation. " + f.get("how_to_confirm", "")).strip()
+
+
+def _w_plan(f):
+    if f.get("available") is False:
+        return _err(f)
+    s = "Finora Plan. Findings: " + "; ".join(d["finding"] for d in f["diagnosis"][:3]) + "."
+    if f["ranked_actions"]:
+        s += " Next actions: " + "; ".join(a["title"] for a in f["ranked_actions"][:3]) + "."
+    return s
+
+
+def _w_what_if(f):
+    if "error" in f:
+        return _err(f)
+    b, sc = f["baseline"], f["scenario"]
+    parts = []
+    for k, label, money in (("surplus", "monthly surplus", True), ("runway_months", "runway (months)", False),
+                            ("health_score", "health score", False), ("fire_age", "FIRE age", False)):
+        if b.get(k) is not None and sc.get(k) is not None:
+            parts.append(f"{label} {inr(b[k]) if money else b[k]} → {inr(sc[k]) if money else sc[k]}")
+    amt = f["params"].get("amount")
+    return (f"What-if: {f['kind']}" + (f" of {inr(amt)} a month" if amt else "") + ": " + ", ".join(parts) + ". " + f["note"])
+
+
+def _w_alerts(f):
+    return "Alerts: " + ("; ".join(a["title"] for a in f["alerts"][:5]) if f["alerts"] else "none right now") + "."
+
+
+WRITERS.update({"spending": _w_spending, "income": _w_income, "compare_months": _w_compare, "accounts_and_balances": _w_accounts,
+                "credit_risk": _w_credit_risk, "anomaly_scan": _w_anomaly_scan, "cash_flow_forecast": _w_cff, "peer_benchmark": _w_peer,
+                "category_suggestions": _w_cat_sugg, "finora_plan": _w_plan, "plan_what_if": _w_what_if, "alerts": _w_alerts})

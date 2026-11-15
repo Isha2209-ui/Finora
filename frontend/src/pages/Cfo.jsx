@@ -12,7 +12,7 @@ export default function Cfo() {
   const b = useAsync(() => api.briefing(profileId), [profileId])
   return (
     <>
-      <PageHeader title="AI CFO" subtitle="Your personal finance assistant. It picks the right calculator or model, then explains the result - and every figure it states is checked against that result before you see it." />
+      <PageHeader title="AI CFO" subtitle="Ask anything in your own words. A language model running on this computer reads your question, looks up your Finora data and models itself, and answers; every figure it states is checked against Finora's calculations." />
       <div className="grid gap-4 xl:grid-cols-[1fr_440px]">
         <div className="space-y-4">
           <Card title={b.data ? `Monthly briefing · ${monthLabel(b.data.month)}` : 'Monthly briefing'} action={b.data && <Badge tone="accent"><CalendarDays size={11} /> {b.data.engine === 'rules' ? 'rule-written' : b.data.engine}</Badge>}>
@@ -41,10 +41,10 @@ export default function Cfo() {
           </Card>
           <Card title="How the assistant stays accurate">
             <ol className="grid gap-3 text-sm md:grid-cols-4">
-              {[['1 · Route', 'Rules recognise the question and choose the calculator or model. Open-ended questions use the language model’s tool-calling.'],
-                ['2 · Compute', 'The backend runs the calculation on your real data. The language model never does arithmetic.'],
-                ['3 · Explain', 'The local model (Qwen via Ollama, or Nemotron) writes a plain-language explanation of the result.'],
-                ['4 · Verify', 'Every number in the explanation is checked against the computed result. If one does not match, the text is discarded and a rule-written answer is shown.']].map(([t, d]) => (
+              {[['1 · Plan', 'Qwen 2.5 (3B), running locally through Ollama, turns your question into a short plan (what to look up, which category, period and count), using what this conversation has already established. Finora checks the plan before anything runs. Nothing leaves this computer.'],
+                ['2 · Look up', 'Finora runs the planned look-ups (spending, transactions, accounts, plan, credit risk, forecast, scanner, peers, what-ifs) and does the arithmetic itself. The tools only read your signed-in profile.'],
+                ['3 · Answer', 'It writes the answer from the tool results, with each model\'s limitations. It cannot change anything in Finora.'],
+                ['4 · Verify', 'Every figure is checked against this question\'s results, and the answer must cover what was asked (category, period, count). If it fails, it is rewritten once; if that fails, a calculator-written answer is shown instead.']].map(([t, d]) => (
                 <li key={t} className="rounded-xl bg-raised p-3"><div className="text-xs font-semibold text-accent">{t}</div><div className="mt-1 text-xs leading-relaxed text-muted">{d}</div></li>))}
             </ol>
           </Card>
