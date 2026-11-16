@@ -1,6 +1,6 @@
 # Finora
 
-**AI-powered personal financial intelligence, FIRE planning and an AI CFO.**
+**AI-powered personal financial intelligence, Machine learning models , FIRE planning and an AI CFO.**
 
 Enter a (demo) PAN and Finora loads that person's whole financial identity — every bank account, credit card,
 stock, mutual fund, SIP, deposit, property, loan and insurance policy — then analyses it with trained ML models,
