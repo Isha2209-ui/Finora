@@ -1,101 +1,158 @@
 # Finora
 
-**AI-powered personal financial intelligence, Machine learning models , FIRE planning and an AI CFO.**
+**An AI-powered personal financial intelligence and management platform.**
 
-Enter a (demo) PAN and Finora loads that person's whole financial identity — every bank account, credit card,
-stock, mutual fund, SIP, deposit, property, loan and insurance policy — then analyses it with trained ML models,
-projects the path to financial independence, simulates big purchase decisions and answers questions through an
-AI assistant that can only state numbers the backend has computed.
+Finora helps bring your financial information into one place and uses machine learning and artificial intelligence to find meaningful insights.
 
-> All demo data is **synthetic**. A real PAN does not give access to anyone's finances; a production system would
-> use the RBI Account Aggregator framework with user consent.
+Finora combines financial tracking, planning tools, machine-learning insights, reports, and a conversational AI CFO in one local application.
 
-**Documentation:** [setup guide](docs/SETUP.md) · [project status](docs/PROJECT_STATUS.md) · [verification](docs/PHASE_9_VERIFICATION.md) ·
-[ML provenance](docs/ML_PROVENANCE.md) · [demo script](docs/DEMO_SCRIPT.md) · [viva Q&A](docs/VIVA_QA.md) · [screenshots](docs/SCREENSHOTS.md)
+### Explore machine-learning insights
 
-## Run it (macOS)
+Finora includes model-supported tools for transaction categorization, unusual activity, peer comparisons, credit-risk patterns, and cash-flow forecasting. The Model Lab shows information about the models and their evaluation.
 
-```bash
-./setup.sh      # first time only: Python env, packages, database, demo data, tests
-./run.sh        # starts backend + frontend
-```
+### Ask the AI CFO
 
-**One server process per database.** The backend locks `backend/finora.db.lock` at start-up; a second backend (or `uvicorn --workers 2`) on the same database refuses to start. Run tests freely while it runs: they use a temporary copy of the database.
+The AI CFO answers supported questions using calculations based on the selected profile. When configured with Ollama, it uses a local language model. Its tools are read-only, and the backend checks the numbers in its answers. Without Ollama, the assistant can still answer supported questions in calculator mode.
 
-Open **http://localhost:5173**, create a local account (e-mail + password) and sign in. In VS Code: `Cmd+Shift+B` runs the same thing ("Run Finora").
+## Quick start
 
-After signing in you choose **Explore demo identity** or **Build my financial identity**.
+### Requirements
 
-- **Demo identities** are four fictional people with synthetic data (demo identifiers `ABCDE1234F` balanced saver · `PQRST5678K` overspender with 3 cards · `LMNOP2345D` loan-heavy · `XYZAB9876C` freelancer). Opening one gives you a private **sandbox** copy: edit anything, press **Reset demo** to restore it, and it is deleted after 24 hours. The four originals are read-only templates and never change.
-- **Your own profile** is private to your account. No bank, bureau or government system is ever contacted: a real PAN finds nothing.
+- macOS or Linux (on Windows, use WSL)
+- Python 3.11 or newer
+- Node.js 20 or newer, with npm
+- About 1.5 GB of disk space for packages and the app; the optional language model needs additional memory and disk space
 
-| Needs | Notes |
-|---|---|
-| Python 3.11+ and Node 20+ | required |
-| PostgreSQL (Postgres.app) | optional — `setup.sh` uses it if present, otherwise SQLite |
-| Ollama + `ollama pull qwen2.5:3b` | optional — the local AI CFO (Qwen 2.5 3B); without it the assistant answers in "calculator mode" |
+PostgreSQL and Ollama are optional. The default setup can use SQLite and calculator mode for the AI CFO.
 
-Useful commands (inside `backend/` with the venv active):
+### Install and run
 
 ```bash
-pytest -q                    # 523 tests
-python -m app.ml.train check # acceptance checks of the shipped models (retraining needs the raw datasets: docs/SETUP.md §7)
-python -m app.data.seed      # rebuild demo data (refuses if accounts exist; --force deletes them too)
+git clone https://github.com/Isha2209-ui/Finora.git
+cd Finora
+./setup.sh
+./run.sh
 ```
 
-API documentation (Swagger): http://127.0.0.1:8001/docs
+Open [**http://localhost:5173**](http://localhost:5173) in your browser. Create a local account with an email address and password, then sign in. The API documentation is available at [**http://127.0.0.1:8001/docs**](http://127.0.0.1:8001/docs).
 
-## What is inside
+Keep the terminal running while you use Finora. Press **Ctrl+C** in that terminal to stop the app. In VS Code, after setup, you can also run the **Run Finora** build task with **Cmd+Shift+B**.
 
+### Setup notes
+
+- `setup.sh` creates a Python environment in `backend/venv`, installs backend and frontend dependencies, prepares the local database, loads demo data, and checks the shipped model files.
+- The default database is `backend/finora.db`. Local databases, virtual environments, and environment files are excluded from Git.
+- If your local database already contains accounts or profiles, the demo seed step refuses to replace them. Don’t use the seed script’s `--force` option unless you intentionally want to delete that local data.
+- If setup stops before installing frontend packages, install them with:
+  ```bash
+  cd frontend
+  npm install
+  ```
+
+For more setup details and common fixes, see [docs/SETUP.md](docs/SETUP.md).
+
+## Choose how to start
+
+After signing in, you can explore a demo identity or start a private profile of your own.
+
+### Explore a demo identity
+
+Finora includes four fictional profiles with synthetic financial data:
+
+| Demo identifier | Profile                      |
+| --------------- | ---------------------------- |
+| `ABCDE1234F`    | Balanced saver               |
+| `PQRST5678K`    | Overspender with three cards |
+| `LMNOP2345D`    | Loan-heavy profile           |
+| `XYZAB9876C`    | Freelancer                   |
+
+You can select a demo person from the start screen or open one using its demo identifier. Finora creates a private sandbox copy for your account, so you can explore and edit it. Resetting restores the original demo data. Sandboxes expire after 24 hours; the read-only templates remain unchanged.
+
+### Create your own private profile
+
+Choose **Start with my own data** to create a profile visible only to your account. Finora asks for basic details such as your name, age, employment type, and target retirement age; city is optional. Your profile starts empty, so Finora does not invent financial details for you.
+
+## Optional: enable the local AI CFO model
+
+The AI CFO can use [Ollama](https://ollama.com/) and the local `qwen2.5:3b` model. Install Ollama and download the model:
+
+```bash
+ollama pull qwen2.5:3b
 ```
-backend/app/
-  models.py            22 tables (SQLAlchemy)
-  data/                synthetic generator, bank-statement narrations, seed script
-  services/            cleaning, calculations, FIRE, decision simulator, tax, recommendations, reports, CSV import
-  ml/                  credit_risk, categoriser, anomaly, forecast, peers, train.py
-  cfo/                 router -> tools -> language model -> number guard -> rule-based fallback
-  routes/              REST API
-backend/datasets/      raw public datasets for retraining (git-ignored; not needed to run)
-backend/artifacts/     trained models: real/<model>/<version>/ (model.joblib, metrics.json, provenance.json) + active.json
-backend/tests/         formulas, cleaning, models, API, AI CFO
-frontend/src/pages/    7 areas + Settings (React 19 + Vite 7 + Tailwind v4 + Recharts)
-frontend/e2e/          Playwright CLI browser suites
+
+Keep Ollama running locally, then start Finora. Without the model, the assistant uses calculator mode. Finora refuses remote or cloud models for the AI CFO.
+
+## Technology
+
+- **Frontend:** React 19, Vite 7, Tailwind CSS 4, Recharts
+- **Backend:** Python, FastAPI, SQLAlchemy
+- **Database:** SQLite by default; optional PostgreSQL
+- **Machine learning:** scikit-learn, XGBoost, SHAP
+- **Optional local language model:** Qwen 2.5 3B through Ollama
+
+## Models and limitations
+
+The trained model files are shipped with the project. Their datasets, methods, evaluation, and provenance are described in [docs/ML_PROVENANCE.md](docs/ML_PROVENANCE.md).
+
+| Capability                 | Method                         | Important limitation                                                                                        |
+| -------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| Credit-risk patterns       | XGBoost with SHAP explanations | Trained on Taiwan credit-card data from 2005. This is not an Indian credit score or bureau assessment.      |
+| Peer benchmarking          | Weighted K-Means               | Uses US household survey data, not Indian household benchmarks.                                             |
+| Transaction categorization | TF-IDF and logistic regression | Performance is not established for Indian UPI or NEFT descriptions; low-confidence suggestions need review. |
+| Unusual activity           | Isolation Forest               | Flags activity that is unusual for a profile. It does not identify or prove fraud.                          |
+| Cash-flow forecasting      | XGBoost regression             | In the documented evaluation, it did not beat a simple three-month-average baseline.                        |
+| Model Lab                  | Model registry and checks      | Shows model versions, provenance, metrics, and checks; it is not a predictive model.                        |
+
+## Project structure
+
+```text
+backend/
+  app/             API routes, services, data models, ML, and AI CFO
+  artifacts/       Shipped model files and metadata
+  tests/           Backend tests
+  requirements.txt Python dependencies
+frontend/
+  src/             React application
+  e2e/             Browser walkthroughs
+docs/              Setup, demo, model, verification, and project documentation
+report/            Project report files
+setup.sh           One-time local setup
+run.sh             Starts the backend and frontend
 ```
 
-## The models (trained on real public data; full details in [docs/ML_PROVENANCE.md](docs/ML_PROVENANCE.md))
+## Development commands
 
-| Capability | Algorithm | Data | Measured result |
-|---|---|---|---|
-| Credit Risk | XGBoost + SHAP | UCI Default of Credit Card Clients, 30,000 accounts (Taiwan 2005) | Test ROC-AUC 0.783 (logistic regression 0.760) |
-| Peer Benchmarking | Weighted K-Means (k = 3) | Federal Reserve SCF 2022, 4,595 US families | Silhouette 0.219; cross-implicate ARI ≥ 0.867 |
-| Transaction Categoriser | TF-IDF + logistic regression | Oklahoma / DC purchase cards; MoneyVis (UK) | Macro-F1 0.600 held-out merchants (keyword rules 0.149) |
-| Anomaly Detection Scanner | Isolation Forest | Oklahoma purchase cards, 1.05 M transactions | Flag stability ≥ 0.82; accuracy not measured (human review pending) |
-| Cash-Flow Forecast | XGBoost | MoneyVis, one UK person, 2015–2022 | MAE 856.93 vs 3-month average 809.49 (does not beat it; shown beside it) |
-| Model Lab | registry, checksums, metrics | — | — |
+Run these from the project root unless stated otherwise.
 
-**Known limits (state these, don't hide them)**
+```bash
+# Start the app after setup
+./run.sh
 
-- Credit risk is a Taiwan 2005 pattern, not an Indian bureau score. Demographic columns were dropped on purpose.
-- The categoriser is unmeasured on Indian UPI/NEFT narrations; suggestions under 0.5 confidence go to Review.
-- The anomaly score means "unusual for you", not fraud. Peers are US households.
-- Market prices are stored "as of" values, not a live feed. Tax follows FY 2026-27 slabs without surcharge.
+# Run backend tests
+cd backend
+source venv/bin/activate
+pytest -q
 
-## Accounts, ownership and security
+# Check the shipped machine-learning models
+python -m app.ml.train check
+```
 
-- **Accounts:** e-mail + password, hashed with argon2id (`argon2-cffi`; bcrypt is accepted as a fallback). No verification e-mail in this local version.
-- **Sessions:** random 256-bit token in an `httpOnly`, `SameSite=Lax` cookie (`Secure` in production); the database stores only its SHA-256 hash. Sign-out revokes the session server-side.
-- **CSRF:** every state-changing request must echo the session's CSRF token in `X-CSRF-Token`.
-- **Ownership:** every profile route checks the signed-in account against the profile's `kind`. Demo *templates* are readable by any account and never writable. *Private* and *sandbox* profiles are visible only to their owner (others get 404). Synthetic *population* profiles cannot be reached through the API (tested).
-- **Training data:** models train only on public datasets, never on account holders' profiles (there is a test for this).
-- **Limits & audit:** rate limits on sign-in (per account and per IP), sign-up, uploads and chat; uploads are capped at 25 MB and 150,000 rows. Sign-up is not rate-limited by default (`REGISTER_IP_MAX=0`); set it for any public deployment. Sign-ins, profile creation and deletion, uploads, exports, reports and retraining are written to `audit_events`, which holds IDs and counts only.
-- **Logs:** a logging filter redacts PAN-like strings, long card or account numbers, e-mail addresses and session tokens.
-- **Config:** secrets come from the environment (`.env`, git-ignored). With `FINORA_ENV=production` the server refuses to start on a default `PAN_PEPPER` or without `COOKIE_SECURE=true`.
+Only one backend process can use a given database at a time. Finora enforces this with a database lock; don’t start multiple Uvicorn workers against the same database.
 
-## How the AI CFO avoids making numbers up
+## Documentation
 
-1. **Guards** — requests to change data, to look at another profile or to pick stocks/funds get fixed replies; no model call.
-2. **Plan** — the local model (Qwen 2.5 3B via Ollama; cloud models are refused) writes a JSON plan of read-only operations.
-3. **Compute** — read-only tools run them on the signed-in profile only.
-4. **Write and verify** — the model drafts the answer; every number is checked against the computed results, and unsupported claims are rejected. A failed draft is rewritten once, otherwise a rule-written answer is shown.
+- [Setup guide](docs/SETUP.md)
+- [Demo walkthrough](docs/DEMO_SCRIPT.md)
+- [Project status](docs/PROJECT_STATUS.md)
+- [ML provenance and evaluation](docs/ML_PROVENANCE.md)
+- [Screenshots](docs/SCREENSHOTS.md)
+- [Verification notes](docs/PHASE_9_VERIFICATION.md)
+- [Viva questions and answers](docs/VIVA_QA.md)
 
-Details and evaluation: [docs/PHASE_7_VERIFICATION.md](docs/PHASE_7_VERIFICATION.md), [docs/PHASE_9_VERIFICATION.md](docs/PHASE_9_VERIFICATION.md).
+## Security and local data
+
+The local app stores account and profile data in its configured database. Keep `backend/.env`, local databases, backups, and uploaded statements private. The repository’s `.gitignore` excludes these local files, but review `git status` before committing changes.
+
+The local setup is intended for development and demonstration, not direct public deployment. Review the security and configuration requirements in [docs/SETUP.md](docs/SETUP.md) before exposing the service.
+
+##
